@@ -1,15 +1,21 @@
 import { promises as fsPromises } from "fs"
 import { describe } from "mocha"
-import { expect } from "chai"
+import { expect, use } from "chai"
 import { CustomerInfo } from "../../src/customerInfo"
 import { CustomerDbFs } from "../../src/customerDbFs"
-
+use(require("chai-as-promised"))
 const dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
 
 describe("CustomerDbFs Unit Tests", () => {
 
     afterEach("clear dbStore", async() => {
         await fsPromises.unlink(dbPath)
+    })
+
+    it("throws when missing id", async() => {
+        const db: CustomerDbFs = new CustomerDbFs(dbPath)
+        expect(db.getCustomerInfoById("1"))
+            .to.eventually.throw
     })
 
     it("can save customer info in an empty db", async() => {

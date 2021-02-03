@@ -1,7 +1,7 @@
 import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { ICustomerInfo, CustomerInfo } from "./customerInfo"
-import { ICustomerDb } from "./customerDb"
+import { ICustomerDb, UnknownCustomerError } from "./customerDb"
 
 const exists = promisify(existsAsync)
 
@@ -24,7 +24,9 @@ export class CustomerDbFs implements ICustomerDb {
     }
 
     async getCustomerInfoById(id: string): Promise<CustomerInfo> {
-        return new CustomerInfo((await getDb(this.dbPath))[id])
+        const info = (await getDb(this.dbPath))[id]
+        if (typeof info === "undefined") throw new UnknownCustomerError(id)
+        return new CustomerInfo(info)
     }
 
     async setCustomerInfo(id: string, info: ICustomerInfo): Promise<void> {
