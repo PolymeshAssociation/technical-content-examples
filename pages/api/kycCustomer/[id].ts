@@ -17,7 +17,10 @@ async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> 
 async function setCustomerInfo(req: NextApiRequest): Promise<void> {
     return await new CustomerDbFs(kycDbPath).setCustomerInfo(
         <string>req.query.id, 
-        new CustomerInfo(req.body))
+        new CustomerInfo(
+            typeof req.body === "string"
+                ? JSON.parse(req.body)
+                : req.body))
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object | ICustomerInfo>): Promise<any> {
