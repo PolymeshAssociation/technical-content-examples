@@ -1,6 +1,6 @@
-import { describe } from 'mocha'
-import { expect } from 'chai'
-import { ICustomerInfo, CustomerInfo } from "../../src/customerInfo"
+import { describe } from "mocha"
+import { expect } from "chai"
+import { CustomerInfo } from "../../src/customerInfo"
 
 describe("CustomerInfo Unit Tests", () => {
 
