@@ -14,13 +14,19 @@ after("restore env", async() => {
     await fsPromises.unlink(dbPath)
 })
 
+let customerId = 0;
+
+beforeEach("increase customerId", () => {
+    customerId++
+})
+
 describe('/api/kycuser/[id] GET Integration Tests', () => {
  
     it('returns 404 on get unknown', async () => {
         const { req, res } = createMocks({
             "method": "GET",
             "query": {
-                "id": '3',
+                "id": customerId.toString(),
             }
         })
 
@@ -33,9 +39,9 @@ describe('/api/kycuser/[id] GET Integration Tests', () => {
     it('returns the info on previously set info', async () => {
         {
             const { req, res } = createMocks({
-                "method": "POST",
+                "method": "PUT",
                 "query": {
-                    "id": '3',
+                    "id": customerId.toString(),
                 },
                 "body": {
                     "name": "John Doe",
@@ -49,7 +55,7 @@ describe('/api/kycuser/[id] GET Integration Tests', () => {
         const { req, res } = createMocks({
             "method": "GET",
             "query": {
-                "id": '3',
+                "id": customerId.toString(),
             }
         })
 
@@ -66,13 +72,13 @@ describe('/api/kycuser/[id] GET Integration Tests', () => {
 
 })
 
-describe('/api/kycuser/[id] POST Integration Tests', () => {
+describe('/api/kycuser/[id] PUT Integration Tests', () => {
  
     it('returns 200 on set info', async () => {
         const { req, res } = createMocks({
-            "method": "POST",
+            "method": "PUT",
             "query": {
-                "id": '3',
+                "id": customerId.toString(),
             },
             "body": {
                 "name": "John Doe",

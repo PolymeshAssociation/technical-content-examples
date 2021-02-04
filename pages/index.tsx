@@ -54,7 +54,7 @@ export default function Home() {
     setMyInfo(info)
     setStatus("Submitting info")
     const response = await fetch(`/api/kycCustomer/${id}`, {
-      "method": "POST",
+      "method": "PUT",
       "body": JSON.stringify(info)
     })
     if (response.status == 200) {
@@ -72,7 +72,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>Create Next App</title>
+        <title>EzKyc Customer Page</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 

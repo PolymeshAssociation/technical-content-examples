@@ -26,9 +26,9 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
 export default async function (req: NextApiRequest, res: NextApiResponse<object | ICustomerInfo>): Promise<any> {
     try {
         switch (req.method) {
-            case 'GET':
+            case "GET":
                 try {
-                    res.status(200).json(await getCustomerInfoById(req))                
+                    res.status(200).json(await getCustomerInfoById(req))
                 } catch(getError) {
                     if (getError instanceof UnknownCustomerError) {
                         res.status(404).json({"status": "not found"})
@@ -37,7 +37,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                     }
                 }
                 break
-            case 'POST':
+            case "PUT":
                 await setCustomerInfo(req)
                 res.status(200).json({"status": "ok"})
                 break
