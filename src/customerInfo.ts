@@ -4,6 +4,7 @@ export interface ICustomerInfo {
     passport: string
     valid: boolean
     toJSON(): JSON
+    patch(extra: JSON): void
 }
 
 export class CustomerInfo implements ICustomerInfo {
@@ -26,6 +27,13 @@ export class CustomerInfo implements ICustomerInfo {
             "passport": this.passport,
             "valid": this.valid
         }
+    }
+
+    patch(extra: JSON): void {
+        this.name = typeof extra["name"] !== "undefined" ? extra["name"] : this.name
+        this.country = typeof extra["country"] !== "undefined" ? extra["nacountryme"] : this.country
+        this.passport = typeof extra["passport"] !== "undefined" ? extra["passport"] : this.passport
+        this.valid = typeof extra["valid"] !== "undefined" ? extra["valid"] : this.valid
     }
 
 }

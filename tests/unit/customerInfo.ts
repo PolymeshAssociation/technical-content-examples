@@ -35,4 +35,45 @@ describe("CustomerInfo Unit Tests", () => {
         expect(back["valid"]).to.be.true
     })
 
+    it("can patch name with single JSON info", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "name": "John Doe",
+            "country": "UK",
+            "passport": "12345",
+            "valid": true
+        }
+        const info = new CustomerInfo(bareInfo)
+
+        info.patch(<JSON><unknown>{
+            "name": "Jane Doe"
+        })
+        const back = info.toJSON()
+
+        expect(back["name"]).to.equal("Jane Doe")
+        expect(back["country"]).to.equal("UK")
+        expect(back["passport"]).to.equal("12345")
+        expect(back["valid"]).to.be.true
+    })
+
+    it("can patch name with partial JSON info", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "name": "John Doe",
+            "country": "UK",
+            "passport": "12345",
+            "valid": true
+        }
+        const info = new CustomerInfo(bareInfo)
+
+        info.patch(<JSON><unknown>{
+            "name": "Jane Doe",
+            "valid": false
+        })
+        const back = info.toJSON()
+
+        expect(back["name"]).to.equal("Jane Doe")
+        expect(back["country"]).to.equal("UK")
+        expect(back["passport"]).to.equal("12345")
+        expect(back["valid"]).to.be.false
+    })
+
 })
