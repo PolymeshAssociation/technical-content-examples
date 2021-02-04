@@ -12,7 +12,7 @@ const getDb = async function(dbPath: string): Promise<JSON> {
     return JSON.parse((await fsPromises.readFile(dbPath)).toString())
 }
 const saveDb = async function(dbPath: string,db: JSON): Promise<void> {
-    return fsPromises.writeFile(dbPath, JSON.stringify(db))
+    return fsPromises.writeFile(dbPath, JSON.stringify(db, null, 4))
 }
 
 export class CustomerDbFs implements ICustomerDb {

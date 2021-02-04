@@ -14,3 +14,40 @@ a {
 * {
   box-sizing: border-box;
 }
+
+button.submit {
+  background-color: #0070f3;
+  border-radius: 6px;
+  border: 1px solid #337fed;
+  display: inline-block;
+  cursor: pointer;
+  color: #ffffff;
+  font-weight: bold;
+  margin-top: 1em;
+  padding: 6px 24px;
+}
+
+button.submit:hover {
+  background-color:#1e62d0;
+}
+
+button.submit:active {
+  position:relative;
+  top:1px;
+}
+
+button.submit:disabled {
+  background-color: #e7e7e7;
+  border-color: #e7e7e7;
+  color: #45576b;
+  cursor: not-allowed;
+}
+
+button.submit:disabled:active {
+  top: 0px;
+}
+
+input {
+  padding-left: 9px;
+  margin-bottom: 9px;
+}

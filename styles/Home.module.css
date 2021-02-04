@@ -49,7 +49,7 @@
 .title {
   margin: 0;
   line-height: 1.15;
-  font-size: 4rem;
+  font-size: 2.5rem;
 }
 
 .title,
@@ -110,8 +110,29 @@
   line-height: 1.5;
 }
 
+.card legend {
+  padding: 0.5rem;
+  background-color: #f3f3f3;
+  border: 1px solid #eaeaea;
+  font-weight: bold;
+  color: #505050;
+  border-radius: 6px;
+}
+
+.card label {
+  margin: 0;
+  line-height: 1.5;
+  margin-right: 1em;
+}
+
+.hasTitle {
+  border-bottom-width: 1px;
+  border-bottom-style: dotted;
+  cursor: help;
+}
+
 .logo {
-  height: 1em;
+  height: 2em;
 }
 
 @media (max-width: 600px) {

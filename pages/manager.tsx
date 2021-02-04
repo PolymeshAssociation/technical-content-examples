@@ -78,7 +78,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <Head>
-        <title>EzKyc Manager Page</title>
+        <title>EzKyc Management Tool</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -91,56 +91,58 @@ export default function Home() {
 
         <form lang="en">
 
-          <fieldset>
-            <legend>Id Of Your Customer</legend>
+          <fieldset className={styles.card}>
+            <legend>Id of your customer</legend>
 
             <div>
-              <label htmlFor="customer-id">Your Id </label>
+              <label htmlFor="customer-id">Id</label>
               <input name="id" id="customer-id" type="number" placeholder="1" value={myInfo["id"]} onChange={onCustomerIdChanged}></input>
             </div>
 
             <div className="submit">
-              <button className="submit customerId" onClick={submitGetCustomerInfo}>Fetch Their Info</button>
+              <button className="submit customerId" onClick={submitGetCustomerInfo}>Fetch their info</button>
             </div>
 
           </fieldset>
 
-          <fieldset>
-            <legend>What The Customer Filled In</legend>
+          <fieldset className={styles.card}>
+            <legend>What the customer filled in</legend>
 
             <div>
-              <label htmlFor="customer-name">Their Name </label>
+              <label htmlFor="customer-name">Their name</label>
               <input name="name" id="customer-name" type="text" placeholder="John Doe" value={myInfo["info"]["name"]} readOnly={true}></input>
             </div>
 
             <div>
-              <label htmlFor="customer-country">Their Country </label>
+              <label htmlFor="customer-country">Their country</label>
               <input name="country" id="customer-country" type="text" placeholder="UK" value={myInfo["info"]["country"]} readOnly={true}></input>
             </div>
 
             <div>
-              <label htmlFor="customer-passport">Their Passport Number </label>
+              <label htmlFor="customer-passport">Their passport number</label>
               <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} readOnly={true}></input>
             </div>
 
           </fieldset>
 
-          <fieldset>
-            <legend>Your Opinion</legend>
+          <fieldset className={styles.card}>
+            <legend>Act on your decision</legend>
 
-            <div>
-              <label htmlFor="customer-valid">Is It Valid </label>
-              <input name="valid" type="checkbox" checked={myInfo["info"]["valid"]} disabled={true} ></input>
+            <div>After careful review of the documents, we have decided to:</div>
+
+            <div className="submit">
+              <button className="submit" disabled={myInfo["id"] === "" || myInfo["info"]["valid"]} onClick={submitValid} data-valid="true">Accept</button>
+              <button className="submit" disabled={!(myInfo["info"]["valid"])} onClick={submitValid} data-valid="false">Reject</button>
             </div>
 
           </fieldset>
 
-          <fieldset>
-            <legend>Your Action</legend>
+          <fieldset className={styles.card}>
+            <legend>Your stored decision</legend>
 
-            <div className="submit">
-              <button className="submit" disabled={myInfo["id"] === "" || myInfo["info"]["valid"]} onClick={submitValid} data-valid="true">Validate</button>
-              <button className="submit" disabled={!(myInfo["info"]["valid"])} onClick={submitValid} data-valid="false">Invalidate</button>
+            <div>
+              <label htmlFor="customer-valid">Verified by you</label>
+              <input name="valid" type="checkbox" checked={myInfo["info"]["valid"]} disabled={true} ></input>
             </div>
 
           </fieldset>
@@ -155,12 +157,12 @@ export default function Home() {
 
       <footer className={styles.footer}>
         <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+          href="http://polymath.network"
           target="_blank"
           rel="noopener noreferrer"
         >
           Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
+          <img src="/polymath.svg" alt="Vercel Logo" className={styles.logo} />
         </a>
       </footer>
     </div>

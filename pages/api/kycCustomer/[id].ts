@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import getConfig from 'next/config'
 import { CustomerInfo, ICustomerInfo } from "../../../src/customerInfo"
-import { UnknownCustomerError } from "../../../src/customerDb";
+import { UnknownCustomerError } from "../../../src/customerDb"
 import { CustomerDbFs } from "../../../src/customerDbFs"
 
 const { serverRuntimeConfig: { kycDbPath } } = getConfig() || {
@@ -24,8 +24,8 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
 }
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id;
-    const customerDb = new CustomerDbFs(kycDbPath);
+    const id = <string>req.query.id
+    const customerDb = new CustomerDbFs(kycDbPath)
     const customerInfo = await customerDb.getCustomerInfoById(id)
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)

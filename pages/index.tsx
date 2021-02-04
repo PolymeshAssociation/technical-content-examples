@@ -26,11 +26,11 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      console.log(body);
       setMyInfo({
         ...myInfo,
         "info": body
       })
+      
     } else {
       setStatus("Something went wrong")
     }
@@ -104,52 +104,52 @@ export default function Home() {
 
         <form lang="en">
 
-          <fieldset>
-            <legend>Your Customer Id</legend>
+          <fieldset className={styles.card}>
+            <legend>Your customer id</legend>
 
             <div>
-              <label htmlFor="customer-id">Your Id </label>
+              <label htmlFor="customer-id" className={styles.hasTitle} title="Given to you when you registered. As of now, just pick one.">Your id</label>
               <input name="id" id="customer-id" type="number" placeholder="1" value={myInfo["id"]} onChange={onMyIdChanged}></input>
-              <div>Given to you when you registered</div>
             </div>
 
             <div className="submit">
-              <button className="submit customerId" onClick={submitGetMyInfo}>Fetch Your Info</button>
+              <button className="submit customerId" onClick={submitGetMyInfo}>Fetch your info</button>
             </div>
 
           </fieldset>
 
-          <fieldset>
-            <legend>The Info We Need From You</legend>
+          <fieldset className={styles.card}>
+            <legend>What we need from you</legend>
 
             <div>
-              <label htmlFor="customer-name">Your Name </label>
-              <input name="name" id="customer-name" type="text" placeholder="John Doe" value={myInfo["info"]["name"]} onChange={onMyInfoChanged}></input>
+              <label htmlFor="customer-name">Your name</label>
+              <input name="name" id="customer-name" type="text" placeholder="John Doe" value={myInfo["info"]["name"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
             </div>
 
             <div>
-              <label htmlFor="customer-country">Your Country </label>
-              <input name="country" id="customer-country" type="text" placeholder="UK" value={myInfo["info"]["country"]} onChange={onMyInfoChanged}></input>
+              <label htmlFor="customer-country">Your country</label>
+              <input name="country" id="customer-country" type="text" placeholder="UK" value={myInfo["info"]["country"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
             </div>
 
             <div>
-              <label htmlFor="customer-passport">Your Passport Number </label>
-              <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} onChange={onMyInfoChanged}></input>
+              <label htmlFor="customer-passport">Your passport number</label>
+              <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
             </div>
 
             <div className="submit">
-              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit Your info</button>
+              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your info</button>
             </div>
 
           </fieldset>
 
-          <fieldset>
-            <legend>What EzKyc Has To Say</legend>
+          <fieldset className={styles.card}>
+            <legend>EzKyc's decision</legend>
 
             <div>
-              <label htmlFor="customer-valid">Is It Valid </label>
+              <label htmlFor="customer-valid">
+                <span className={styles.hasTitle} title="Fetch your info again to see EzKyc decision">Verified</span>?
+              </label>
               <input name="valid" type="checkbox" checked={myInfo["info"]["valid"]} disabled={true} ></input>
-              <div>Fetch your info again to see EzKyc decision</div>
             </div>
 
           </fieldset>
@@ -159,19 +159,19 @@ export default function Home() {
         <div id="status" className={styles.status}>
           Latest status will show here
         </div>
-
       </main>
 
       <footer className={styles.footer}>
         <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+          href="http://polymath.network"
           target="_blank"
           rel="noopener noreferrer"
         >
           Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
+          <img src="/polymath.svg" alt="Polymath Logo" className={styles.logo} />
         </a>
       </footer>
+
     </div>
   )
 }
