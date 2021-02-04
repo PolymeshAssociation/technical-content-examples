@@ -16,7 +16,7 @@ export class CustomerInfo implements ICustomerInfo {
         this.name = info["name"]
         this.country = info["country"]
         this.passport = info["passport"]
-        this.valid = info["valid"]
+        this.valid = typeof info["valid"] === "undefined" ? false : info["valid"]
     }
 
     toJSON(): JSON {
