@@ -23,6 +23,16 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
                 : req.body))
 }
 
+async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
+    const id = <string>req.query.id;
+    const customerDb = new CustomerDbFs(kycDbPath);
+    const customerInfo = await customerDb.getCustomerInfoById(id)
+    customerInfo.patch(typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body)
+    await customerDb.setCustomerInfo(id, customerInfo)
+}
+
 export default async function (req: NextApiRequest, res: NextApiResponse<object | ICustomerInfo>): Promise<any> {
     try {
         switch (req.method) {
@@ -40,6 +50,18 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             case "PUT":
                 await setCustomerInfo(req)
                 res.status(200).json({"status": "ok"})
+                break
+            case "PATCH":
+                try {
+                    await updateCustomerInfo(req)
+                    res.status(200).json({"status": "ok"})
+                } catch(getError) {
+                    if (getError instanceof UnknownCustomerError) {
+                        res.status(404).json({"status": "not found"})
+                    } else {
+                        throw getError
+                    }
+                }
                 break
             default:
                 res.status(405).end()
