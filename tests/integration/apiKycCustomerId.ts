@@ -2,109 +2,89 @@ import { promises as fsPromises } from "fs"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
-
-const dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
-const toRestore: RestoreFn = mockedEnv({
-    "KYC_DB_PATH": dbPath
-})
 import handleKycCustomerId from "../../pages/api/kycCustomer/[id]"
 
-after("restore env", async() => {
-    toRestore()
-    await fsPromises.unlink(dbPath)
-})
+describe("/api/kycuser/[id] Integration Tests", () => {
+    let dbPath: string
+    let toRestore: RestoreFn
 
-let customerId = 0;
+    beforeEach("mock env", async() => {
+        dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
+        toRestore = mockedEnv({
+            "KYC_DB_PATH": dbPath
+        })
+    })
+    
+    afterEach("restore env", async() => {
+        toRestore()
+        await fsPromises.unlink(dbPath)
+    })
+    
+    describe("GET", () => {
+    
+        it("returns 404 on get unknown", async () => {
+            const { req, res } = createMocks({
+                "method": "GET",
+                "query": {
+                    "id": "3",
+                }
+            })
 
-beforeEach("increase customerId", () => {
-    customerId++
-})
+            await handleKycCustomerId(req, res)
 
-describe('/api/kycuser/[id] GET Integration Tests', () => {
- 
-    it('returns 404 on get unknown', async () => {
-        const { req, res } = createMocks({
-            "method": "GET",
-            "query": {
-                "id": customerId.toString(),
+            expect(res._getStatusCode()).to.equal(404)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
+        })
+    
+        it("returns the info on previously set info", async () => {
+            {
+                const { req, res } = createMocks({
+                    "method": "PUT",
+                    "query": {
+                        "id": "3",
+                    },
+                    "body": {
+                        "name": "John Doe",
+                        "country": "UK",
+                        "passport": "12345",
+                        "valid": true
+                    }
+                })
+                await handleKycCustomerId(req, res)
             }
+            const { req, res } = createMocks({
+                "method": "GET",
+                "query": {
+                    "id": "3",
+                }
+            })
+
+            await handleKycCustomerId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "name": "John Doe",
+                "country": "UK",
+                "passport": "12345",
+                "valid": true
+            })
         })
 
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(404)
-        expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
     })
- 
-    it('returns the info on previously set info', async () => {
-        {
+
+    describe("PUT", () => {
+    
+        it("returns 200 on set info", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
                 "query": {
-                    "id": customerId.toString(),
+                    "id": "4",
                 },
                 "body": {
                     "name": "John Doe",
                     "country": "UK",
                     "passport": "12345",
                     "valid": true
-                }
-            })
-            await handleKycCustomerId(req, res)
-        }
-        const { req, res } = createMocks({
-            "method": "GET",
-            "query": {
-                "id": customerId.toString(),
-            }
-        })
-
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(200)
-        expect(JSON.parse(res._getData())).to.deep.equal({
-            "name": "John Doe",
-            "country": "UK",
-            "passport": "12345",
-            "valid": true
-        })
-    })
-
-})
-
-describe('/api/kycuser/[id] PUT Integration Tests', () => {
- 
-    it('returns 200 on set info', async () => {
-        const { req, res } = createMocks({
-            "method": "PUT",
-            "query": {
-                "id": customerId.toString(),
-            },
-            "body": {
-                "name": "John Doe",
-                "country": "UK",
-                "passport": "12345",
-                "valid": true
-            }
-        })
-
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(200)
-        expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-    })
- 
-    it('returns 200 on set info missing valid', async () => {
-        {
-                const { req, res } = createMocks({
-                "method": "PUT",
-                "query": {
-                    "id": customerId.toString(),
-                },
-                "body": {
-                    "name": "John Doe",
-                    "country": "UK",
-                    "passport": "12345"
                 }
             })
 
@@ -112,68 +92,54 @@ describe('/api/kycuser/[id] PUT Integration Tests', () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-        }
-        const { req, res } = createMocks({
-            "method": "GET",
-            "query": {
-                "id": customerId.toString(),
+        })
+    
+        it("returns 200 on set info missing valid", async () => {
+            {
+                    const { req, res } = createMocks({
+                    "method": "PUT",
+                    "query": {
+                        "id": "4",
+                    },
+                    "body": {
+                        "name": "John Doe",
+                        "country": "UK",
+                        "passport": "12345"
+                    }
+                })
+
+                await handleKycCustomerId(req, res)
+
+                expect(res._getStatusCode()).to.equal(200)
+                expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
             }
-        })
-
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(200)
-        expect(JSON.parse(res._getData())).to.deep.equal({
-            "name": "John Doe",
-            "country": "UK",
-            "passport": "12345",
-            "valid": false
-        })
-    })
-
-})
-
-describe('/api/kycuser/[id] PATCH Integration Tests', () => {
- 
-    it('returns 404 on patch unknown', async () => {
-        const { req, res } = createMocks({
-            "method": "PATCH",
-            "query": {
-                "id": customerId.toString(),
-            },
-            "body": {
-                "passport": "12346",
-                "valid": false
-            }
-        })
-
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(404)
-        expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
-    })
- 
-    it('returns 200 on patch existing info', async () => {
-        {
             const { req, res } = createMocks({
-                "method": "PUT",
+                "method": "GET",
                 "query": {
-                    "id": customerId.toString(),
-                },
-                "body": {
-                    "name": "John Doe",
-                    "country": "UK",
-                    "passport": "12345",
-                    "valid": true
+                    "id": "4",
                 }
             })
+
             await handleKycCustomerId(req, res)
-        }
-        {
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "name": "John Doe",
+                "country": "UK",
+                "passport": "12345",
+                "valid": false
+            })
+        })
+
+    })
+
+    describe("PATCH", () => {
+    
+        it("returns 404 on patch unknown", async () => {
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
-                    "id": customerId.toString(),
+                    "id": "3",
                 },
                 "body": {
                     "passport": "12346",
@@ -183,25 +149,61 @@ describe('/api/kycuser/[id] PATCH Integration Tests', () => {
 
             await handleKycCustomerId(req, res)
 
-            expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-        }
-        const { req, res } = createMocks({
-            "method": "GET",
-            "query": {
-                "id": customerId.toString(),
+            expect(res._getStatusCode()).to.equal(404)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
+        })
+    
+        it("returns 200 on patch existing info", async () => {
+            {
+                const { req, res } = createMocks({
+                    "method": "PUT",
+                    "query": {
+                        "id": "3",
+                    },
+                    "body": {
+                        "name": "John Doe",
+                        "country": "UK",
+                        "passport": "12345",
+                        "valid": true
+                    }
+                })
+                await handleKycCustomerId(req, res)
             }
+            {
+                const { req, res } = createMocks({
+                    "method": "PATCH",
+                    "query": {
+                        "id": "3",
+                    },
+                    "body": {
+                        "passport": "12346",
+                        "valid": false
+                    }
+                })
+
+                await handleKycCustomerId(req, res)
+
+                expect(res._getStatusCode()).to.equal(200)
+                expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
+            }
+            const { req, res } = createMocks({
+                "method": "GET",
+                "query": {
+                    "id": "3",
+                }
+            })
+
+            await handleKycCustomerId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "name": "John Doe",
+                "country": "UK",
+                "passport": "12346",
+                "valid": false
+            })
         })
 
-        await handleKycCustomerId(req, res)
-
-        expect(res._getStatusCode()).to.equal(200)
-        expect(JSON.parse(res._getData())).to.deep.equal({
-            "name": "John Doe",
-            "country": "UK",
-            "passport": "12346",
-            "valid": false
-        })
     })
 
 })

@@ -4,9 +4,13 @@ import { expect, use } from "chai"
 import { CustomerInfo } from "../../src/customerInfo"
 import { CustomerDbFs } from "../../src/customerDbFs"
 use(require("chai-as-promised"))
-const dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
 
 describe("CustomerDbFs Unit Tests", () => {
+    let dbPath
+
+    beforeEach("prepare dbStore", async() => {
+        dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
+    })
 
     afterEach("clear dbStore", async() => {
         await fsPromises.unlink(dbPath)
@@ -14,7 +18,7 @@ describe("CustomerDbFs Unit Tests", () => {
 
     it("throws when missing id", async() => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
-        expect(db.getCustomerInfoById("1"))
+        await expect(db.getCustomerInfoById("1"))
             .to.eventually.throw
     })
 
