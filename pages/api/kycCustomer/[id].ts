@@ -1,21 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import getConfig from 'next/config'
 import { CustomerInfo, ICustomerInfo } from "../../../src/customerInfo"
 import { UnknownCustomerError } from "../../../src/customerDb"
-import { CustomerDbFs } from "../../../src/customerDbFs"
-
-const { serverRuntimeConfig: { kycDbPath } } = getConfig() || {
-    "serverRuntimeConfig": {
-        "kycDbPath": process.env.KYC_DB_PATH
-    }
-}
+import customerDbFactory from "../../../src/customerDbFactory"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
-    return await new CustomerDbFs(kycDbPath).getCustomerInfoById(<string>req.query.id)
+    return await (await customerDbFactory()).getCustomerInfoById(<string>req.query.id)
 }
 
 async function setCustomerInfo(req: NextApiRequest): Promise<void> {
-    return await new CustomerDbFs(kycDbPath).setCustomerInfo(
+    return await (await customerDbFactory()).setCustomerInfo(
         <string>req.query.id, 
         new CustomerInfo(
             typeof req.body === "string"
@@ -25,7 +18,7 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
     const id = <string>req.query.id
-    const customerDb = new CustomerDbFs(kycDbPath)
+    const customerDb = await customerDbFactory()
     const customerInfo = await customerDb.getCustomerInfoById(id)
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)
