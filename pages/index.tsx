@@ -9,7 +9,9 @@ export default function Home() {
       "name": "",
       "country": "",
       "passport": "",
-      "valid": false
+      "valid": false,
+      "jurisdiction": "",
+      "polymeshId": ""
     },
     "modified": false
   } as object);
@@ -136,6 +138,11 @@ export default function Home() {
               <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
             </div>
 
+            <div>
+              <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
+              <input name="jurisdiction" id="customer-jurisdiction" type="text" placeholder="IE" value={myInfo["info"]["jurisdiction"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
+            </div>
+
             <div className="submit">
               <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your info</button>
             </div>
@@ -150,6 +157,20 @@ export default function Home() {
                 <span className={styles.hasTitle} title="Fetch your info again to see EzKyc decision">Verified</span>?
               </label>
               <input name="valid" type="checkbox" checked={myInfo["info"]["valid"]} disabled={true} ></input>
+            </div>
+
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Your info relevant to Polymesh</legend>
+
+            <div>
+              <label htmlFor="customer-polymeshId">Your Polymesh id</label>
+              <input name="polymeshId" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshId"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
+            </div>
+
+            <div className="submit">
+              <button className="submit myUpdates" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your updated situation</button>
             </div>
 
           </fieldset>

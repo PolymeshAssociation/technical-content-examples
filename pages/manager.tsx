@@ -9,7 +9,9 @@ export default function Home() {
       "name": "",
       "country": "",
       "passport": "",
-      "valid": false
+      "valid": false,
+      "jurisdiction": "",
+      "polymeshId": ""
     }
   } as object);
 
@@ -121,6 +123,16 @@ export default function Home() {
             <div>
               <label htmlFor="customer-passport">Their passport number</label>
               <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} readOnly={true}></input>
+            </div>
+
+            <div>
+              <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
+              <input name="jurisdiction" id="customer-jurisdiction" type="text" placeholder="IE" value={myInfo["info"]["jurisdiction"]} readOnly={true}></input>
+            </div>
+
+            <div>
+              <label htmlFor="customer-polymeshId">Their Polymesh id</label>
+              <input name="polymeshId" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshId"]} readOnly={true}></input>
             </div>
 
           </fieldset>

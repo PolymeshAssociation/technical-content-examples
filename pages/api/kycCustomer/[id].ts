@@ -8,6 +8,7 @@ async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> 
 }
 
 async function setCustomerInfo(req: NextApiRequest): Promise<void> {
+    // TODO add validation on pre-existing polymesh id
     return await (await customerDbFactory()).setCustomerInfo(
         <string>req.query.id, 
         new CustomerInfo(
@@ -23,6 +24,7 @@ async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
+    // TODO add validation on pre-existing polymesh id
     await customerDb.setCustomerInfo(id, customerInfo)
 }
 

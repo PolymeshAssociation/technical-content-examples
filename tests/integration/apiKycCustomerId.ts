@@ -47,7 +47,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                         "name": "John Doe",
                         "country": "UK",
                         "passport": "12345",
-                        "valid": true
+                        "valid": true,
+                        "jurisdiction": "IE",
+                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -66,7 +68,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "name": "John Doe",
                 "country": "UK",
                 "passport": "12345",
-                "valid": true
+                "valid": true,
+                "jurisdiction": "IE",
+                "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
             })
         })
 
@@ -84,7 +88,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     "name": "John Doe",
                     "country": "UK",
                     "passport": "12345",
-                    "valid": true
+                    "valid": true,
+                    "jurisdiction": "IE",
+                    "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                 }
             })
 
@@ -104,7 +110,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     "body": {
                         "name": "John Doe",
                         "country": "UK",
-                        "passport": "12345"
+                        "passport": "12345",
+                        "jurisdiction": "IE",
+                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
 
@@ -127,7 +135,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "name": "John Doe",
                 "country": "UK",
                 "passport": "12345",
-                "valid": false
+                "valid": false,
+                "jurisdiction": "IE",
+                "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
             })
         })
 
@@ -164,7 +174,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                         "name": "John Doe",
                         "country": "UK",
                         "passport": "12345",
-                        "valid": true
+                        "valid": true,
+                        "jurisdiction": "IE",
+                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -177,7 +189,8 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "passport": "12346",
-                        "valid": false
+                        "valid": false,
+                        "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
                     }
                 })
 
@@ -200,7 +213,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "name": "John Doe",
                 "country": "UK",
                 "passport": "12346",
-                "valid": false
+                "valid": false,
+                "jurisdiction": "IE",
+                "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
             })
         })
 

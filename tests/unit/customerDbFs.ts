@@ -28,7 +28,9 @@ describe("CustomerDbFs Unit Tests", () => {
             "name": "John Doe",
             "country": "UK",
             "passport": "12345",
-            "valid": true
+            "valid": true,
+            "jurisdiction": "IE",
+            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -40,7 +42,9 @@ describe("CustomerDbFs Unit Tests", () => {
             "name": "John Doe",
             "country": "UK",
             "passport": "12345",
-            "valid": true
+            "valid": true,
+            "jurisdiction": "IE",
+            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -50,6 +54,8 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved.country).to.equal("UK")
         expect(retrieved.passport).to.equal("12345")
         expect(retrieved.valid).to.be.true
+        expect(retrieved.jurisdiction).to.equal("IE")
+        expect(retrieved.polymeshId).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef")
     })
 
     it("can save and get 2 saved customer infos", async() => {
@@ -58,14 +64,18 @@ describe("CustomerDbFs Unit Tests", () => {
             "name": "John Doe",
             "country": "UK",
             "passport": "12345",
-            "valid": true
+            "valid": true,
+            "jurisdiction": "IE",
+            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
         }
         const info1 = new CustomerInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
             "name": "Jane Doe",
             "country": "UK",
             "passport": "12346",
-            "valid": false
+            "valid": false,
+            "jurisdiction": "FR",
+            "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
         }
         const info2 = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)
@@ -77,11 +87,15 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved1.country).to.equal("UK")
         expect(retrieved1.passport).to.equal("12345")
         expect(retrieved1.valid).to.be.true
+        expect(retrieved1.jurisdiction).to.equal("IE")
+        expect(retrieved1.polymeshId).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef")
 
         expect(retrieved2.name).to.equal("Jane Doe")
         expect(retrieved2.country).to.equal("UK")
         expect(retrieved2.passport).to.equal("12346")
         expect(retrieved2.valid).to.be.false
+        expect(retrieved2.jurisdiction).to.equal("FR")
+        expect(retrieved2.polymeshId).to.equal("0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0")
     })
 
 })
