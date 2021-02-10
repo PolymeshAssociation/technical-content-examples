@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { CustomerInfo, ICustomerInfo } from "../../../src/customerInfo"
+import { CustomerInfo, ICustomerInfo, InvalidCountryCodeError, InvalidPolymeshDidError } from "../../../src/customerInfo"
 import { UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 
@@ -32,36 +32,28 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
     try {
         switch (req.method) {
             case "GET":
-                try {
-                    res.status(200).json(await getCustomerInfoById(req))
-                } catch(getError) {
-                    if (getError instanceof UnknownCustomerError) {
-                        res.status(404).json({"status": "not found"})
-                    } else {
-                        throw getError
-                    }
-                }
+                res.status(200).json(await getCustomerInfoById(req))
                 break
             case "PUT":
                 await setCustomerInfo(req)
                 res.status(200).json({"status": "ok"})
                 break
             case "PATCH":
-                try {
-                    await updateCustomerInfo(req)
-                    res.status(200).json({"status": "ok"})
-                } catch(getError) {
-                    if (getError instanceof UnknownCustomerError) {
-                        res.status(404).json({"status": "not found"})
-                    } else {
-                        throw getError
-                    }
-                }
+                await updateCustomerInfo(req)
+                res.status(200).json({"status": "ok"})
                 break
             default:
                 res.status(405).end()
         }
     } catch(e) {
-        res.status(500).json({"status": "internal error"})
+        if (e instanceof UnknownCustomerError) {
+            res.status(404).json({"status": "not found"})
+        } else if (e instanceof InvalidCountryCodeError) {
+            res.status(400).json({"status": `invalid country code ${e.countryCode}`})
+        } else if (e instanceof InvalidPolymeshDidError) {
+            res.status(400).json({"status": `invalid Polymesh Did ${e.polymeshDid}`})
+        } else {
+            res.status(500).json({"status": "internal error"})
+        }
     }
 }

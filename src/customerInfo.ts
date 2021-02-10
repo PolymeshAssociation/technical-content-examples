@@ -6,10 +6,12 @@ export interface ICustomerInfo {
     passport: string
     valid: boolean
     jurisdiction: CountryCode
-    polymeshId: string
+    polymeshDid: string
     toJSON(): JSON
     patch(extra: JSON): void
 }
+
+const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
 
 export class CustomerInfo implements ICustomerInfo {
     name: string
@@ -17,7 +19,7 @@ export class CustomerInfo implements ICustomerInfo {
     passport: string
     valid: boolean
     jurisdiction: CountryCode
-    polymeshId: string
+    polymeshDid: string
 
     constructor(info: JSON) {
         this.name = info["name"]
@@ -31,7 +33,10 @@ export class CustomerInfo implements ICustomerInfo {
             throw new InvalidCountryCodeError(info["jurisdiction"])
         }
         this.jurisdiction = CountryCode[info["jurisdiction"]]
-        this.polymeshId = info["polymeshId"]
+        if (!(info["polymeshDid"] as string).match(polymeshDidRegex)) {
+            throw new InvalidPolymeshDidError(info["polymeshDid"])
+        }
+        this.polymeshDid = info["polymeshDid"]
         // TODO verify id formatting
     }
 
@@ -42,7 +47,7 @@ export class CustomerInfo implements ICustomerInfo {
             "passport": this.passport,
             "valid": this.valid,
             "jurisdiction": this.jurisdiction,
-            "polymeshId": this.polymeshId
+            "polymeshDid": this.polymeshDid
         }
     }
 
@@ -58,7 +63,10 @@ export class CustomerInfo implements ICustomerInfo {
             throw new InvalidCountryCodeError(extra["jurisdiction"])
         }
         this.jurisdiction = typeof extra["jurisdiction"] !== "undefined" ? CountryCode[extra["jurisdiction"]] : this.jurisdiction
-        this.polymeshId = typeof extra["polymeshId"] !== "undefined" ? extra["polymeshId"] : this.polymeshId
+        if (typeof extra["polymeshDid"] !== "undefined" && !(extra["polymeshDid"] as string).match(polymeshDidRegex)) {
+            throw new InvalidPolymeshDidError(extra["polymeshDid"])
+        }
+        this.polymeshDid = typeof extra["polymeshDid"] !== "undefined" ? extra["polymeshDid"] : this.polymeshDid
     }
 
 }
@@ -70,7 +78,13 @@ export class CustomerInfoError {
 }
 
 export class InvalidCountryCodeError extends CustomerInfoError {
-    constructor (public jurisdiction: string) {
+    constructor (public countryCode: string) {
+        super()
+    }
+}
+
+export class InvalidPolymeshDidError extends CustomerInfoError {
+    constructor (public polymeshDid: string) {
         super()
     }
 }

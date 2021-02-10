@@ -31,7 +31,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -45,7 +45,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -56,7 +56,7 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved.passport).to.equal("12345")
         expect(retrieved.valid).to.be.true
         expect(retrieved.jurisdiction).to.equal(CountryCode["Ie"])
-        expect(retrieved.polymeshId).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef")
+        expect(retrieved.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
     })
 
     it("can save and get 2 saved customer infos", async() => {
@@ -67,7 +67,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
         }
         const info1 = new CustomerInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
@@ -76,7 +76,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12346",
             "valid": false,
             "jurisdiction": "Fr",
-            "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
+            "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
         }
         const info2 = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)
@@ -89,14 +89,14 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved1.passport).to.equal("12345")
         expect(retrieved1.valid).to.be.true
         expect(retrieved1.jurisdiction).to.equal(CountryCode["Ie"])
-        expect(retrieved1.polymeshId).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef")
+        expect(retrieved1.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
 
         expect(retrieved2.name).to.equal("Jane Doe")
         expect(retrieved2.country).to.equal(CountryCode["Gb"])
         expect(retrieved2.passport).to.equal("12346")
         expect(retrieved2.valid).to.be.false
         expect(retrieved2.jurisdiction).to.equal(CountryCode["Fr"])
-        expect(retrieved2.polymeshId).to.equal("0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0")
+        expect(retrieved2.polymeshDid).to.equal("0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde")
     })
 
 })

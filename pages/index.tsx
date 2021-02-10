@@ -15,7 +15,7 @@ export default function Home() {
       "passport": "",
       "valid": false,
       "jurisdiction": "",
-      "polymeshId": ""
+      "polymeshDid": ""
     },
     "modified": false
   } as object)
@@ -185,7 +185,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-polymeshId">Your Polymesh did</label>
-              <input name="polymeshId" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshId"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
+              <input name="polymeshDid" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshDid"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
             </div>
 
             <div className="submit">

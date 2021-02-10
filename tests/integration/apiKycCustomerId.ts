@@ -49,7 +49,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                         "passport": "12345",
                         "valid": true,
                         "jurisdiction": "Ie",
-                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                        "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -70,7 +70,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "passport": "12345",
                 "valid": true,
                 "jurisdiction": "Ie",
-                "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
             })
         })
 
@@ -90,7 +90,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     "passport": "12345",
                     "valid": true,
                     "jurisdiction": "Ie",
-                    "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                 }
             })
 
@@ -112,7 +112,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                         "country": "Gb",
                         "passport": "12345",
                         "jurisdiction": "Ie",
-                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                        "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                     }
                 })
 
@@ -137,7 +137,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "passport": "12345",
                 "valid": false,
                 "jurisdiction": "Ie",
-                "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
             })
         })
 
@@ -176,7 +176,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                         "passport": "12345",
                         "valid": true,
                         "jurisdiction": "Ie",
-                        "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
+                        "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -190,7 +190,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     "body": {
                         "passport": "12346",
                         "valid": false,
-                        "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
+                        "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
                     }
                 })
 
@@ -215,7 +215,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 "passport": "12346",
                 "valid": false,
                 "jurisdiction": "Ie",
-                "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
+                "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
             })
         })
 
