@@ -29,7 +29,7 @@ export default async function(): Promise<IClaimForwarder> {
         middleware: {
             link: middlewareLink,
             key: middlewareKey
-        },
+        }
     })
     return new ClaimForwarderPoly(api)
 }

@@ -4,7 +4,7 @@ import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
 import handleKycCustomerId from "../../pages/api/kycCustomer/[id]"
 
-describe("/api/kycuser/[id] Integration Tests", () => {
+describe("/api/kycCustomer/[id] Integration Tests", () => {
     let dbPath: string
     let toRestore: RestoreFn
 
