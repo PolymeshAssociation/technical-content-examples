@@ -45,10 +45,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
+                        "country": "Gb",
                         "passport": "12345",
                         "valid": true,
-                        "jurisdiction": "IE",
+                        "jurisdiction": "Ie",
                         "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
@@ -66,10 +66,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12345",
                 "valid": true,
-                "jurisdiction": "IE",
+                "jurisdiction": "Ie",
                 "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
             })
         })
@@ -86,10 +86,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 },
                 "body": {
                     "name": "John Doe",
-                    "country": "UK",
+                    "country": "Gb",
                     "passport": "12345",
                     "valid": true,
-                    "jurisdiction": "IE",
+                    "jurisdiction": "Ie",
                     "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                 }
             })
@@ -109,9 +109,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
+                        "country": "Gb",
                         "passport": "12345",
-                        "jurisdiction": "IE",
+                        "jurisdiction": "Ie",
                         "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
@@ -133,10 +133,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12345",
                 "valid": false,
-                "jurisdiction": "IE",
+                "jurisdiction": "Ie",
                 "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
             })
         })
@@ -172,10 +172,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
+                        "country": "Gb",
                         "passport": "12345",
                         "valid": true,
-                        "jurisdiction": "IE",
+                        "jurisdiction": "Ie",
                         "polymeshId": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef"
                     }
                 })
@@ -211,10 +211,10 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12346",
                 "valid": false,
-                "jurisdiction": "IE",
+                "jurisdiction": "Ie",
                 "polymeshId": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcdef0"
             })
         })

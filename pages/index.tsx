@@ -1,6 +1,10 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import Select from "react-select"
 import styles from "../styles/Home.module.css"
+import { CountryCode } from "@polymathnetwork/polymesh-sdk/generated/types"
+import countries from "i18n-iso-countries"
+countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -14,7 +18,13 @@ export default function Home() {
       "polymeshId": ""
     },
     "modified": false
-  } as object);
+  } as object)
+  const countryList = Object.values(CountryCode).sort().map(code => {
+    return {
+      "value": code,
+      "label": countries.getName(code.toUpperCase(), "en") || code
+    }
+  })
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -75,8 +85,6 @@ export default function Home() {
       ...myInfo,
       "id": e.target.value
     })
-    console.log(myInfo);
-    
   }
 
   function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -85,6 +93,17 @@ export default function Home() {
       "info": {
         ...myInfo["info"],
         [e.target.name]: e.target.value
+      },
+      "modified": true
+    })
+  }
+
+  function onCountryChanged(countryCode: string, target: object): void {
+    setMyInfo({
+      ...myInfo,
+      "info": {
+        ...myInfo["info"],
+        [target["name"]]: countryCode
       },
       "modified": true
     })
@@ -130,7 +149,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <input name="country" id="customer-country" type="text" placeholder="UK" value={myInfo["info"]["country"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
             </div>
 
             <div>
@@ -140,7 +159,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
-              <input name="jurisdiction" id="customer-jurisdiction" type="text" placeholder="IE" value={myInfo["info"]["jurisdiction"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["jurisdiction"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
             </div>
 
             <div className="submit">
@@ -165,7 +184,7 @@ export default function Home() {
             <legend>Your info relevant to Polymesh</legend>
 
             <div>
-              <label htmlFor="customer-polymeshId">Your Polymesh id</label>
+              <label htmlFor="customer-polymeshId">Your Polymesh did</label>
               <input name="polymeshId" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshId"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
             </div>
 

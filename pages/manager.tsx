@@ -1,6 +1,10 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import Select from "react-select"
 import styles from "../styles/Home.module.css"
+import { CountryCode } from "@polymathnetwork/polymesh-sdk/generated/types"
+import countries from "i18n-iso-countries"
+countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -13,7 +17,13 @@ export default function Home() {
       "jurisdiction": "",
       "polymeshId": ""
     }
-  } as object);
+  } as object)
+  const countryList = Object.values(CountryCode).sort().map(code => {
+    return {
+      "value": code,
+      "label": countries.getName(code.toUpperCase(), "en") || code
+    }
+  })
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -34,7 +44,6 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      console.log(body);
       setMyInfo({
         ...myInfo,
         "info": body
@@ -117,7 +126,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Their country</label>
-              <input name="country" id="customer-country" type="text" placeholder="UK" value={myInfo["info"]["country"]} readOnly={true}></input>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} isDisabled={true}/>
             </div>
 
             <div>
@@ -127,11 +136,11 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
-              <input name="jurisdiction" id="customer-jurisdiction" type="text" placeholder="IE" value={myInfo["info"]["jurisdiction"]} readOnly={true}></input>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["jurisdiction"])} isDisabled={true}/>
             </div>
 
             <div>
-              <label htmlFor="customer-polymeshId">Their Polymesh id</label>
+              <label htmlFor="customer-polymeshId">Their Polymesh did</label>
               <input name="polymeshId" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshId"]} readOnly={true}></input>
             </div>
 
