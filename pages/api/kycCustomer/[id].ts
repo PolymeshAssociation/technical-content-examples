@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next"
 import { CustomerInfo, ICustomerInfo, InvalidCountryCodeError, InvalidPolymeshDidError } from "../../../src/customerInfo"
 import { UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
+import ClaimForwarderFactory from "../../../src/claimForwarderFactory"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
     return await (await customerDbFactory()).getCustomerInfoById(<string>req.query.id)
@@ -14,6 +15,10 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
         ? JSON.parse(req.body)
         : req.body)
     await customerDb.setCustomerInfo(id, customerInfo)
+    if (customerInfo.valid && customerInfo.polymeshDid !== null) {
+        const claimForwarder = await ClaimForwarderFactory()
+        await claimForwarder.addJurisdictionClaim(customerInfo)
+    }
 }
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
@@ -24,6 +29,10 @@ async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
         ? JSON.parse(req.body)
         : req.body)
     await customerDb.setCustomerInfo(id, customerInfo)
+    if (customerInfo.valid && customerInfo.polymeshDid !== null) {
+        const claimForwarder = await ClaimForwarderFactory()
+        await claimForwarder.addJurisdictionClaim(customerInfo)
+    }
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object | ICustomerInfo>): Promise<any> {
