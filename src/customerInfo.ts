@@ -6,7 +6,7 @@ export interface ICustomerInfo {
     passport: string
     valid: boolean
     jurisdiction: CountryCode
-    polymeshDid: string
+    polymeshDid: string | null
     toJSON(): JSON
     patch(extra: JSON): void
 }
@@ -19,7 +19,7 @@ export class CustomerInfo implements ICustomerInfo {
     passport: string
     valid: boolean
     jurisdiction: CountryCode
-    polymeshDid: string
+    polymeshDid: string | null
 
     constructor(info: JSON) {
         this.name = info["name"]
@@ -33,10 +33,10 @@ export class CustomerInfo implements ICustomerInfo {
             throw new InvalidCountryCodeError(info["jurisdiction"])
         }
         this.jurisdiction = CountryCode[info["jurisdiction"]]
-        if (!(info["polymeshDid"] as string).match(polymeshDidRegex)) {
+        if (typeof info["polymeshDid"] !== "undefined" && !(info["polymeshDid"] as string).match(polymeshDidRegex)) {
             throw new InvalidPolymeshDidError(info["polymeshDid"])
         }
-        this.polymeshDid = info["polymeshDid"]
+        this.polymeshDid = info["polymeshDid"] || null
         // TODO verify id formatting
     }
 
