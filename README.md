@@ -9,7 +9,9 @@ First, install:
 ```bash
 npm install
 ```
-Second, run the development server:
+Second, create a `keys.json` file modelled on `keys.json.sample`, with proper key values.
+
+Third, run the development server:
 
 ```bash
 npm run dev
