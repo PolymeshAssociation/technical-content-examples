@@ -124,7 +124,7 @@ describe("CustomerInfo Unit Tests", () => {
 
         info.patch(<JSON><unknown>{
             "name": "Jane Doe",
-            "valid": false
+            "valid": false,
         })
         const back = info.toJSON()
 

@@ -153,7 +153,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 },
                 "body": {
                     "passport": "12346",
-                    "valid": false
+                    "valid": false,
                 }
             })
 
@@ -188,7 +188,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                     },
                     "body": {
                         "passport": "12346",
-                        "valid": false
+                        "valid": false,
                     }
                 })
 

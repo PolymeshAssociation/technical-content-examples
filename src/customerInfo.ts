@@ -90,3 +90,9 @@ export class InvalidPolymeshDidError extends CustomerInfoError {
         super()
     }
 }
+
+export class CustomerInfoError {
+    constructor () {
+        Error.apply(this, arguments)
+    }
+}
