@@ -42,6 +42,20 @@ describe("CustomerInfo Unit Tests", () => {
         expect(info.polymeshDid).to.be.null
     })
 
+    it("can construct from incomplete JSON", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "name": "John Doe",
+            "country": "Gb",
+            "valid": true,
+        }
+        const info = new CustomerInfo(bareInfo)
+
+        expect(info.name).to.equal("John Doe")
+        expect(info.country).to.equal("Gb")
+        expect(info.passport).to.be.undefined
+        expect(info.valid).to.be.true
+    })
+
     it("can convert to JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "name": "John Doe",
