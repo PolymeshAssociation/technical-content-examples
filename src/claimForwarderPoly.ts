@@ -6,9 +6,18 @@ import {
 } from "./claimForwarder"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity, ScopeType, ClaimType, ClaimData } from "@polymathnetwork/polymesh-sdk/types"
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 
 export class ClaimsAddedResultPoly implements ClaimsAddedResult{
-    constructor(public status: boolean) {
+    constructor(
+        public status: boolean,
+        public blockHashes: string[]) {
+    }
+
+    toJSON(): JSON {
+        return <JSON><unknown>{
+            "blockHashes": this.blockHashes
+        }
     }
 }
 
@@ -47,7 +56,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         const myId = await this.api.getCurrentIdentity() // TODO
         const issuedClaims = await this.api.claims.getIdentitiesWithClaims({
             targets: [customerIdentity],
-            trustedClaimIssuers: [await this.api.getAccount().getIdentity()],
+            trustedClaimIssuers: [await this.api.getCurrentIdentity()],
             claimTypes: [ ClaimType.Jurisdiction ],
             includeExpired: false,
             start: 0,
@@ -82,15 +91,14 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         try {
             claim = await this.getJurisdictionClaim(customer)
             // Already has a claim, no need to add.
-            return new ClaimsAddedResultPoly(true)
+            return new ClaimsAddedResultPoly(true, [])
         } catch(e) {
             if (!(e instanceof NoClaimForCustomerError)) {
                 // Need to revoke before adding
                 throw e
             }
         }
-
-        const queue = await this.api.claims.addClaims({
+        const queue: TransactionQueue<void> = await this.api.claims.addClaims({
             claims: [{
                 target: customerIdentity,
                 claim: {
@@ -104,8 +112,9 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             }]
         })
         await queue.run()
-
-        return new ClaimsAddedResultPoly(true)
+        return new ClaimsAddedResultPoly(
+            true,
+            queue.transactions.map(tx => tx.blockHash!))
     }
 
     async revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResult> {

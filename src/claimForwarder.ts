@@ -10,6 +10,7 @@ export interface IClaimForwarder {
 
 export interface ClaimsAddedResult {
     status: boolean
+    toJSON(): JSON
 }
 
 export interface ClaimsRevokedResult {
