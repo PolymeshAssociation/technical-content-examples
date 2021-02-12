@@ -5,7 +5,7 @@ module.exports = {
         // Will only be available on the server side
         kycDbPath: process.env.KYC_DB_PATH || "./dbStore/kycCustomers.db",
         polymesh: {
-            accountUri: process.env.POLY_ACCOUNT_URI || keys["accountUri"],
+            accountMnemonic: process.env.POLY_ACCOUNT_URI || keys["accountMnemonic"],
             middlewareLink: process.env.MIDDLEWARE_LINK || keys["middlewareLink"],
             middlewareKey: process.env.MIDDLEWARE_KEY || keys["middlewareKey"]
         }

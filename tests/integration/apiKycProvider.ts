@@ -1,4 +1,3 @@
-import { promises as fsPromises } from "fs"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
@@ -8,7 +7,7 @@ import handleKycProvider from "../../pages/api/kycProvider"
 describe("/api/kycProvider Integration Tests", () => {
     const { 
         serverRuntimeConfig: { polymesh: {
-            accountUri,
+            accountMnemonic,
             middlewareLink,
             middlewareKey
         } },
@@ -21,7 +20,7 @@ describe("/api/kycProvider Integration Tests", () => {
     beforeEach("mock env", async() => {
         toRestore = mockedEnv({
             "POLY_NODE_URL": nodeUrl,
-            "POLY_ACCOUNT_URI": accountUri,
+            "POLY_ACCOUNT_MNEMONIC": accountMnemonic,
             "MIDDLEWARE_LINK": middlewareLink,
             "MIDDLEWARE_KEY": middlewareKey
         })
@@ -39,10 +38,8 @@ describe("/api/kycProvider Integration Tests", () => {
             await handleKycProvider(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({
-                "did": "0x0600000000000000000000000000000000000000000000000000000000000000"
-            })
-        }).timeout(10000)
+            expect(JSON.parse(res._getData())["did"]).to.match(/^0x[0-9a-fA-F]{64}$/)
+        }).timeout(20000)
     
     })
 

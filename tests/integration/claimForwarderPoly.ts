@@ -9,7 +9,7 @@ use(require("chai-as-promised"))
 describe("ClaimForwarderPoly Integration Tests", () => {
     const { 
         serverRuntimeConfig: { polymesh: {
-            accountUri,
+            accountMnemonic,
             middlewareLink,
             middlewareKey
         } },
@@ -24,7 +24,7 @@ describe("ClaimForwarderPoly Integration Tests", () => {
     it("getJurisdictionClaim throws if more than 1 identity returned", async() => {
         const api = await Polymesh.connect({
             nodeUrl,
-            accountUri: "//Alice",
+            accountMnemonic,
             middleware: {
                 link: middlewareLink,
                 key: middlewareKey
@@ -41,7 +41,6 @@ describe("ClaimForwarderPoly Integration Tests", () => {
             "polymeshDid":  alice.did
         }
         const info = new CustomerInfo(bareInfo)
-        await claimForwarder.getJurisdictionClaim(info)
 
         await expect(claimForwarder.getJurisdictionClaim(info))
             .to.eventually.throw
