@@ -123,7 +123,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Their country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} isDisabled={true}/>            
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} isDisabled={true}/>
             </div>
 
             <div>
