@@ -26,9 +26,9 @@ describe("CustomerDbFs Unit Tests", () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo: JSON = <JSON><unknown>{
             "name": "John Doe",
-            "country": "UK",
+            "country": "Gb",
             "passport": "12345",
-            "valid": true
+            "valid": true,
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -38,16 +38,16 @@ describe("CustomerDbFs Unit Tests", () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo: JSON = <JSON><unknown>{
             "name": "John Doe",
-            "country": "UK",
+            "country": "Gb",
             "passport": "12345",
-            "valid": true
+            "valid": true,
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
         const retrieved: CustomerInfo = await db.getCustomerInfoById("1")
 
         expect(retrieved.name).to.equal("John Doe")
-        expect(retrieved.country).to.equal("UK")
+        expect(retrieved.country).to.equal("Gb")
         expect(retrieved.passport).to.equal("12345")
         expect(retrieved.valid).to.be.true
     })
@@ -56,16 +56,16 @@ describe("CustomerDbFs Unit Tests", () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo1: JSON = <JSON><unknown>{
             "name": "John Doe",
-            "country": "UK",
+            "country": "Gb",
             "passport": "12345",
-            "valid": true
+            "valid": true,
         }
         const info1 = new CustomerInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
             "name": "Jane Doe",
-            "country": "UK",
+            "country": "Gb",
             "passport": "12346",
-            "valid": false
+            "valid": false,
         }
         const info2 = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)
@@ -74,12 +74,12 @@ describe("CustomerDbFs Unit Tests", () => {
         const retrieved2: CustomerInfo = await db.getCustomerInfoById("2")
 
         expect(retrieved1.name).to.equal("John Doe")
-        expect(retrieved1.country).to.equal("UK")
+        expect(retrieved1.country).to.equal("Gb")
         expect(retrieved1.passport).to.equal("12345")
         expect(retrieved1.valid).to.be.true
 
         expect(retrieved2.name).to.equal("Jane Doe")
-        expect(retrieved2.country).to.equal("UK")
+        expect(retrieved2.country).to.equal("Gb")
         expect(retrieved2.passport).to.equal("12346")
         expect(retrieved2.valid).to.be.false
     })

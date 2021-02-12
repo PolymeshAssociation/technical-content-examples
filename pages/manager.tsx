@@ -9,7 +9,7 @@ export default function Home() {
       "name": "",
       "country": "",
       "passport": "",
-      "valid": false
+      "valid": false,
     }
   } as object);
 
@@ -32,7 +32,6 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      console.log(body);
       setMyInfo({
         ...myInfo,
         "info": body
@@ -56,7 +55,7 @@ export default function Home() {
         "valid": valid
       }
     })
-    setStatus("Submitting info")
+    setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PATCH",
       "body": JSON.stringify({

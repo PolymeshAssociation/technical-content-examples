@@ -8,12 +8,12 @@ async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> 
 }
 
 async function setCustomerInfo(req: NextApiRequest): Promise<void> {
-    return await (await customerDbFactory()).setCustomerInfo(
-        <string>req.query.id, 
-        new CustomerInfo(
-            typeof req.body === "string"
-                ? JSON.parse(req.body)
-                : req.body))
+    const id = <string>req.query.id
+    const customerDb = await customerDbFactory()
+    const customerInfo = new CustomerInfo(typeof req.body === "string"
+        ? JSON.parse(req.body)
+        : req.body)
+    await customerDb.setCustomerInfo(id, customerInfo)
 }
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
@@ -30,36 +30,28 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
     try {
         switch (req.method) {
             case "GET":
-                try {
-                    res.status(200).json(await getCustomerInfoById(req))
-                } catch(getError) {
-                    if (getError instanceof UnknownCustomerError) {
-                        res.status(404).json({"status": "not found"})
-                    } else {
-                        throw getError
-                    }
-                }
+                res.status(200).json(await getCustomerInfoById(req))
                 break
             case "PUT":
                 await setCustomerInfo(req)
-                res.status(200).json({"status": "ok"})
+                res.status(200).json({
+                    "status": "ok",
+                })
                 break
             case "PATCH":
-                try {
-                    await updateCustomerInfo(req)
-                    res.status(200).json({"status": "ok"})
-                } catch(getError) {
-                    if (getError instanceof UnknownCustomerError) {
-                        res.status(404).json({"status": "not found"})
-                    } else {
-                        throw getError
-                    }
-                }
+                await updateCustomerInfo(req)
+                res.status(200).json({
+                    "status": "ok",
+                })
                 break
             default:
                 res.status(405).end()
         }
     } catch(e) {
-        res.status(500).json({"status": "internal error"})
+        if (e instanceof UnknownCustomerError) {
+            res.status(404).json({"status": "not found"})
+        } else {
+            res.status(500).json({"status": "internal error"})
+        }
     }
 }

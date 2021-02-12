@@ -4,7 +4,7 @@ import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
 import handleKycCustomerId from "../../pages/api/kycCustomer/[id]"
 
-describe("/api/kycuser/[id] Integration Tests", () => {
+describe("/api/kycCustomer/[id] Integration Tests", () => {
     let dbPath: string
     let toRestore: RestoreFn
 
@@ -45,9 +45,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
+                        "country": "Gb",
                         "passport": "12345",
-                        "valid": true
+                        "valid": false,
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -64,9 +64,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12345",
-                "valid": true
+                "valid": false,
             })
         })
 
@@ -82,9 +82,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 },
                 "body": {
                     "name": "John Doe",
-                    "country": "UK",
+                    "country": "Gb",
                     "passport": "12345",
-                    "valid": true
+                    "valid": true,
                 }
             })
 
@@ -103,8 +103,8 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
-                        "passport": "12345"
+                        "country": "Gb",
+                        "passport": "12345",
                     }
                 })
 
@@ -125,9 +125,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12345",
-                "valid": false
+                "valid": false,
             })
         })
 
@@ -143,7 +143,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                 },
                 "body": {
                     "passport": "12346",
-                    "valid": false
+                    "valid": false,
                 }
             })
 
@@ -162,9 +162,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "name": "John Doe",
-                        "country": "UK",
+                        "country": "Gb",
                         "passport": "12345",
-                        "valid": true
+                        "valid": true,
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -177,7 +177,7 @@ describe("/api/kycuser/[id] Integration Tests", () => {
                     },
                     "body": {
                         "passport": "12346",
-                        "valid": false
+                        "valid": false,
                     }
                 })
 
@@ -198,9 +198,9 @@ describe("/api/kycuser/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "name": "John Doe",
-                "country": "UK",
+                "country": "Gb",
                 "passport": "12346",
-                "valid": false
+                "valid": false,
             })
         })
 

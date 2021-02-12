@@ -9,7 +9,7 @@ export default function Home() {
       "name": "",
       "country": "",
       "passport": "",
-      "valid": false
+      "valid": false,
     },
     "modified": false
   } as object);
@@ -47,7 +47,7 @@ export default function Home() {
       ...myInfo,
       "modified": false
     })
-    setStatus("Submitting info")
+    setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PUT",
       "body": JSON.stringify(myInfo["info"])
@@ -73,8 +73,6 @@ export default function Home() {
       ...myInfo,
       "id": e.target.value
     })
-    console.log(myInfo);
-    
   }
 
   function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
