@@ -1,8 +1,10 @@
 import Head from "next/head"
+import getConfig from "next/config"
 import React, { useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
-import { CountryCode } from "@polymathnetwork/polymesh-sdk/generated/types"
+import { ClaimType, ClaimData, CountryCode, CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
+import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
 import countries from "i18n-iso-countries"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
@@ -29,6 +31,71 @@ export default function Home() {
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
     element.innerHTML = content
+  }
+
+  async function getEzKycDid(): Promise<string> {
+    setStatus("Fetching EzKyc did")
+    const response = await fetch("/api/kycProvider", { "method": "GET" })
+    if (response.status != 200) {
+      setStatus("Something went wrong when getting the EzKyc information")
+      console.log(response)
+      throw new Error("Failed to get EzKyc did");
+    }
+    setStatus("Received EzKyc did")
+    return (await response.json())["did"]
+  }
+
+  async function getPolyWalletApi(): Promise<any> {
+    setStatus("Getting your Polymesh Wallet")
+    // Move to top of the file when compilation error no longer present.
+    const {
+      web3Accounts,
+      web3Enable,
+      web3FromAddress,
+      web3ListRpcProviders,
+      web3UseRpcProvider
+    } = require('@polkadot/extension-dapp')
+    
+    const { 
+      publicRuntimeConfig: { 
+        appName,
+        // TODO remove middlewareLink and middlewareKey if still undesirable
+        polymesh: { nodeUrl, middlewareLink, middlewareKey }
+      }
+    } = getConfig()
+    const polkaDotExtensions = await web3Enable(appName)
+    const polyWallets = polkaDotExtensions.filter(injected => injected["name"] === "polywallet")
+    if (polyWallets.length == 0) {
+      setStatus("You need to install the Polymesh Wallet extension")
+      throw new Error("No Polymesh Wallet")
+    }
+    const polyWallet = polyWallets[0]
+    setStatus("Verifying network")
+    const network = await polyWallet.network.get()
+    if (network["wssUrl"] !== nodeUrl) {
+      setStatus(`Your network needs to match ${nodeUrl}`)
+      throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
+    }
+    setStatus("Fetching your account")
+    const myAccounts = await polyWallet.accounts.get()
+    if (myAccounts.length == 0) {
+      setStatus("You need to create an account in the Polymesh Wallet extension")
+      return
+    }
+    const myAccount = myAccounts[0]
+    const myKeyring = new Keyring()
+    myKeyring.addFromAddress(myAccount.address)
+    const mySigner = polyWallet.signer
+    setStatus("Building your API")
+    return await Polymesh.connect({
+      nodeUrl,
+      keyring: myKeyring,
+      signer: polyWallet.signer,
+      middleware: {
+        link: middlewareLink,
+        key: middlewareKey
+      }
+    })
   }
 
   async function getMyInfo(): Promise<Response> {
@@ -108,6 +175,33 @@ export default function Home() {
       },
       "modified": true
     })
+  }
+
+  async function fetchMyClaim(e): Promise<ClaimData | null> {
+    e.preventDefault() // prevent page from submitting form
+    const [ ezKycDid, api ] = await Promise.all([
+      getEzKycDid(),
+      getPolyWalletApi()
+    ])
+    setStatus("Fetching your identity")
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const ezKycIdentity = await api.getIdentity({ did: ezKycDid })
+    const issuedClaims = await api.claims.getIdentitiesWithClaims({
+      targets: [me],
+      trustedClaimIssuers: [ezKycIdentity],
+      claimTypes: [ ClaimType.Jurisdiction ],
+      includeExpired: false,
+      start: 0,
+      size: 20
+    })
+    console.log(issuedClaims);
+    if (issuedClaims.data.length == 0) {
+      setStatus("There are no claims for you")
+      return null
+    } else {
+      const issuedClaim = issuedClaims.data[0]
+      return issuedClaim
+    }
   }
 
   return (
@@ -190,7 +284,11 @@ export default function Home() {
             </div>
 
             <div className="submit">
-              <button className="submit myUpdates" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your updated situation</button>
+              <button className="submit myUpdates" disabled={!myInfo["modified"]} onClick={submitMyInfo}>Submit your updated situation</button>
+            </div>
+
+            <div className="submit">
+              <button className="submit myClaim" disabled={!myInfo["info"]["valid"]} onClick={fetchMyClaim}>Fetch My Claim</button>
             </div>
 
           </fieldset>
