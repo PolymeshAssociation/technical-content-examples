@@ -15,5 +15,19 @@ module.exports = {
         polymesh: {
             nodeUrl: process.env.POLY_NODE_URL || "wss://pme.polymath.network"
         }
-    }
+    },
+    webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+        // Note: we provide webpack above so you should not `require` it
+        // Perform customizations to webpack config
+        // config.plugins.push(new webpack.IgnorePlugin(/\/__tests__\//))
+    
+        config.module.rules.push({
+            test: /\.mjs$/,
+            include: /node_modules/,
+            type: 'javascript/auto',
+        })
+
+        // Important: return the modified config
+        return config
+    },
 }
