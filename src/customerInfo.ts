@@ -33,7 +33,9 @@ export class CustomerInfo implements ICustomerInfo {
             throw new InvalidCountryCodeError(info["jurisdiction"])
         }
         this.jurisdiction = CountryCode[info["jurisdiction"]]
-        if (typeof info["polymeshDid"] !== "undefined" && !(info["polymeshDid"] as string).match(polymeshDidRegex)) {
+        if (typeof info["polymeshDid"] !== "undefined"
+            && info["polymeshDid"] !== null
+            && !(info["polymeshDid"] as string).match(polymeshDidRegex)) {
             throw new InvalidPolymeshDidError(info["polymeshDid"])
         }
         this.polymeshDid = info["polymeshDid"] || null
