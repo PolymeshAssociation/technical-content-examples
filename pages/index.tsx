@@ -59,13 +59,14 @@ export default function Home() {
       ...myInfo,
       "modified": false
     })
-    setStatus("Submitting info")
+    setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PUT",
       "body": JSON.stringify(myInfo["info"])
     })
     if (response.status == 200) {
-      setStatus("Info submitted and saved")
+      const body = await response.json()
+      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
       setMyInfo({

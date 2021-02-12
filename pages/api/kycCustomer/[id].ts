@@ -3,12 +3,13 @@ import { CustomerInfo, ICustomerInfo, InvalidCountryCodeError, InvalidPolymeshDi
 import { UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 import ClaimForwarderFactory from "../../../src/claimForwarderFactory"
+import { ClaimsAddedResult } from "../../../src/claimForwarder"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
     return await (await customerDbFactory()).getCustomerInfoById(<string>req.query.id)
 }
 
-async function setCustomerInfo(req: NextApiRequest): Promise<void> {
+async function setCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult | null> {
     const id = <string>req.query.id
     const customerDb = await customerDbFactory()
     const customerInfo = new CustomerInfo(typeof req.body === "string"
@@ -17,11 +18,13 @@ async function setCustomerInfo(req: NextApiRequest): Promise<void> {
     await customerDb.setCustomerInfo(id, customerInfo)
     if (customerInfo.valid && customerInfo.polymeshDid !== null) {
         const claimForwarder = await ClaimForwarderFactory()
-        await claimForwarder.addJurisdictionClaim(customerInfo)
+        return await claimForwarder.addJurisdictionClaim(customerInfo)
+    } else {
+        return null
     }
 }
 
-async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
+async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult | null> {
     const id = <string>req.query.id
     const customerDb = await customerDbFactory()
     const customerInfo = await customerDb.getCustomerInfoById(id)
@@ -31,7 +34,9 @@ async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
     await customerDb.setCustomerInfo(id, customerInfo)
     if (customerInfo.valid && customerInfo.polymeshDid !== null) {
         const claimForwarder = await ClaimForwarderFactory()
-        await claimForwarder.addJurisdictionClaim(customerInfo)
+        return await claimForwarder.addJurisdictionClaim(customerInfo)
+    } else {
+        return null
     }
 }
 
@@ -42,12 +47,18 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 res.status(200).json(await getCustomerInfoById(req))
                 break
             case "PUT":
-                await setCustomerInfo(req)
-                res.status(200).json({"status": "ok"})
+                const resultSet = await setCustomerInfo(req)
+                res.status(200).json({
+                    "status": "ok",
+                    "result": resultSet?.toJSON()
+                })
                 break
             case "PATCH":
-                await updateCustomerInfo(req)
-                res.status(200).json({"status": "ok"})
+                const resultPatch = await updateCustomerInfo(req)
+                res.status(200).json({
+                    "status": "ok",
+                    "result": resultPatch?.toJSON()
+                })
                 break
             default:
                 res.status(405).end()

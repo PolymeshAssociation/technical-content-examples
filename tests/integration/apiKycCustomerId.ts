@@ -47,7 +47,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                         "name": "John Doe",
                         "country": "Gb",
                         "passport": "12345",
-                        "valid": true,
+                        "valid": false,
                         "jurisdiction": "Ie",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                     }
@@ -68,7 +68,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 "name": "John Doe",
                 "country": "Gb",
                 "passport": "12345",
-                "valid": true,
+                "valid": false,
                 "jurisdiction": "Ie",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
             })
@@ -88,7 +88,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                     "name": "John Doe",
                     "country": "Gb",
                     "passport": "12345",
-                    "valid": true,
+                    "valid": false,
                     "jurisdiction": "Ie",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
                 }
@@ -175,8 +175,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                         "country": "Gb",
                         "passport": "12345",
                         "valid": true,
-                        "jurisdiction": "Ie",
-                        "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+                        "jurisdiction": "Ie"
                     }
                 })
                 await handleKycCustomerId(req, res)
@@ -189,8 +188,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                     },
                     "body": {
                         "passport": "12346",
-                        "valid": false,
-                        "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
+                        "valid": false
                     }
                 })
 
@@ -215,7 +213,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 "passport": "12346",
                 "valid": false,
                 "jurisdiction": "Ie",
-                "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
+                "polymeshDid": null
             })
         })
 

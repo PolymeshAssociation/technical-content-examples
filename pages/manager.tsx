@@ -67,7 +67,7 @@ export default function Home() {
         "valid": valid
       }
     })
-    setStatus("Submitting info")
+    setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PATCH",
       "body": JSON.stringify({
@@ -75,7 +75,8 @@ export default function Home() {
       })
     })
     if (response.status == 200) {
-      setStatus("Info submitted and saved")
+      const body = await response.json()
+      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
       await getCustomerInfo()
