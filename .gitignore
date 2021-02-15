@@ -33,5 +33,5 @@ yarn-error.log*
 # vercel
 .vercel
 
-# sensitive data
-keys.json
+# secrets
+**/keys.json
