@@ -3,10 +3,9 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
-import { ClaimType, ClaimData, CountryCode, CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
+import { ClaimType, ClaimData, CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
-import countries from "i18n-iso-countries"
-countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
+import { CountryInfo, getCountryList } from "../src/types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -20,13 +19,8 @@ export default function Home() {
       "polymeshDid": ""
     },
     "modified": false
-  } as object)
-  const countryList = Object.values(CountryCode).sort().map(code => {
-    return {
-      "value": code,
-      "label": countries.getName(code.toUpperCase(), "en") || code
-    }
   })
+  const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -166,12 +160,12 @@ export default function Home() {
     })
   }
 
-  function onCountryChanged(countryCode: string, target: object): void {
+  function onCountryChanged(countryCode: CountryInfo, target: object): void {
     setMyInfo({
       ...myInfo,
       "info": {
         ...myInfo["info"],
-        [target["name"]]: countryCode
+        [target["name"]]: countryCode.value
       },
       "modified": true
     })
@@ -244,7 +238,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo["info"]["country"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
             </div>
 
             <div>
@@ -254,7 +248,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
-              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["jurisdiction"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo["info"]["jurisdiction"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
             </div>
 
             <div className="submit">
