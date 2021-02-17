@@ -6,6 +6,10 @@ export interface IOrderInfo {
     toJSON(): JSON
 }
 
+export interface IAssignedOrderInfo extends IOrderInfo {
+    id: string
+}
+
 function requireDesiredType(info: JSON, field: string, receivedType: string) {
     if (typeof info[field] === "undefined") { 
         throw new IncompleteInformationError(field)
@@ -39,6 +43,23 @@ export class OrderInfo implements IOrderInfo {
             "token": this.token,
             "price": this.price,
         }
+    }
+
+}
+
+export class AssignedOrderInfo extends OrderInfo implements IAssignedOrderInfo {
+    id: string
+
+    constructor(info: JSON) {
+        super(info)
+        requireDesiredType(info, "id", "string")
+        this.id = info["id"]
+    }
+
+    toJSON(): JSON {
+        const json = super.toJSON()
+        json["id"] = this.id
+        return json
     }
 
 }
