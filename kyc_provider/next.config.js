@@ -14,7 +14,9 @@ module.exports = {
         // Will be available on both server and client
         appName: "ezKyc",
         polymesh: {
-            nodeUrl: process.env.POLY_NODE_URL || "wss://alcyone-rpc.polymesh.live",
+            nodeUrl: process.env.POLY_NODE_URL
+                || keys["rpcNetwork"]
+                || "wss://alcyone-rpc.polymesh.live",
             // TODO choose where the middleware info goes. Server only or public (i.e. shared)?
             middlewareLink: process.env.MIDDLEWARE_LINK || keys["middlewareLink"],
             middlewareKey: process.env.MIDDLEWARE_KEY || keys["middlewareKey"],

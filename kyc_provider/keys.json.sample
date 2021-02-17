@@ -1,5 +1,6 @@
 {
     "accountMnemonic": "lock basic ...",
+    "rpcNetwork": "wss://alcyone-rpc.polymesh.live",
     "middlewareLink": "https://0123456789.execute-api.us-east-1.amazonaws.com/dev/graphql",
     "middlewareKey": "0123456789abcdefghijklmnopqrstuvwxyzABCD"
 }
