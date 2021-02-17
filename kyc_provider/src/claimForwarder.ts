@@ -23,6 +23,12 @@ export class ClaimForwarderError {
     }
 }
 
+export class NonExistentKycIdentityError extends ClaimForwarderError {
+    constructor (public address: string) {
+        super()
+    }
+}
+
 export class NoClaimForCustomerError extends ClaimForwarderError {
     constructor (public customer: ICustomerInfo) {
         super()

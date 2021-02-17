@@ -2,7 +2,8 @@ import { ICustomerInfo } from "./customerInfo"
 import {
     IClaimForwarder,
     ClaimsAddedResult, ClaimsRevokedResult,
-    ClaimForwarderError, NoClaimForCustomerError, InvalidCustomerError, IncompleteCustomerError
+    ClaimForwarderError, NonExistentKycIdentityError,
+    NoClaimForCustomerError, InvalidCustomerError, IncompleteCustomerError
 } from "./claimForwarder"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity, ScopeType, ClaimType, ClaimData } from "@polymathnetwork/polymesh-sdk/types"
@@ -44,7 +45,11 @@ export class ClaimForwarderPoly implements IClaimForwarder {
     }
 
     async getServiceProviderIdentity(): Promise<Identity> {
-        return Promise.resolve(this.api.getCurrentIdentity())
+        const providerId = await this.api.getCurrentIdentity()
+        if (providerId === null) {
+            throw new NonExistentKycIdentityError(this.api.getAccount().address)
+        }
+        return providerId
     }
 
     async getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData> {

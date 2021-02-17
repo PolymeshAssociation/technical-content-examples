@@ -47,14 +47,14 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 res.status(200).json(await getCustomerInfoById(req))
                 break
             case "PUT":
-                const resultSet = await setCustomerInfo(req)
+                const resultSet: ClaimsAddedResult = await setCustomerInfo(req)
                 res.status(200).json({
                     "status": "ok",
                     "result": resultSet?.toJSON()
                 })
                 break
             case "PATCH":
-                const resultPatch = await updateCustomerInfo(req)
+                const resultPatch: ClaimsAddedResult = await updateCustomerInfo(req)
                 res.status(200).json({
                     "status": "ok",
                     "result": resultPatch?.toJSON()

@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import ClaimForwarderFactory from "../../src/claimForwarderFactory"
+import { NonExistentKycIdentityError} from "../../src/claimForwarder"
 
 async function getKycProviderInfo(req: NextApiRequest): Promise<JSON> {
     const claimForwarder = await ClaimForwarderFactory()
@@ -19,6 +20,10 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 res.status(405).end()
         }
     } catch(e) {
-        res.status(500).json({"status": "internal error"})
+        if (e instanceof NonExistentKycIdentityError) {
+            res.status(500).json({"status": "kyc provider does not exist on this network"})
+        } else {
+            res.status(500).json({"status": "internal error"})
+        }
     }
 }
