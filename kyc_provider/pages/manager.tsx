@@ -15,7 +15,7 @@ export default function Home() {
       "jurisdiction": "",
       "polymeshDid": ""
     }
-  } as object)
+  })
   const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
