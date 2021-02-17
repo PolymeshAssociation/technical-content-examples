@@ -2,8 +2,7 @@ import Head from "next/head"
 import React, { useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
-import countries from "i18n-iso-countries"
-countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
+import { CountryInfo, getCountryList } from "../src/types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -14,13 +13,8 @@ export default function Home() {
       "passport": "",
       "valid": false,
     }
-  } as object)
-  const countryList = Object.entries(countries.getNames("en", { select: "official" })).map(([code, countryName]) => {
-    return {
-      "value": code.charAt(0) + code.charAt(1).toLocaleLowerCase(),
-      "label": countryName
-    }
   })
+  const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -123,7 +117,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Their country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} isDisabled={true}/>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo["info"]["country"])} isDisabled={true}/>
             </div>
 
             <div>
