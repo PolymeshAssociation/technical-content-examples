@@ -39,6 +39,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
         } else if (e instanceof WrongTypeError) {
             res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
         } else {
+            console.log(e)
             res.status(500).json({"status": "internal error"})
         }
     }
