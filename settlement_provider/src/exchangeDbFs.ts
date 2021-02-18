@@ -32,7 +32,7 @@ export class ExchangeDbFs implements IExchangeDb {
                 [])
     }
 
-    async getOrderInfoById(id: string): Promise<OrderInfo> {
+    async getOrderInfoById(id: string): Promise<IOrderInfo> {
         const info: JSON = (await getDb(this.dbPath))[id]
         if (typeof info === "undefined") throw new UnknownTraderError(id)
         return new OrderInfo(info)

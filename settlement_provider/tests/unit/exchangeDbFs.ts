@@ -2,18 +2,20 @@ import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { AssignedOrderInfo, OrderInfo } from "../../src/orderInfo"
+import { IAssignedOrderInfo, IOrderInfo, OrderInfo } from "../../src/orderInfo"
+import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ExchangeDbFs } from "../../src/exchangeDbFs"
-import { UnknownTraderError } from "../../src/exchangeDb"
 use(require("chai-as-promised"))
 
 const exists = promisify(existsAsync)
 
 describe("ExchangeDbFs Unit Tests", () => {
-    let dbPath
+    let dbPath: string
+    let exchangeDb: IExchangeDb
 
     beforeEach("prepare dbStore", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
+        exchangeDb = new ExchangeDbFs(dbPath)
     })
 
     afterEach("clear dbStore", async() => {
@@ -23,137 +25,102 @@ describe("ExchangeDbFs Unit Tests", () => {
     })
 
     it("throws when missing id", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
-        await expect(db.getOrderInfoById("1")).to.eventually.be
+        await expect(exchangeDb.getOrderInfoById("1")).to.eventually.be
             .rejectedWith(UnknownTraderError)
             .that.satisfies((error: UnknownTraderError) => error.id === "1")
     })
 
-    it("can save trade info in an empty db", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+    it("can save order info in an empty db", async() => {
         const bareInfo: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
         }
-        const info = new OrderInfo(bareInfo)
-        await db.setOrderInfo("1", info)
+        await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
     })
 
-    it("can get saved traderr info", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+    it("can get saved order info", async() => {
         const bareInfo: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
         }
-        const info = new OrderInfo(bareInfo)
-        await db.setOrderInfo("1", info)
-        const retrieved: OrderInfo = await db.getOrderInfoById("1")
+        await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
 
-        expect(retrieved.isBuy).to.be.true
-        expect(retrieved.quantity).to.equal(12345)
-        expect(retrieved.token).to.equal("ACME")
-        expect(retrieved.price).to.equal(33)
+        const retrieved: IOrderInfo = await exchangeDb.getOrderInfoById("1")
+        expect(retrieved.toJSON()).to.deep.equal(bareInfo)
     })
 
-    it("can save and get 2 saved trader infos", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+    it("can save and get 2 saved order infos", async() => {
         const bareInfo1: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
         }
-        const info1 = new OrderInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
         }
-        const info2 = new OrderInfo(bareInfo2)
-        await db.setOrderInfo("1", info1)
-        await db.setOrderInfo("2", info2)
-        const retrieved1: OrderInfo = await db.getOrderInfoById("1")
-        const retrieved2: OrderInfo = await db.getOrderInfoById("2")
 
-        expect(retrieved1.isBuy).to.be.true
-        expect(retrieved1.quantity).to.equal(12345)
-        expect(retrieved1.token).to.equal("ACME")
-        expect(retrieved1.price).to.equal(33)
-
-        expect(retrieved2.isBuy).to.be.false
-        expect(retrieved2.quantity).to.equal(667)
-        expect(retrieved2.token).to.equal("ACME")
-        expect(retrieved2.price).to.equal(30)
+        await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
+        await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
+        
+        const retrieved1: IOrderInfo = await exchangeDb.getOrderInfoById("1")
+        const retrieved2: IOrderInfo = await exchangeDb.getOrderInfoById("2")
+        expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
+        expect(retrieved2.toJSON()).to.deep.equal(bareInfo2)
     })
 
-    it("can save and get the 2 saved trader infos together", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+    it("can save and get the 2 saved order infos together", async() => {
         const bareInfo1: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
         }
-        const info1 = new OrderInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
         }
-        const info2 = new OrderInfo(bareInfo2)
-        await db.setOrderInfo("1", info1)
-        await db.setOrderInfo("2", info2)
-        const retrieved: AssignedOrderInfo[] = await db.getOrders()
 
-        expect(retrieved[0].id).to.equal("1")
-        expect(retrieved[0].isBuy).to.be.true
-        expect(retrieved[0].quantity).to.equal(12345)
-        expect(retrieved[0].token).to.equal("ACME")
-        expect(retrieved[0].price).to.equal(33)
-
-        expect(retrieved[1].id).to.equal("2")
-        expect(retrieved[1].isBuy).to.be.false
-        expect(retrieved[1].quantity).to.equal(667)
-        expect(retrieved[1].token).to.equal("ACME")
-        expect(retrieved[1].price).to.equal(30)
+        await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
+        await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
+        
+        const retrieved: IAssignedOrderInfo[] = await exchangeDb.getOrders()
+        expect(retrieved[0].toJSON()).to.deep.equal({...bareInfo1, "id": "1"})
+        expect(retrieved[1].toJSON()).to.deep.equal({...bareInfo2, "id": "2"})
     })
 
-    it("can delete 1 of 2 saved trader infos", async() => {
-        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+    it("can delete 1 of 2 saved order infos", async() => {
         const bareInfo1: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
         }
-        const info1 = new OrderInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
         }
-        const info2 = new OrderInfo(bareInfo2)
-        await db.setOrderInfo("1", info1)
-        await db.setOrderInfo("2", info2)
-        await db.deleteOrderInfoById("2")
+        await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
+        await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
+        await exchangeDb.deleteOrderInfoById("2")
 
-        const retrieved2: OrderInfo = await db.getOrderInfoById("1")
-        expect(retrieved2.isBuy).to.be.true
-        expect(retrieved2.quantity).to.equal(12345)
-        expect(retrieved2.token).to.equal("ACME")
-        expect(retrieved2.price).to.equal(33)
+        const retrieved1: IOrderInfo = await exchangeDb.getOrderInfoById("1")
+        expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
 
-        await expect(db.getOrderInfoById("2")).to.eventually.be
+        await expect(exchangeDb.getOrderInfoById("2")).to.eventually.be
             .rejectedWith(UnknownTraderError)
             .that.satisfies((error: UnknownTraderError) => error.id === "2")
     })
-
 
 })

@@ -3,10 +3,10 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
+import { OrderInfo } from "../../src/orderInfo"
 import { IExchangeDb } from "../../src/exchangeDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import handleTraderId from "../../pages/api/trader/[id]"
-import { OrderInfo } from "../../src/orderInfo"
 
 const exists = promisify(existsAsync)
 
