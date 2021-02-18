@@ -123,4 +123,36 @@ describe("ExchangeDbFs Unit Tests", () => {
         expect(retrieved[1].price).to.equal(30)
     })
 
+    it("can delete 1 of 2 saved trader infos", async() => {
+        const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
+        const bareInfo1: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 12345,
+            "token": "ACME",
+            "price": 33,
+        }
+        const info1 = new OrderInfo(bareInfo1)
+        const bareInfo2: JSON = <JSON><unknown>{
+            "isBuy": false,
+            "quantity": 667,
+            "token": "ACME",
+            "price": 30,
+        }
+        const info2 = new OrderInfo(bareInfo2)
+        await db.setOrderInfo("1", info1)
+        await db.setOrderInfo("2", info2)
+        await db.deleteOrderInfoById("2")
+
+        const retrieved2: OrderInfo = await db.getOrderInfoById("1")
+        expect(retrieved2.isBuy).to.be.true
+        expect(retrieved2.quantity).to.equal(12345)
+        expect(retrieved2.token).to.equal("ACME")
+        expect(retrieved2.price).to.equal(33)
+
+        await expect(db.getOrderInfoById("2")).to.eventually.be
+            .rejectedWith(UnknownTraderError)
+            .that.satisfies((error: UnknownTraderError) => error.id === "2")
+    })
+
+
 })

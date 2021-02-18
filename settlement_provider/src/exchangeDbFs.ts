@@ -44,4 +44,10 @@ export class ExchangeDbFs implements IExchangeDb {
         return saveDb(this.dbPath, db)
     }
 
+    async deleteOrderInfoById(id: string): Promise<void> {
+        const db: JSON = await getDb(this.dbPath)
+        delete db[id]
+        return saveDb(this.dbPath, db)
+    }
+
 }

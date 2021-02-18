@@ -104,7 +104,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                    }
+                }
             })
 
             await handleTraderId(req, res)
@@ -171,6 +171,89 @@ describe("/api/trader/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "cannot have 0 price"})
+        })
+
+    })
+
+    describe("DELETE", () => {
+    
+        it("returns 200 on delete existing info", async () => {
+            {
+                const { req, res } = createMocks({
+                    "method": "PUT",
+                    "query": {
+                        "id": "3",
+                    },
+                    "body": {
+                        "isBuy": false,
+                        "quantity": 12345,
+                        "token": "ACME",
+                        "price": 33,
+                    }
+                })
+                await handleTraderId(req, res)
+            }
+            const { req, res } = createMocks({
+                "method": "DELETE",
+                "query": {
+                    "id": "3",
+                }
+            })
+
+            await handleTraderId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
+        })
+    
+        it("info no longer accessible after delete", async () => {
+            {
+                const { req, res } = createMocks({
+                    "method": "PUT",
+                    "query": {
+                        "id": "3",
+                    },
+                    "body": {
+                        "isBuy": false,
+                        "quantity": 12345,
+                        "token": "ACME",
+                        "price": 33,
+                    }
+                })
+                await handleTraderId(req, res)
+            }
+            {
+                const { req, res } = createMocks({
+                    "method": "DELETE",
+                    "query": {
+                        "id": "3",
+                    }
+                })
+                await handleTraderId(req, res)
+            }
+            const { req, res } = createMocks({
+                "method": "GET",
+                "query": {
+                    "id": "3",
+                }
+            })
+            await handleTraderId(req, res)
+            expect(res._getStatusCode()).to.equal(404)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
+        })
+    
+        it("returns 200 on delete missing info", async () => {
+            const { req, res } = createMocks({
+                "method": "DELETE",
+                "query": {
+                    "id": "4",
+                }
+            })
+
+            await handleTraderId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
         })
 
     })

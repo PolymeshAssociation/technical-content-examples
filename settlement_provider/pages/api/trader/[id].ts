@@ -16,6 +16,12 @@ async function setOrderInfo(req: NextApiRequest): Promise<void> {
     await exchangeDb.setOrderInfo(id, orderInfo)
 }
 
+async function deleteOrderInfo(req: NextApiRequest): Promise<void> {
+    const id = <string>req.query.id
+    const exchangeDb = await exchangeDbFactory()
+    await exchangeDb.deleteOrderInfoById(id)
+}
+
 export default async function (req: NextApiRequest, res: NextApiResponse<object | IOrderInfo>): Promise<any> {
     try {
         switch (req.method) {
@@ -24,6 +30,17 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 break
             case "PUT":
                 await setOrderInfo(req)
+                res.status(200).json({ "status": "ok" })
+                break
+            case "DELETE":
+                try {
+                    await deleteOrderInfo(req)
+                } catch(e) {
+                    if (!(e instanceof UnknownTraderError)) {
+                        throw e
+                    }
+                    // Idempotent, delete missing is ok.
+                }
                 res.status(200).json({ "status": "ok" })
                 break
             default:
