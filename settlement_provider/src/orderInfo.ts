@@ -78,30 +78,19 @@ export class OrderInfoError extends Error {
 }
 
 export class IncompleteOrderInfoError extends OrderInfoError {
-    field: string
-
-    constructor (field: string, message?: string) {
+    constructor (public field: string, message?: string) {
         super(message)
-        this.field = field
     }
 }
 
 export class WrongTypeOrderError extends OrderInfoError {
-    field: string
-    receivedType: string
-
-    constructor (field: string, receivedType: string, message?: string) {
+    constructor (public field: string, public receivedType: string, message?: string) {
         super(message)
-        this.field = field
-        this.receivedType = receivedType
     }
 }
 
 export class WrongZeroOrderError extends OrderInfoError {
-    field: string
-
-    constructor (field: string, message?: string) {
+    constructor (public field: string, message?: string) {
         super(message)
-        this.field = field
     }
 }

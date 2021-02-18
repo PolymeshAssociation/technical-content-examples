@@ -15,10 +15,7 @@ export class ExchangeDbError extends Error {
 }
 
 export class UnknownTraderError extends ExchangeDbError {
-    id: string
-    
-    constructor (id: string, message?: string) {
+    constructor (public id: string, message?: string) {
         super(message)
-        this.id = id
     }
 }
