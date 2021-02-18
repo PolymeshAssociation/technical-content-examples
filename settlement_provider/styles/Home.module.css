@@ -99,6 +99,17 @@
   border-color: #0070f3;
 }
 
+.card.selected {
+  background-color: black;
+  color: white;
+}
+
+.card.selected:hover,
+.card.selected:focus,
+.card.selected:active {
+  border-color: black;
+}
+
 .card h3 {
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
@@ -131,6 +142,10 @@
   cursor: help;
 }
 
+.unbreakable {
+  white-space: nowrap;
+}
+
 .logo {
   height: 2em;
 }
@@ -140,4 +155,28 @@
     width: 100%;
     flex-direction: column;
   }
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+}
+
+.sell-column {
+  background-color: blue;
+  height: 100px;
+}
+
+.buy-column {
+  background-color: green;
+  height: 100px;
 }

@@ -40,12 +40,12 @@ export default function Home() {
   }
 
   function onTradeSelected(isBuy: boolean) {
-    return function(e: React.ChangeEvent<HTMLInputElement>): void {
+    return function(e: React.MouseEvent<HTMLElement, MouseEvent>): void {
       setMyInfo({
         ...myInfo,
         "picked": {
           ...myInfo["picked"],
-          [ isBuy ? "buy" : "sell" ]: e.target.value
+          [ isBuy ? "buy" : "sell" ]: e.currentTarget.getAttribute("data-trade-id")
         }
       })
     }
@@ -76,23 +76,18 @@ export default function Home() {
             <div className={styles.column}>
               <div className='sell-column'>
 
-                <h3>Sell orders</h3>
+                <h3>Select 1 sell order</h3>
 
                 {
                   myInfo.info.trades
                     .filter((trade) => !trade["isBuy"])
                     .sort((left, right) => left.price - right.price)
-                    .map((trade) => <fieldset className={styles.card} key={`order-sell-${trade.id}`}>
-                      <legend>
-                        <input name="isSell" id={`order-sell-${trade.id}`} type="radio" value={trade.id} checked={myInfo["picked"]["sell"] === trade.id} onChange={onTradeSelected(false)}/>
-                        <label htmlFor={`order-sell-${trade.id}`}> Trader {trade.id}</label>
-                      </legend>
-      
-                      <div>
-                        {trade.quantity} ea of {trade.token} @ {trade.price} USD / token
-                      </div>
-      
-                    </fieldset>)
+                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === trade.id ? styles.selected : ""}`} key={`order-sell-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(false)}>
+                      <span title="Trader id">{trade.id} - </span>
+                      <span title="Quantity">{trade.quantity} </span>
+                      of <span title="Ticker">{trade.token}</span>, 
+                      <b title="Price in USD / token"> @ {trade.price} </b>
+                    </div>)
                 }
 
               </div>
@@ -101,23 +96,18 @@ export default function Home() {
             <div className={styles.column}>
               <div className='buy-column'>
 
-              <h3>Buy orders</h3>
+              <h3>Select 1 buy order</h3>
 
                 {
                   myInfo.info.trades
                     .filter((trade) => trade["isBuy"])
-                    .sort((left, right) => left.price - right.price)
-                    .map((trade) => <fieldset className={styles.card} key={`order-buy-${trade.id}`}>
-                      <legend>
-                        <input name="isBuy" id={`order-buy-${trade.id}`} type="radio" value={trade.id} checked={myInfo["picked"]["buy"] === trade.id} onChange={onTradeSelected(true)}/>
-                        <label htmlFor={`order-buy-${trade.id}`}> Trader {trade.id}</label>
-                      </legend>
-      
-                      <div>
-                        {trade.quantity} ea of {trade.token} @ {trade.price} USD / token
-                      </div>
-      
-                    </fieldset>)
+                    .sort((left, right) => right.price - left.price)
+                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === trade.id ? styles.selected : ""}`} key={`order-buy-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(true)}>
+                      <b title="Price in USD / token"> @ {trade.price}</b>,
+                      <span title="Quantity"> {trade.quantity}</span> of
+                      <span title="Ticker"> {trade.token}</span>
+                      <span title="Trader id"> - {trade.id}</span>
+                    </div>)
                 }
 
               </div>
