@@ -51,6 +51,25 @@ export default function Home() {
     }
   }
 
+  async function createMatch(): Promise<Response> {
+    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo["picked"]["buy"]}&sellerId=${myInfo["picked"]["sell"]}`, {
+      "method": "POST"
+    })
+    if (settlementResponse.status == 200) {
+      setStatus("Settlement posted")
+    } else {
+      console.log(settlementResponse.json())
+      setStatus("Something went wrong")
+    }
+    return settlementResponse
+  }
+  
+  async function submitMatch(e): Promise<void> {
+    e.preventDefault() // prevent page from submitting form
+    await createMatch()
+    await getOrdersInfo()
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -70,6 +89,10 @@ export default function Home() {
         <h2>Pick 2 orders to match</h2>
 
         <form lang="en">
+
+          <div className="submit">
+            <button className="submit match" onClick={submitMatch} disabled={myInfo["picked"]["buy"] === "" || myInfo["picked"]["sell"] === ""}>Submit the match</button>
+          </div>
 
           <div className={styles.row}>
 
