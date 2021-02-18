@@ -36,11 +36,18 @@ button.submit:active {
   top:1px;
 }
 
-button.submit:disabled {
+button.submit:disabled,
+button.submit.danger:disabled {
   background-color: #e7e7e7;
   border-color: #e7e7e7;
   color: #45576b;
   cursor: not-allowed;
+}
+
+button.submit.danger {
+  background-color: #f30000;
+  border-color: #ee3737;
+
 }
 
 button.submit:disabled:active {

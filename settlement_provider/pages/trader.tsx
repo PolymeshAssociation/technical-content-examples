@@ -3,14 +3,15 @@ import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
+  const emptyOrder = {
+    "isBuy": true,
+    "quantity": "",
+    "token": "",
+    "price": ""
+  }
   const [myInfo, setMyInfo] = useState({
     "id": "",
-    "order": {
-      "isBuy": true,
-      "quantity": "",
-      "token": "",
-      "price": ""
-    },
+    "order": Object.assign({}, emptyOrder),
     "modified": false
   })
 
@@ -19,12 +20,12 @@ export default function Home() {
     element.innerHTML = content
   }
 
-  async function getMyInfo(): Promise<Response> {
+  async function getMyOrder(): Promise<Response> {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "GET" })
     if (response.status == 404) {
-      setStatus("Customer not found, enter your information")
+      setStatus("Order not found, enter your order info")
     } else if (response.status == 200) {
-      setStatus("Info fetched")
+      setStatus("Order fetched")
       const body = await response.json()
       setMyInfo({
         ...myInfo,
@@ -37,12 +38,31 @@ export default function Home() {
     return response
   }
 
-  async function submitGetMyInfo(e): Promise<void> {
+  async function submitGetMyOrder(e): Promise<void> {
     e.preventDefault() // prevent page from submitting form
-    await getMyInfo()
+    await getMyOrder()
   }
 
-  async function sendMyInfo(): Promise<void> {
+  async function deleteMyOrder(): Promise<Response> {
+    const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "DELETE" })
+    if (response.status == 200) {
+      setStatus("Info deleted")
+      setMyInfo({
+        ...myInfo,
+        "order": Object.assign({}, emptyOrder)
+      })
+    } else {
+      setStatus("Something went wrong")
+    }
+    return response
+  }
+
+  async function submitDeleteMyOrder(e): Promise<void> {
+    e.preventDefault() // prevent page from submitting form
+    await deleteMyOrder()
+  }
+
+  async function sendMyOrder(): Promise<void> {
     setMyInfo({
       ...myInfo,
       "modified": false
@@ -63,9 +83,9 @@ export default function Home() {
     }
   }
 
-  async function submitMyInfo(e): Promise<void> {
+  async function submitMyOrder(e): Promise<void> {
     e.preventDefault()
-    sendMyInfo()
+    sendMyOrder()
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -75,7 +95,7 @@ export default function Home() {
     })
   }
 
-  function onMyTradeChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo({
       ...myInfo,
       "order": {
@@ -109,12 +129,12 @@ export default function Home() {
           Welcome to NextDaq
         </h1>
 
-        <h2>Tell us about your trade</h2>
+        <h2>Tell us about your order</h2>
 
         <form lang="en">
 
           <fieldset className={styles.card}>
-            <legend>Your customer id</legend>
+            <legend>Your trader id</legend>
 
             <div>
               <label htmlFor="trader-id" className={styles.hasTitle} title="Given to you when you registered. As of now, just pick one.">Your id</label>
@@ -122,13 +142,15 @@ export default function Home() {
             </div>
 
             <div className="submit">
-              <button className="submit customerId" onClick={submitGetMyInfo}>Fetch your info</button>
+              <button className="submit customerId" onClick={submitGetMyOrder} disabled={myInfo["id"] === ""}>Fetch your order</button>
+              &nbsp;&nbsp;
+              <button className="submit danger customerId" onClick={submitDeleteMyOrder} disabled={myInfo["id"] === ""}>Delete your order</button>
             </div>
 
           </fieldset>
 
           <fieldset className={styles.card}>
-            <legend>Your trade info</legend>
+            <legend>Your order info</legend>
 
             <div>
               <label htmlFor="order-is-buy">Buy</label>
@@ -140,21 +162,21 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-quantity">The quantity</label>
-              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo["order"]["quantity"]} onChange={onMyTradeChanged}></input>
+              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo["order"]["quantity"]} onChange={onMyOrderChanged}></input>
             </div>
 
             <div>
               <label htmlFor="order-token">Of the token</label>
-              <input name="token" id="order-token" type="text" placeholder="ACME" value={myInfo["order"]["token"]} onChange={onMyTradeChanged}></input>
+              <input name="token" id="order-token" type="text" placeholder="ACME" value={myInfo["order"]["token"]} onChange={onMyOrderChanged}></input>
             </div>
 
             <div>
               <label htmlFor="order-price">At the USD price of</label>
-              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyTradeChanged}></input>
+              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyOrderChanged}></input>
             </div>
 
             <div className="submit">
-              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your order</button>
+              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyOrder}>Submit your order</button>
             </div>
 
           </fieldset>

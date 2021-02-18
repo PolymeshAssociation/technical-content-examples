@@ -238,6 +238,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 }
             })
             await handleTraderId(req, res)
+            
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
         })
