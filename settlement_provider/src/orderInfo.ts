@@ -70,26 +70,38 @@ export class AssignedOrderInfo extends OrderInfo implements IAssignedOrderInfo {
 
 }
 
-export class OrderInfoError {
-    constructor () {
+export class OrderInfoError extends Error {
+    constructor (message?: string) {
+        super(message)
         Error.apply(this, arguments)
     }
 }
 
 export class IncompleteOrderInfoError extends OrderInfoError {
-    constructor (public field: string) {
-        super()
+    field: string
+
+    constructor (field: string, message?: string) {
+        super(message)
+        this.field = field
     }
 }
 
 export class WrongTypeOrderError extends OrderInfoError {
-    constructor (public field: string, public receivedType: string) {
-        super()
+    field: string
+    receivedType: string
+
+    constructor (field: string, receivedType: string, message?: string) {
+        super(message)
+        this.field = field
+        this.receivedType = receivedType
     }
 }
 
 export class WrongZeroOrderError extends OrderInfoError {
-    constructor (public field: string) {
-        super()
+    field: string
+
+    constructor (field: string, message?: string) {
+        super(message)
+        this.field = field
     }
 }

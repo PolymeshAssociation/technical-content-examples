@@ -6,14 +6,18 @@ export interface IExchangeDb {
     setOrderInfo(id: any, info: IOrderInfo): Promise<void>
 }
 
-export class ExchangeDbError {
-    constructor () {
+export class ExchangeDbError extends Error {
+    constructor (message?: string) {
+        super(message)
         Error.apply(this, arguments);
     }
 }
 
 export class UnknownTraderError extends ExchangeDbError {
-    constructor (public id: any) {
-        super()
+    id: string
+    
+    constructor (id: string, message?: string) {
+        super(message)
+        this.id = id
     }
 }

@@ -1,9 +1,13 @@
-import { promises as fsPromises } from "fs"
+import { exists as existsAsync, promises as fsPromises } from "fs"
+import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
 import { AssignedOrderInfo, OrderInfo } from "../../src/orderInfo"
 import { ExchangeDbFs } from "../../src/exchangeDbFs"
+import { UnknownTraderError } from "../../src/exchangeDb"
 use(require("chai-as-promised"))
+
+const exists = promisify(existsAsync)
 
 describe("ExchangeDbFs Unit Tests", () => {
     let dbPath
@@ -13,13 +17,15 @@ describe("ExchangeDbFs Unit Tests", () => {
     })
 
     afterEach("clear dbStore", async() => {
+        await exists(dbPath)
         await fsPromises.unlink(dbPath)
     })
 
     it("throws when missing id", async() => {
         const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
-        await expect(db.getOrderInfoById("1"))
-            .to.eventually.throw
+        await expect(db.getOrderInfoById("1")).to.eventually.be
+            .rejectedWith(UnknownTraderError)
+            .that.satisfies((error: UnknownTraderError) => error.id === "1")
     })
 
     it("can save trade info in an empty db", async() => {

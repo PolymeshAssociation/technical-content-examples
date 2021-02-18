@@ -31,10 +31,8 @@ describe("OrderInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
         }
-        expect(() => new OrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof IncompleteOrderInfoError 
-                && error.field === "price")
+        expect(() => new OrderInfo(bareInfo)).to.throw(IncompleteOrderInfoError)
+            .that.satisfies((error: IncompleteOrderInfoError) => error.field === "price")
     })
 
     it("cannot construct from wrong type in JSON", () => {
@@ -44,10 +42,8 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
         }
-        expect(() => new OrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof WrongTypeOrderError
-                && error.field === "isBuy"
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
+            .that.satisfies((error: WrongTypeOrderError) => error.field === "isBuy"
                 && error.receivedType === "string")
     })
 
@@ -58,10 +54,8 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
         }
-        expect(() => new OrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof WrongZeroOrderError
-                && error.field === "quantity")
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
     })
 
     it("cannot construct from empty price", () => {
@@ -71,10 +65,8 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 0,
         }
-        expect(() => new OrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof WrongZeroOrderError
-                && error.field === "price")
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "price")
     })
 
     it("can convert to JSON", () => {
@@ -121,10 +113,8 @@ describe("AssignedOrderInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
         }
-        expect(() => new AssignedOrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof IncompleteOrderInfoError 
-                && error.field === "price")
+        expect(() => new AssignedOrderInfo(bareInfo)).to.throw(IncompleteOrderInfoError)
+            .that.satisfies((error: IncompleteOrderInfoError) => error.field === "price")
     })
 
     it("cannot construct from wrong type in JSON", () => {
@@ -135,10 +125,8 @@ describe("AssignedOrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
         }
-        expect(() => new AssignedOrderInfo(bareInfo)).to.throw()
-            .that.satisfies(error =>
-                error instanceof WrongTypeOrderError
-                && error.field === "id"
+        expect(() => new AssignedOrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
+            .that.satisfies((error: WrongTypeOrderError) => error.field === "id"
                 && error.receivedType === "number")
     })
 

@@ -39,7 +39,7 @@ export class ExchangeDbFs implements IExchangeDb {
     }
 
     async setOrderInfo(id: string, info: IOrderInfo): Promise<void> {
-        const db:JSON  = await getDb(this.dbPath)
+        const db: JSON  = await getDb(this.dbPath)
         db[id] = info.toJSON()
         return saveDb(this.dbPath, db)
     }

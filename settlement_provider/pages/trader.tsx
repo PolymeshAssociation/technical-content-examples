@@ -87,7 +87,6 @@ export default function Home() {
   }
 
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    console.log(typeof e.target.value);
     setMyInfo({
       ...myInfo,
       "order": {
