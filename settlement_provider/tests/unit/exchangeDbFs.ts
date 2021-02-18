@@ -17,8 +17,9 @@ describe("ExchangeDbFs Unit Tests", () => {
     })
 
     afterEach("clear dbStore", async() => {
-        await exists(dbPath)
-        await fsPromises.unlink(dbPath)
+        if (await exists(dbPath)) {
+            await fsPromises.unlink(dbPath)
+        }
     })
 
     it("throws when missing id", async() => {

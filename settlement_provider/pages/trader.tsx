@@ -46,7 +46,7 @@ export default function Home() {
   async function deleteMyOrder(): Promise<Response> {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "DELETE" })
     if (response.status == 200) {
-      setStatus("Info deleted")
+      setStatus("Order deleted")
       setMyInfo({
         ...myInfo,
         "order": Object.assign({}, emptyOrder)
@@ -67,13 +67,13 @@ export default function Home() {
       ...myInfo,
       "modified": false
     })
-    setStatus("Submitting info...")
+    setStatus("Submitting order...")
     const response = await fetch(`/api/trader/${myInfo["id"]}`, {
       "method": "PUT",
       "body": JSON.stringify(myInfo["order"])
     })
     if (response.status == 200) {
-      setStatus("Info submitted and saved")
+      setStatus("Order submitted and saved")
     } else {
       setStatus("Something went wrong")
       setMyInfo({

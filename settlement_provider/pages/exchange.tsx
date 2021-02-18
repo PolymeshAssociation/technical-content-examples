@@ -5,7 +5,7 @@ import styles from "../styles/Home.module.css"
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
     "info": {
-      "trades": []
+      "orders": []
     },
     "picked": {
       "sell": "",
@@ -26,7 +26,7 @@ export default function Home() {
       setMyInfo({
         ...myInfo,
         "info": {
-          "trades": body
+          "orders": body
         }
       })
     } else {
@@ -67,7 +67,7 @@ export default function Home() {
           <button className="submit loadTrades" onClick={submitGetOrdersInfo}>Load pending orders</button>
         </div>
 
-        <h2>Pick a sell order and a buy order to match</h2>
+        <h2>Pick 2 orders to match</h2>
 
         <form lang="en">
 
@@ -76,10 +76,10 @@ export default function Home() {
             <div className={styles.column}>
               <div className='sell-column'>
 
-                <h3>Select 1 sell order</h3>
+                <h3>Pick 1 sell order</h3>
 
                 {
-                  myInfo.info.trades
+                  myInfo["info"]["orders"]
                     .filter((trade) => !trade["isBuy"])
                     .sort((left, right) => left.price - right.price)
                     .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === trade.id ? styles.selected : ""}`} key={`order-sell-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(false)}>
@@ -96,10 +96,10 @@ export default function Home() {
             <div className={styles.column}>
               <div className='buy-column'>
 
-              <h3>Select 1 buy order</h3>
+              <h3>Pick 1 buy order</h3>
 
                 {
-                  myInfo.info.trades
+                  myInfo["info"]["orders"]
                     .filter((trade) => trade["isBuy"])
                     .sort((left, right) => right.price - left.price)
                     .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === trade.id ? styles.selected : ""}`} key={`order-buy-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(true)}>
