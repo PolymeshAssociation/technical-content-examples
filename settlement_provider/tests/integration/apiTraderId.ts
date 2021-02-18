@@ -132,6 +132,46 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "wrong type string on field isBuy"})
         })
+    
+        it("returns 400 on set 0 quantity", async () => {
+            const { req, res } = createMocks({
+                "method": "PUT",
+                "query": {
+                    "id": "4",
+                },
+                "body": {
+                    "isBuy": true,
+                    "quantity": 0,
+                    "token": "ACME",
+                    "price": 33,
+                    }
+            })
+
+            await handleTraderId(req, res)
+
+            expect(res._getStatusCode()).to.equal(400)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "cannot have 0 quantity"})
+        })
+    
+        it("returns 400 on set 0 price", async () => {
+            const { req, res } = createMocks({
+                "method": "PUT",
+                "query": {
+                    "id": "4",
+                },
+                "body": {
+                    "isBuy": true,
+                    "quantity": 12345,
+                    "token": "ACME",
+                    "price": 0,
+                    }
+            })
+
+            await handleTraderId(req, res)
+
+            expect(res._getStatusCode()).to.equal(400)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "cannot have 0 price"})
+        })
 
     })
 

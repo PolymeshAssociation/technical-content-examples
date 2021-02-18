@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { OrderInfo, IOrderInfo, IncompleteInformationError, WrongTypeError } from "../../../src/orderInfo"
+import { OrderInfo, IOrderInfo, IncompleteOrderInfoError, WrongTypeOrderError, WrongZeroOrderError } from "../../../src/orderInfo"
 import { UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
 
@@ -32,10 +32,12 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
     } catch(e) {
         if (e instanceof UnknownTraderError) {
             res.status(404).json({"status": "not found"})
-        } else if (e instanceof IncompleteInformationError) {
+        } else if (e instanceof IncompleteOrderInfoError) {
             res.status(400).json({"status": `missing field ${e.field}`})
-        } else if (e instanceof WrongTypeError) {
+        } else if (e instanceof WrongTypeOrderError) {
             res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+        } else if (e instanceof WrongZeroOrderError) {
+            res.status(400).json({"status": `cannot have 0 ${e.field}`})
         } else {
             console.log(e)
             res.status(500).json({"status": "internal error"})

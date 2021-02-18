@@ -34,7 +34,7 @@ describe("ExchangeDbFs Unit Tests", () => {
         await db.setOrderInfo("1", info)
     })
 
-    it("can get saved customer info", async() => {
+    it("can get saved traderr info", async() => {
         const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
         const bareInfo: JSON = <JSON><unknown>{
             "isBuy": true,
@@ -52,7 +52,7 @@ describe("ExchangeDbFs Unit Tests", () => {
         expect(retrieved.price).to.equal(33)
     })
 
-    it("can save and get 2 saved customer infos", async() => {
+    it("can save and get 2 saved trader infos", async() => {
         const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
         const bareInfo1: JSON = <JSON><unknown>{
             "isBuy": true,
@@ -84,7 +84,7 @@ describe("ExchangeDbFs Unit Tests", () => {
         expect(retrieved2.price).to.equal(30)
     })
 
-    it("can save and get the 2 saved customer infos together", async() => {
+    it("can save and get the 2 saved trader infos together", async() => {
         const db: ExchangeDbFs = new ExchangeDbFs(dbPath)
         const bareInfo1: JSON = <JSON><unknown>{
             "isBuy": true,

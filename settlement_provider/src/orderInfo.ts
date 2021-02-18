@@ -12,10 +12,10 @@ export interface IAssignedOrderInfo extends IOrderInfo {
 
 function requireDesiredType(info: JSON, field: string, receivedType: string) {
     if (typeof info[field] === "undefined") { 
-        throw new IncompleteInformationError(field)
+        throw new IncompleteOrderInfoError(field)
     }
     if (typeof info[field] !== receivedType) {
-        throw new WrongTypeError(field, typeof info[field])
+        throw new WrongTypeOrderError(field, typeof info[field])
     }
 }
 
@@ -30,10 +30,16 @@ export class OrderInfo implements IOrderInfo {
         this.isBuy = info["isBuy"]
         requireDesiredType(info, "quantity", "number")
         this.quantity = info["quantity"]
+        if (this.quantity === 0) {
+            throw new WrongZeroOrderError("quantity")
+        }
         requireDesiredType(info, "token", "string")
         this.token = info["token"]
         requireDesiredType(info, "price", "number")
         this.price = info["price"]
+        if (this.price === 0) {
+            throw new WrongZeroOrderError("price")
+        }
     }
 
     toJSON(): JSON {
@@ -70,14 +76,20 @@ export class OrderInfoError {
     }
 }
 
-export class IncompleteInformationError extends OrderInfoError {
+export class IncompleteOrderInfoError extends OrderInfoError {
     constructor (public field: string) {
         super()
     }
 }
 
-export class WrongTypeError extends OrderInfoError {
+export class WrongTypeOrderError extends OrderInfoError {
     constructor (public field: string, public receivedType: string) {
+        super()
+    }
+}
+
+export class WrongZeroOrderError extends OrderInfoError {
+    constructor (public field: string) {
         super()
     }
 }

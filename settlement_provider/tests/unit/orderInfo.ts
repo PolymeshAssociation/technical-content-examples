@@ -2,9 +2,10 @@ import { describe } from "mocha"
 import { expect } from "chai"
 import {
     AssignedOrderInfo,
-    IncompleteInformationError,
+    IncompleteOrderInfoError,
     OrderInfo,
-    WrongTypeError
+    WrongTypeOrderError,
+    WrongZeroOrderError
 } from "../../src/orderInfo"
 
 describe("OrderInfo Unit Tests", () => {
@@ -32,7 +33,7 @@ describe("OrderInfo Unit Tests", () => {
         }
         expect(() => new OrderInfo(bareInfo)).to.throw()
             .that.satisfies(error =>
-                error instanceof IncompleteInformationError 
+                error instanceof IncompleteOrderInfoError 
                 && error.field === "price")
     })
 
@@ -45,9 +46,35 @@ describe("OrderInfo Unit Tests", () => {
         }
         expect(() => new OrderInfo(bareInfo)).to.throw()
             .that.satisfies(error =>
-                error instanceof WrongTypeError
+                error instanceof WrongTypeOrderError
                 && error.field === "isBuy"
                 && error.receivedType === "string")
+    })
+
+    it("cannot construct from empty quantity", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 0,
+            "token": "ACME",
+            "price": 33,
+        }
+        expect(() => new OrderInfo(bareInfo)).to.throw()
+            .that.satisfies(error =>
+                error instanceof WrongZeroOrderError
+                && error.field === "quantity")
+    })
+
+    it("cannot construct from empty price", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 12345,
+            "token": "ACME",
+            "price": 0,
+        }
+        expect(() => new OrderInfo(bareInfo)).to.throw()
+            .that.satisfies(error =>
+                error instanceof WrongZeroOrderError
+                && error.field === "price")
     })
 
     it("can convert to JSON", () => {
@@ -96,7 +123,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
         }
         expect(() => new AssignedOrderInfo(bareInfo)).to.throw()
             .that.satisfies(error =>
-                error instanceof IncompleteInformationError 
+                error instanceof IncompleteOrderInfoError 
                 && error.field === "price")
     })
 
@@ -110,7 +137,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
         }
         expect(() => new AssignedOrderInfo(bareInfo)).to.throw()
             .that.satisfies(error =>
-                error instanceof WrongTypeError
+                error instanceof WrongTypeOrderError
                 && error.field === "id"
                 && error.receivedType === "number")
     })
