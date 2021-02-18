@@ -6,7 +6,7 @@ async function getOrders(): Promise<IAssignedOrderInfo[]> {
     return await (await exchangeDbFactory()).getOrders()
 }
 
-export default async function (req: NextApiRequest, res: NextApiResponse<object | IOrderInfo>): Promise<any> {
+export default async function (req: NextApiRequest, res: NextApiResponse<object>): Promise<any> {
     try {
         switch (req.method) {
             case "GET":

@@ -47,12 +47,13 @@ describe("/api/trader/[id] Integration Tests", () => {
         })
     
         it("returns the info on previously set info", async () => {
-            await exchangeDb.setOrderInfo("3", new OrderInfo({
+            const bareInfo: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
-            } as unknown as JSON))
+            } 
+            await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET",
                 "query": {
@@ -63,12 +64,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             await handleTraderId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({
-                "isBuy": false,
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-            })
+            expect(JSON.parse(res._getData())).to.deep.equal(bareInfo)
         })
 
     })
@@ -76,17 +72,18 @@ describe("/api/trader/[id] Integration Tests", () => {
     describe("PUT", () => {
     
         it("returns 200 on set info and has saved", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "isBuy": false,
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+            }
             const { req, res } = createMocks({
                 "method": "PUT",
                 "query": {
                     "id": "4",
                 },
-                "body": {
-                    "isBuy": false,
-                    "quantity": 12345,
-                    "token": "ACME",
-                    "price": 33,
-                }
+                "body": bareInfo
             })
 
             await handleTraderId(req, res)
@@ -94,12 +91,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
             const order = await exchangeDb.getOrderInfoById("4")
-            expect(order.toJSON()).to.deep.equal({
-                "isBuy": false,
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-            })
+            expect(order.toJSON()).to.deep.equal(bareInfo)
         })
     
         it("returns 400 on set info missing isBuy", async () => {
@@ -132,7 +124,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                    }
+                }
             })
 
             await handleTraderId(req, res)
@@ -152,7 +144,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 0,
                     "token": "ACME",
                     "price": 33,
-                    }
+                }
             })
 
             await handleTraderId(req, res)
@@ -172,7 +164,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 0,
-                    }
+                }
             })
 
             await handleTraderId(req, res)
