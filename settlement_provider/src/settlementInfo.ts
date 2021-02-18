@@ -48,7 +48,7 @@ export class SettlementInfo implements ISettlementInfo {
     token: string
     price: number
 
-constructor(info: JSON) {
+    constructor(info: JSON) {
         requireDesiredType(info, "buyer", "object")
         this.buyer = new SettlementParty(info["buyer"])
         requireDesiredType(info, "seller", "object")
