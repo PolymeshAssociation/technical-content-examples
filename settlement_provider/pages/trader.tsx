@@ -95,15 +95,23 @@ export default function Home() {
     })
   }
 
-  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function changeMyOrder(field: string, value: any): void {
     setMyInfo({
       ...myInfo,
       "order": {
         ...myInfo["order"],
-        [e.target.name]: e.target.value
+        [field]: value
       },
       "modified": true
     })
+  }
+
+  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+    changeMyOrder(e.target.name, e.target.value)
+  }
+
+  function onMyOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+    changeMyOrder(e.target.name, parseInt(e.target.value))
   }
 
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -162,7 +170,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-quantity">The quantity</label>
-              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo["order"]["quantity"]} onChange={onMyOrderChanged}></input>
+              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo["order"]["quantity"]} onChange={onMyOrderNumberChanged}></input>
             </div>
 
             <div>
@@ -172,7 +180,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-price">At the USD price of</label>
-              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyOrderChanged}></input>
+              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyOrderNumberChanged}></input>
             </div>
 
             <div className="submit">
