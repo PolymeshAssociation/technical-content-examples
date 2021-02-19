@@ -53,6 +53,8 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
             }
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
             const { req, res } = createMocks({
@@ -79,6 +81,8 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
             }
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -107,7 +111,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                    }
+                    "isPaid": true,
+                    "isTransferred": false,
+                }
             })
 
             await handleSettlementId(req, res)
@@ -128,7 +134,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                    }
+                    "isPaid": true,
+                    "isTransferred": false,
+                }
             })
 
             await handleSettlementId(req, res)
@@ -149,7 +157,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                    }
+                    "isPaid": true,
+                    "isTransferred": false,
+                }
             })
 
             await handleSettlementId(req, res)

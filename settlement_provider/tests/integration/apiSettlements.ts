@@ -60,6 +60,8 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
             }
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
             const { req, res } = createMocks({
@@ -82,6 +84,8 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
                 "buyer": { "id": "3" },
@@ -89,6 +93,8 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
+                "isPaid": false,
+                "isTransferred": false,
             }
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
@@ -239,6 +245,8 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
+                "isPaid": false,
+                "isTransferred": false,
             })
             const remainingOrder: IOrderInfo = await exchangeDb.getOrderInfoById("2")
             expect(remainingOrder.toJSON()).to.deep.equal({
@@ -290,6 +298,8 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
+                "isPaid": false,
+                "isTransferred": false,
             })
             const remainingOrder: IOrderInfo = await exchangeDb.getOrderInfoById("1")
             expect(remainingOrder.toJSON()).to.deep.equal({

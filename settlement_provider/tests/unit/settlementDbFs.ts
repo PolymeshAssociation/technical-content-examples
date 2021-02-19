@@ -36,6 +36,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
 
         await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo))
@@ -48,6 +50,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
 
         await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo))
@@ -63,6 +67,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "buyer": { "id": "3" },
@@ -70,6 +76,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "isPaid": false,
+            "isTransferred": false,
         }
 
         await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo1))
@@ -88,6 +96,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "buyer": { "id": "3" },
@@ -95,6 +105,8 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "isPaid": false,
+            "isTransferred": false,
         }
 
         await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo1))

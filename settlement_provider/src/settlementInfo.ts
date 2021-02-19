@@ -9,6 +9,8 @@ export interface ISettlementInfo {
     quantity: number
     token: string
     price: number
+    isPaid: boolean
+    isTransferred: boolean
     toJSON(): JSON
 }
 
@@ -47,6 +49,8 @@ export class SettlementInfo implements ISettlementInfo {
     quantity: number
     token: string
     price: number
+    isPaid: boolean
+    isTransferred: boolean
 
     constructor(info: JSON) {
         requireDesiredType(info, "buyer", "object")
@@ -62,6 +66,10 @@ export class SettlementInfo implements ISettlementInfo {
         this.token = info["token"]
         requireDesiredType(info, "price", "number")
         this.price = info["price"]
+        requireDesiredType(info, "isPaid", "boolean")
+        this.isPaid = info["isPaid"]
+        requireDesiredType(info, "isTransferred", "boolean")
+        this.isTransferred = info["isTransferred"]
     }
 
     toJSON(): JSON {
@@ -71,6 +79,8 @@ export class SettlementInfo implements ISettlementInfo {
             "quantity": this.quantity,
             "token": this.token,
             "price": this.price,
+            "isPaid": this.isPaid,
+            "isTransferred": this.isTransferred,
         }
     }
 

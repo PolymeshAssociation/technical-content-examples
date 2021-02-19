@@ -32,7 +32,9 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
         "seller": { "id": sellerId },
         "quantity": quantity,
         "token": buyOrder.token,
-        "price": price
+        "price": price,
+        "isPaid": false,
+        "isTransferred": false,
     } as unknown as JSON
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()

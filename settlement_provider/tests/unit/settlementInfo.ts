@@ -61,6 +61,8 @@ describe("SettlementInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": false,
+            "isTransferred": false,
         }
         const info = new SettlementInfo(bareInfo)
 
@@ -69,6 +71,8 @@ describe("SettlementInfo Unit Tests", () => {
         expect(info.quantity).to.equal(12345)
         expect(info.token).to.equal("ACME")
         expect(info.price).to.equal(33)
+        expect(info.isPaid).to.be.false
+        expect(info.isTransferred).to.be.false
     })
 
     it("cannot construct from incomplete JSON", () => {
@@ -81,6 +85,8 @@ describe("SettlementInfo Unit Tests", () => {
             },
             "quantity": 12345,
             "token": "ACME",
+            "isPaid": false,
+            "isTransferred": false,
         }
         expect(() => new SettlementInfo(bareInfo)).to.throw(IncompleteSettlementInfoError)
             .that.satisfies((error: IncompleteSettlementInfoError) => error.field === "price")
@@ -97,6 +103,8 @@ describe("SettlementInfo Unit Tests", () => {
             "quantity": "12345",
             "token": "ACME",
             "price": 33,
+            "isPaid": false,
+            "isTransferred": false,
         }
         expect(() => new SettlementInfo(bareInfo)).to.throw(WrongTypeSettlementError)
             .that.satisfies((error: WrongTypeSettlementError) => error.field === "quantity"
@@ -114,6 +122,8 @@ describe("SettlementInfo Unit Tests", () => {
             "quantity": "12345",
             "token": "ACME",
             "price": 33,
+            "isPaid": false,
+            "isTransferred": false,
         }
         expect(() => new SettlementInfo(bareInfo)).to.throw(DuplicatePartiesSettlementError)
             .that.satisfies((error: DuplicatePartiesSettlementError) => error.partyId === "1")
@@ -130,6 +140,8 @@ describe("SettlementInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": false,
+            "isTransferred": false,
         }
         const info = new SettlementInfo(bareInfo)
         const back = info.toJSON()
@@ -139,6 +151,8 @@ describe("SettlementInfo Unit Tests", () => {
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
         expect(back["price"]).to.equal(33)
+        expect(back["isPaid"]).to.be.false
+        expect(back["isTransferred"]).to.be.false
     })
 
 })
@@ -157,6 +171,8 @@ describe("FullSettlementInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
         const info = new FullSettlementInfo(bareInfo)
 
@@ -166,6 +182,8 @@ describe("FullSettlementInfo Unit Tests", () => {
         expect(info.quantity).to.equal(12345)
         expect(info.token).to.equal("ACME")
         expect(info.price).to.equal(33)
+        expect(info.isPaid).to.be.true
+        expect(info.isTransferred).to.be.false
     })
 
     it("cannot construct from incomplete JSON", () => {
@@ -179,6 +197,8 @@ describe("FullSettlementInfo Unit Tests", () => {
             },
             "quantity": 12345,
             "token": "ACME",
+            "isPaid": true,
+            "isTransferred": false,
         }
         expect(() => new FullSettlementInfo(bareInfo)).to.throw(IncompleteSettlementInfoError)
             .that.satisfies((error: IncompleteSettlementInfoError) => error.field === "price")
@@ -196,6 +216,8 @@ describe("FullSettlementInfo Unit Tests", () => {
             "quantity": "12345",
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
         expect(() => new FullSettlementInfo(bareInfo)).to.throw(WrongTypeSettlementError)
             .that.satisfies((error: WrongTypeSettlementError) => error.field === "quantity"
@@ -214,6 +236,8 @@ describe("FullSettlementInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "isPaid": true,
+            "isTransferred": false,
         }
         const info = new FullSettlementInfo(bareInfo)
         const back = info.toJSON()
@@ -224,6 +248,8 @@ describe("FullSettlementInfo Unit Tests", () => {
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
         expect(back["price"]).to.equal(33)
+        expect(back["isPaid"]).to.be.true
+        expect(back["isTransferred"]).to.be.false
     })
 
 })
