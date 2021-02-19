@@ -127,3 +127,9 @@ export class DuplicatePartiesSettlementError extends SettlementInfoError {
         super(message)
     }
 }
+
+export class NoActionToDoSettlementError extends SettlementInfoError {
+    constructor (public id: string, message?: string) {
+        super(message)
+    }
+}

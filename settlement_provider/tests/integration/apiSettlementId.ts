@@ -170,4 +170,138 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
     })
 
+    describe("PATCH", () => {
+    
+        it("returns 200 on update isPaid and has saved", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": false,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "PATCH",
+                "query": {
+                    "id": "3",
+                    "isPaid": "",
+                }
+            })
+
+            await handleSettlementId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
+            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isPaid": true})
+        })
+    
+        it("returns 200 on update isTransferred and has saved", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": false,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "PATCH",
+                "query": {
+                    "id": "3",
+                    "isTransferred": "",
+                }
+            })
+
+            await handleSettlementId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
+            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isTransferred": true})
+        })
+    
+        it("returns 200 on update isPaid and isTransferred and has saved", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": false,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "PATCH",
+                "query": {
+                    "id": "3",
+                    "isTransferred": "",
+                    "isPaid": "",
+                }
+            })
+
+            await handleSettlementId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
+            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isPaid": true, "isTransferred": true})
+        })
+    
+        it("returns 400 on update nothing to do", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "PATCH",
+                "query": {
+                    "id": "3",
+                }
+            })
+            await handleSettlementId(req, res)
+
+            expect(res._getStatusCode()).to.equal(400)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "no action found for 3"})
+        })
+    
+        it("returns 404 on unknown settlement", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "PATCH",
+                "query": {
+                    "id": "4",
+                    "isPaid": "",
+                }
+            })
+
+            await handleSettlementId(req, res)
+
+            expect(res._getStatusCode()).to.equal(404)
+            expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
+        })
+
+    })
+
 })
