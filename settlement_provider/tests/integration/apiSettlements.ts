@@ -110,6 +110,115 @@ describe("/api/settlements Integration Tests", () => {
                 {...bareInfo1, "id": "3"}
             ])
         })
+    
+        it("returns the filtered info on previously set double info", async () => {
+            const bareInfo1: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
+            }
+            const bareInfo2: JSON = <JSON><unknown>{
+                "buyer": { "id": "3" },
+                "seller": { "id": "2" },
+                "quantity": 543,
+                "token": "ACME",
+                "price": 30,
+                "isPaid": false,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            const { req, res } = createMocks({
+                "method": "GET",
+                "query": {
+                    "traderId": "1"
+                }
+            })
+
+            await handleSettlements(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal([
+                {...bareInfo1, "id": "3"}
+            ])
+        })
+
+    })
+    
+    describe("GET for traderId", () => {
+    
+        it("returns empty on get without anything", async () => {
+            const { req, res } = createMocks({
+                "method": "GET"
+            })
+
+            await handleSettlements(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal([])
+        })
+    
+        it("returns the info on previously set info", async () => {
+            const bareInfo: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                "method": "GET"
+            })
+
+            await handleSettlements(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal([{
+                ...bareInfo,
+                "id": "3",
+            }])
+        })
+    
+        it("returns the info on previously set double info", async () => {
+            const bareInfo1: JSON = <JSON><unknown>{
+                "buyer": { "id": "1" },
+                "seller": { "id": "2" },
+                "quantity": 12345,
+                "token": "ACME",
+                "price": 33,
+                "isPaid": true,
+                "isTransferred": false,
+            }
+            const bareInfo2: JSON = <JSON><unknown>{
+                "buyer": { "id": "3" },
+                "seller": { "id": "2" },
+                "quantity": 543,
+                "token": "ACME",
+                "price": 30,
+                "isPaid": false,
+                "isTransferred": false,
+            }
+            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            const { req, res } = createMocks({
+                "method": "GET"
+            })
+
+            await handleSettlements(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal([
+                {...bareInfo2, "id": "2"},
+                {...bareInfo1, "id": "3"}
+            ])
+        })
 
     })
     

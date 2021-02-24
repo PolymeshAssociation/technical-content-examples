@@ -6,8 +6,13 @@ import { IncompatibleOrderTypeError, ISettlementDb, WrongOrderTypeError } from "
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 
-async function getSettlements(): Promise<IFullSettlementInfo[]> {
-    return await (await settlementDbFactory()).getSettlements()
+async function getSettlements(req: NextApiRequest): Promise<IFullSettlementInfo[]> {
+    const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
+    const traderId: string = <string>req.query.traderId
+    if (typeof traderId === "undefined") {
+        return all
+    }
+    return all.filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId);
 }
 
 async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
@@ -60,7 +65,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object>
     try {
         switch (req.method) {
             case "GET":
-                res.status(200).json(await getSettlements())
+                res.status(200).json(await getSettlements(req))
                 break
             case "POST":
                 res.status(200).json(await matchOrders(req))
