@@ -26,6 +26,10 @@ export default function Home() {
             Match NextDaq orders on the algorithm page
         </a>
 
+        <a href="custodian" className={styles.card}>
+            Enter info for your matched trade on the custodian page
+        </a>
+
       </main>
 
       <footer className={styles.footer}>
