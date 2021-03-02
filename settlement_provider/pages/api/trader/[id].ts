@@ -1,5 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { OrderInfo, IOrderInfo, IncompleteOrderInfoError, WrongTypeOrderError, WrongZeroOrderError } from "../../../src/orderInfo"
+import {
+    OrderInfo,
+    IOrderInfo,
+    IncompleteOrderInfoError,
+    WrongTypeOrderError,
+    WrongZeroOrderError,
+} from "../../../src/orderInfo"
 import { UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
 

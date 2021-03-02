@@ -7,12 +7,12 @@ export default function Home() {
     "isBuy": true,
     "quantity": "",
     "token": "",
-    "price": ""
+    "price": "",
   }
   const [myInfo, setMyInfo] = useState({
     "id": "",
     "order": Object.assign({}, emptyOrder),
-    "modified": false
+    "modified": false,
   })
 
   function setStatus(content: string) {

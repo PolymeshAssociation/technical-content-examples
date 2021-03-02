@@ -29,7 +29,7 @@ describe("/api/settlements Integration Tests", () => {
         exchangeDb = await exchangeDbFactory()
         settlementDb = await settlementDbFactory()
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
         if (await exists(exchangeDbPath)) {
