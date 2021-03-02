@@ -11,7 +11,7 @@ export interface IAssignedOrderInfo extends IOrderInfo {
 }
 
 function requireDesiredType(info: JSON, field: string, receivedType: string) {
-    if (typeof info[field] === "undefined") { 
+    if (typeof info[field] === "undefined") {
         throw new IncompleteOrderInfoError(field)
     }
     if (typeof info[field] !== receivedType) {

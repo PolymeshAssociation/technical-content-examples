@@ -22,16 +22,16 @@ describe("/api/trades Integration Tests", () => {
         })
         exchangeDb = await exchangeDbFactory()
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
         if (await exists(dbPath)) {
             await fsPromises.unlink(dbPath)
         }
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
                 "method": "GET"
@@ -42,7 +42,7 @@ describe("/api/trades Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([])
         })
-    
+
         it("returns the info on previously set info", async () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo({
                 "isBuy": false,
@@ -65,7 +65,7 @@ describe("/api/trades Integration Tests", () => {
                 "price": 33,
             }])
         })
-    
+
         it("returns the info on previously set double info", async () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo({
                 "isBuy": false,

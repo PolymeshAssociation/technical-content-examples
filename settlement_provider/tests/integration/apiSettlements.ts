@@ -39,9 +39,9 @@ describe("/api/settlements Integration Tests", () => {
             await fsPromises.unlink(settlementDbPath)
         }
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
                 "method": "GET"
@@ -52,7 +52,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([])
         })
-    
+
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "buyer": { "id": "1" },
@@ -76,7 +76,7 @@ describe("/api/settlements Integration Tests", () => {
                 "id": "3",
             }])
         })
-    
+
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
                 "buyer": { "id": "1" },
@@ -110,7 +110,7 @@ describe("/api/settlements Integration Tests", () => {
                 {...bareInfo1, "id": "3"}
             ])
         })
-    
+
         it("returns the filtered info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
                 "buyer": { "id": "1" },
@@ -148,9 +148,9 @@ describe("/api/settlements Integration Tests", () => {
         })
 
     })
-    
+
     describe("GET for traderId", () => {
-    
+
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
                 "method": "GET"
@@ -161,7 +161,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([])
         })
-    
+
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "buyer": { "id": "1" },
@@ -185,7 +185,7 @@ describe("/api/settlements Integration Tests", () => {
                 "id": "3",
             }])
         })
-    
+
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
                 "buyer": { "id": "1" },
@@ -221,9 +221,9 @@ describe("/api/settlements Integration Tests", () => {
         })
 
     })
-    
+
     describe("POST", () => {
-    
+
         it("returns 404 on missing buy order", async () => {
             await exchangeDb.setOrderInfo("2", new OrderInfo({
                 "isBuy": false,
@@ -244,7 +244,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 1"})
         })
-    
+
         it("returns 404 on missing sell order", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
                 "isBuy": true,
@@ -265,7 +265,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 2"})
         })
-    
+
         it("returns 400 if isBuy are not correct", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
                 "isBuy": true,
@@ -292,7 +292,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order is of wrong type, expectedIsBuy: false"})
         })
-    
+
         it("returns 400 when tokens not matching", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
                 "isBuy": true,
@@ -319,7 +319,7 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Orders are not for same token, ACME / ECMN"})
         })
-    
+
         it("returns 200 when got a match, and got correct data, seller has more", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo(<JSON><unknown>{
                 "isBuy": true,
@@ -372,7 +372,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 5,
             })
         })
-    
+
         it("returns 200 when got a match, and got correct data, buyer has more", async () => {
             const bareBuyOrder: JSON = <JSON><unknown>{
                 "isBuy": true,

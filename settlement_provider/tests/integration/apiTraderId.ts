@@ -22,16 +22,16 @@ describe("/api/trader/[id] Integration Tests", () => {
         })
         exchangeDb = await exchangeDbFactory()
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
         if (await exists(dbPath)) {
             await fsPromises.unlink(dbPath)
         }
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns 404 on get unknown", async () => {
             const { req, res } = createMocks({
                 "method": "GET",
@@ -45,14 +45,14 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
         })
-    
+
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
-            } 
+            }
             await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET",
@@ -70,7 +70,7 @@ describe("/api/trader/[id] Integration Tests", () => {
     })
 
     describe("PUT", () => {
-    
+
         it("returns 200 on set info and has saved", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "isBuy": false,
@@ -93,7 +93,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             const order = await exchangeDb.getOrderInfoById("4")
             expect(order.toJSON()).to.deep.equal(bareInfo)
         })
-    
+
         it("returns 400 on set info missing isBuy", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -112,7 +112,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "missing field isBuy"})
         })
-    
+
         it("returns 400 on set info wrong type isBuy", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -132,7 +132,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "wrong type string on field isBuy"})
         })
-    
+
         it("returns 400 on set 0 quantity", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -152,7 +152,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "cannot have 0 quantity"})
         })
-    
+
         it("returns 400 on set 0 price", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -176,7 +176,7 @@ describe("/api/trader/[id] Integration Tests", () => {
     })
 
     describe("DELETE", () => {
-    
+
         it("returns 200 on delete existing info and no longer accessible", async () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo({
                 "isBuy": false,
@@ -197,7 +197,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
             expect(await exchangeDb.getOrders()).to.be.empty
         })
-    
+
         it("returns 200 on delete missing info", async () => {
             const { req, res } = createMocks({
                 "method": "DELETE",

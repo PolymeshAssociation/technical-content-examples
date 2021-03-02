@@ -31,7 +31,7 @@ export default function Home() {
         ...myInfo,
         "order": body
       })
-      
+
     } else {
       setStatus("Something went wrong")
     }

@@ -69,7 +69,7 @@ describe("ExchangeDbFs Unit Tests", () => {
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
-        
+
         const retrieved1: IOrderInfo = await exchangeDb.getOrderInfoById("1")
         const retrieved2: IOrderInfo = await exchangeDb.getOrderInfoById("2")
         expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
@@ -92,7 +92,7 @@ describe("ExchangeDbFs Unit Tests", () => {
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
-        
+
         const retrieved: IAssignedOrderInfo[] = await exchangeDb.getOrders()
         expect(retrieved[0].toJSON()).to.deep.equal({...bareInfo1, "id": "1"})
         expect(retrieved[1].toJSON()).to.deep.equal({...bareInfo2, "id": "2"})
