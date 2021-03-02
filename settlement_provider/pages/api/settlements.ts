@@ -48,14 +48,14 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
         await exchangeDb.deleteOrderInfoById(buyerId)
     } else {
         const orderJson: JSON = buyOrder.toJSON()
-        orderJson["quantity"] -= quantity 
+        orderJson["quantity"] -= quantity
         await exchangeDb.setOrderInfo(buyerId, new OrderInfo(orderJson))
     }
     if (sellOrder.quantity === quantity) {
         await exchangeDb.deleteOrderInfoById(sellerId)
     } else {
         const orderJson: JSON = sellOrder.toJSON()
-        orderJson["quantity"] -= quantity 
+        orderJson["quantity"] -= quantity
         await exchangeDb.setOrderInfo(sellerId, new OrderInfo(orderJson))
     }
     return new FullSettlementInfo({...settlement, "id": settlementId} as unknown as JSON)

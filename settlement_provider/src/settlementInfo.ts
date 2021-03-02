@@ -19,7 +19,7 @@ export interface IFullSettlementInfo extends ISettlementInfo {
 }
 
 function requireDesiredType(info: JSON, field: string, receivedType: string) {
-    if (typeof info[field] === "undefined") { 
+    if (typeof info[field] === "undefined") {
         throw new IncompleteSettlementInfoError(field)
     }
     if (typeof info[field] !== receivedType) {

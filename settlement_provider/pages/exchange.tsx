@@ -63,7 +63,7 @@ export default function Home() {
     }
     return settlementResponse
   }
-  
+
   async function submitMatch(e): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await createMatch()
@@ -108,7 +108,7 @@ export default function Home() {
                     .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === trade.id ? styles.selected : ""}`} key={`order-sell-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(false)}>
                       <span title="Trader id">{trade.id} - </span>
                       <span title="Quantity">{trade.quantity} </span>
-                      of <span title="Ticker">{trade.token}</span>, 
+                      of <span title="Ticker">{trade.token}</span>,
                       <b title="Price in USD / token"> @ {trade.price} </b>
                     </div>)
                 }
