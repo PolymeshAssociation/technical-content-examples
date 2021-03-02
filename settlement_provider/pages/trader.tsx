@@ -7,12 +7,14 @@ export default function Home() {
     "isBuy": true,
     "quantity": "",
     "token": "",
-    "price": ""
+    "price": "",
+    "polymeshDid": "",
+    "portfolioId": null
   }
   const [myInfo, setMyInfo] = useState({
     "id": "",
     "order": Object.assign({}, emptyOrder),
-    "modified": false
+    "modified": false,
   })
 
   function setStatus(content: string) {
@@ -31,7 +33,7 @@ export default function Home() {
         ...myInfo,
         "order": body
       })
-      
+
     } else {
       setStatus("Something went wrong")
     }
@@ -114,6 +116,14 @@ export default function Home() {
     changeMyOrder(e.target.name, parseInt(e.target.value))
   }
 
+  function onMyNullableOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+    if (e.target.value === "") {
+      changeMyOrder(e.target.name, null)
+    } else {
+      changeMyOrder(e.target.name, parseInt(e.target.value))
+    }
+  }
+
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo({
       ...myInfo,
@@ -181,6 +191,16 @@ export default function Home() {
             <div>
               <label htmlFor="order-price">At the USD price of</label>
               <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyOrderNumberChanged}></input>
+            </div>
+
+            <div>
+              <label htmlFor="order-polymeshDid">Your Polymesh did</label>
+              <input name="polymeshDid" id="order-polymeshDid" type="text" placeholder="0x12345" value={myInfo["order"]["polymeshDid"]} onChange={onMyOrderChanged}></input>
+            </div>
+
+            <div>
+              <label htmlFor="order-portfolioId">The trading portfolio id</label>
+              <input name="portfolioId" id="order-portfolioId" type="number" placeholder="1" value={myInfo["order"]["portfolioId"]} onChange={onMyNullableOrderNumberChanged}></input>
             </div>
 
             <div className="submit">
