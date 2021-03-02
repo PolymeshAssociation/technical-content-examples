@@ -9,7 +9,7 @@ export default function Home() {
     "token": "",
     "price": "",
     "polymeshDid": "",
-    "portfolioId": null
+    "portfolioId": null,
   }
   const [myInfo, setMyInfo] = useState({
     "id": "",

@@ -5,7 +5,7 @@ import {
     IncompleteOrderInfoError,
     WrongTypeOrderError,
     WrongZeroOrderError,
-    InvalidPolymeshDidError
+    InvalidPolymeshDidError,
 } from "../../../src/orderInfo"
 import { UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
