@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { IOrderInfo, IAssignedOrderInfo } from "../../src/orderInfo"
+import { IAssignedOrderInfo } from "../../src/orderInfo"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 
 async function getOrders(): Promise<IAssignedOrderInfo[]> {

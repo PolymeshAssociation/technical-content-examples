@@ -1,5 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { OrderInfo, IOrderInfo, IncompleteOrderInfoError, WrongTypeOrderError, WrongZeroOrderError } from "../../../src/orderInfo"
+import {
+    OrderInfo,
+    IOrderInfo,
+    IncompleteOrderInfoError,
+    WrongTypeOrderError,
+    WrongZeroOrderError,
+    InvalidPolymeshDidError
+} from "../../../src/orderInfo"
 import { UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
 
@@ -55,6 +62,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
         } else if (e instanceof WrongZeroOrderError) {
             res.status(400).json({"status": `cannot have 0 ${e.field}`})
+        } else if (e instanceof InvalidPolymeshDidError) {
+            res.status(400).json({"status": `wrong polymeshId ${e.polymeshDid}`})
         } else {
             console.log(e)
             res.status(500).json({"status": "internal error"})

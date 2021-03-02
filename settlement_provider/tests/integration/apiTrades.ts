@@ -22,16 +22,16 @@ describe("/api/trades Integration Tests", () => {
         })
         exchangeDb = await exchangeDbFactory()
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
         if (await exists(dbPath)) {
             await fsPromises.unlink(dbPath)
         }
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
                 "method": "GET"
@@ -42,13 +42,15 @@ describe("/api/trades Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([])
         })
-    
+
         it("returns the info on previously set info", async () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo({
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
             } as unknown as JSON))
             const { req, res } = createMocks({
                 "method": "GET"
@@ -63,21 +65,26 @@ describe("/api/trades Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
             }])
         })
-    
+
         it("returns the info on previously set double info", async () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo({
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
             } as unknown as JSON))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
                 "isBuy": true,
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
             } as unknown as JSON))
             const { req, res } = createMocks({
                 "method": "GET"
@@ -93,6 +100,8 @@ describe("/api/trades Integration Tests", () => {
                     "quantity": 543,
                     "token": "ACME",
                     "price": 30,
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null
                 },
                 {
                     "id": "3",
@@ -100,6 +109,8 @@ describe("/api/trades Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
                 }
             ])
         })

@@ -36,6 +36,8 @@ describe("ExchangeDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": 1,
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
     })
@@ -46,6 +48,8 @@ describe("ExchangeDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": 1,
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
 
@@ -59,17 +63,21 @@ describe("ExchangeDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": 1,
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+            "portfolioId": 2,
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
-        
+
         const retrieved1: IOrderInfo = await exchangeDb.getOrderInfoById("1")
         const retrieved2: IOrderInfo = await exchangeDb.getOrderInfoById("2")
         expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
@@ -82,17 +90,21 @@ describe("ExchangeDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": 1,
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+            "portfolioId": 2,
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
-        
+
         const retrieved: IAssignedOrderInfo[] = await exchangeDb.getOrders()
         expect(retrieved[0].toJSON()).to.deep.equal({...bareInfo1, "id": "1"})
         expect(retrieved[1].toJSON()).to.deep.equal({...bareInfo2, "id": "2"})
@@ -104,12 +116,16 @@ describe("ExchangeDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": 1,
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+            "portfolioId": 3,
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))

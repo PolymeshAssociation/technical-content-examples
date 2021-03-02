@@ -3,15 +3,19 @@ export interface IOrderInfo {
     quantity: number
     token: string
     price: number
+    polymeshDid: string
+    portfolioId: number | null
     toJSON(): JSON
 }
+
+const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
 
 export interface IAssignedOrderInfo extends IOrderInfo {
     id: string
 }
 
 function requireDesiredType(info: JSON, field: string, receivedType: string) {
-    if (typeof info[field] === "undefined") { 
+    if (typeof info[field] === "undefined") {
         throw new IncompleteOrderInfoError(field)
     }
     if (typeof info[field] !== receivedType) {
@@ -24,6 +28,8 @@ export class OrderInfo implements IOrderInfo {
     quantity: number
     token: string
     price: number
+    polymeshDid: string
+    portfolioId: number | null
 
     constructor(info: JSON) {
         requireDesiredType(info, "isBuy", "boolean")
@@ -40,6 +46,17 @@ export class OrderInfo implements IOrderInfo {
         if (this.price === 0) {
             throw new WrongZeroOrderError("price")
         }
+        requireDesiredType(info, "polymeshDid", "string")
+        if (!(info["polymeshDid"] as string).match(polymeshDidRegex)) {
+            throw new InvalidPolymeshDidError(info["polymeshDid"])
+        }
+        this.polymeshDid = info["polymeshDid"]
+        if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null) {
+            this.portfolioId = null
+        } else {
+            requireDesiredType(info, "portfolioId", "number")
+            this.portfolioId = info["portfolioId"]
+        }
     }
 
     toJSON(): JSON {
@@ -48,6 +65,8 @@ export class OrderInfo implements IOrderInfo {
             "quantity": this.quantity,
             "token": this.token,
             "price": this.price,
+            "polymeshDid": this.polymeshDid,
+            "portfolioId": this.portfolioId,
         }
     }
 
@@ -91,6 +110,12 @@ export class WrongTypeOrderError extends OrderInfoError {
 
 export class WrongZeroOrderError extends OrderInfoError {
     constructor (public field: string, message?: string) {
+        super(message)
+    }
+}
+
+export class InvalidPolymeshDidError extends OrderInfoError {
+    constructor (public polymeshDid: string, message?: string) {
         super(message)
     }
 }
