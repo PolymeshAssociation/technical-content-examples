@@ -55,8 +55,12 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -79,8 +83,12 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -88,8 +96,12 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -113,8 +125,12 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the filtered info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -122,8 +138,12 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -164,8 +184,12 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -188,8 +212,12 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -197,8 +225,12 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -349,8 +381,12 @@ describe("/api/settlements Integration Tests", () => {
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "id": settlements[0].id,
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
@@ -402,8 +438,12 @@ describe("/api/settlements Integration Tests", () => {
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "id": settlements[0].id,
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,

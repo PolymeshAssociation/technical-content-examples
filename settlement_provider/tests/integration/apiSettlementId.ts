@@ -48,8 +48,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -76,8 +80,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 200 on set info and has saved", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -107,7 +115,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "id": "4",
                 },
                 "body": {
-                    "buyer": { "id": "1" },
+                    "buyer": {
+                        "id": "1",
+                    },
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
@@ -129,7 +139,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "id": "4",
                 },
                 "body": {
-                    "buyer": { "id": "1" },
+                    "buyer": {
+                        "id": "1",
+                    },
                     "seller": "2",
                     "quantity": 12345,
                     "token": "ACME",
@@ -152,8 +164,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "id": "4",
                 },
                 "body": {
-                    "buyer": { "id": "1" },
-                    "seller": { "id": "1" },
+                    "buyer": {
+                        "id": "1",
+                    },
+                    "seller": {
+                        "id": "1",
+                    },
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
@@ -174,8 +190,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 200 on update isPaid and has saved", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -201,8 +221,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 200 on update isTransferred and has saved", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -228,8 +252,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 200 on update isPaid and isTransferred and has saved", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -256,8 +284,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 400 on update nothing to do", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -279,8 +311,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
         it("returns 404 on unknown settlement", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                },
+                "seller": {
+                    "id": "2",
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,

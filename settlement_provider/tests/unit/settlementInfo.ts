@@ -6,7 +6,7 @@ import {
     FullSettlementInfo,
     IncompleteSettlementInfoError,
     WrongTypeSettlementError,
-    DuplicatePartiesSettlementError
+    DuplicatePartiesSettlementError,
 } from "../../src/settlementInfo"
 
 describe("Settlement Party Unit Tests", () => {
@@ -53,10 +53,10 @@ describe("SettlementInfo Unit Tests", () => {
     it("can construct from JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -78,10 +78,10 @@ describe("SettlementInfo Unit Tests", () => {
     it("cannot construct from incomplete JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -95,10 +95,10 @@ describe("SettlementInfo Unit Tests", () => {
     it("cannot construct from wrong type in JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": "12345",
             "token": "ACME",
@@ -111,13 +111,13 @@ describe("SettlementInfo Unit Tests", () => {
                 && error.receivedType === "string")
     })
 
-    it("cannot construct from same seller and buyer", () => {
+    it("cannot construct from same seller and buyer id", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "1"
+                "id": "1",
             },
             "quantity": "12345",
             "token": "ACME",
@@ -132,10 +132,10 @@ describe("SettlementInfo Unit Tests", () => {
     it("can convert to JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -146,8 +146,12 @@ describe("SettlementInfo Unit Tests", () => {
         const info = new SettlementInfo(bareInfo)
         const back = info.toJSON()
 
-        expect(back["buyer"]).to.deep.equal({ "id": "1" })
-        expect(back["seller"]).to.deep.equal({ "id": "2" })
+        expect(back["buyer"]).to.deep.equal({
+            "id": "1",
+        })
+        expect(back["seller"]).to.deep.equal({
+            "id": "2",
+        })
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
         expect(back["price"]).to.equal(33)
@@ -163,10 +167,10 @@ describe("FullSettlementInfo Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "3",
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -190,10 +194,10 @@ describe("FullSettlementInfo Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "3",
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -208,10 +212,10 @@ describe("FullSettlementInfo Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "3",
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": "12345",
             "token": "ACME",
@@ -228,10 +232,10 @@ describe("FullSettlementInfo Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "3",
             "buyer": {
-                "id": "1"
+                "id": "1",
             },
             "seller": {
-                "id": "2"
+                "id": "2",
             },
             "quantity": 12345,
             "token": "ACME",
@@ -243,8 +247,12 @@ describe("FullSettlementInfo Unit Tests", () => {
         const back = info.toJSON()
 
         expect(back["id"]).to.equal("3")
-        expect(back["buyer"]).to.deep.equal({ "id": "1" })
-        expect(back["seller"]).to.deep.equal({ "id": "2" })
+        expect(back["buyer"]).to.deep.equal({
+            "id": "1",
+        })
+        expect(back["seller"]).to.deep.equal({
+            "id": "2",
+        })
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
         expect(back["price"]).to.equal(33)

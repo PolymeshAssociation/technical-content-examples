@@ -35,7 +35,6 @@ export class SettlementParty implements ISettlementParty {
         this.id = info["id"]
     }
 
-
     toJSON(): JSON {
         return <JSON><unknown>{
             "id": this.id,

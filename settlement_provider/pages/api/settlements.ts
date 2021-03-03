@@ -1,6 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
-import { IFullSettlementInfo, SettlementInfo, FullSettlementInfo } from "../../src/settlementInfo"
+import {
+    FullSettlementInfo,
+    IFullSettlementInfo,
+    SettlementInfo,
+} from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { IncompatibleOrderTypeError, ISettlementDb, WrongOrderTypeError } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
@@ -33,8 +37,12 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const quantity: number = Math.min(buyOrder.quantity, sellOrder.quantity)
     const price: number = (buyOrder.price + sellOrder.price) / 2
     const settlement: JSON = {
-        "buyer": { "id": buyerId },
-        "seller": { "id": sellerId },
+        "buyer": {
+            "id": buyerId,
+        },
+        "seller": {
+            "id": sellerId,
+        },
         "quantity": quantity,
         "token": buyOrder.token,
         "price": price,
