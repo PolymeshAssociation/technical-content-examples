@@ -96,7 +96,7 @@ describe("SettlementInfo Unit Tests", () => {
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                },
+            },
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
@@ -230,7 +230,7 @@ describe("SettlementInfo Unit Tests", () => {
         expect(back["seller"]).to.deep.equal({
             "id": "2",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-            "portfolioId": null
+            "portfolioId": null,
         })
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
