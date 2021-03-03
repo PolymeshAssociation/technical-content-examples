@@ -6,6 +6,7 @@ import {
     WrongTypeSettlementError,
     DuplicatePartiesSettlementError,
     NoActionToDoSettlementError,
+    DuplicatePolymeshDidSettlementError,
 } from "../../../src/settlementInfo"
 import { ISettlementDb, UnknownSettlementError } from "../../../src/settlementDb"
 import settlementDbFactory from "../../../src/settlementDbFactory"
@@ -67,6 +68,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
         } else if (e instanceof DuplicatePartiesSettlementError) {
             res.status(400).json({"status": `same buyer and seller: ${e.partyId}`})
+        } else if (e instanceof DuplicatePolymeshDidSettlementError) {
+            res.status(400).json({"status": `same buyer and seller: ${e.polymeshDid}`})
         } else if (e instanceof NoActionToDoSettlementError) {
             res.status(400).json({"status": `no action found for ${e.id}`})
         } else {

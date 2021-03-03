@@ -55,8 +55,16 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -79,8 +87,16 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -88,8 +104,16 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    "portfolioId": 2,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -113,8 +137,16 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the filtered info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -122,8 +154,16 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    "portfolioId": 2,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -164,8 +204,16 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -188,8 +236,16 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
@@ -197,8 +253,16 @@ describe("/api/settlements Integration Tests", () => {
                 "isTransferred": false,
             }
             const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": { "id": "3" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "3",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    "portfolioId": 2,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
@@ -344,7 +408,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ACME",
                 "price": 35,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
             }
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareSellOrder))
             const { req, res } = createMocks({
@@ -362,8 +426,16 @@ describe("/api/settlements Integration Tests", () => {
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "id": settlements[0].id,
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
@@ -420,8 +492,16 @@ describe("/api/settlements Integration Tests", () => {
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "id": settlements[0].id,
-                "buyer": { "id": "1" },
-                "seller": { "id": "2" },
+                "buyer": {
+                    "id": "1",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "portfolioId": 1,
+                },
+                "seller": {
+                    "id": "2",
+                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "portfolioId": null,
+                },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,

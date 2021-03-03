@@ -1,6 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
-import { IFullSettlementInfo, SettlementInfo, FullSettlementInfo } from "../../src/settlementInfo"
+import {
+    DuplicatePartiesSettlementError,
+    DuplicatePolymeshDidSettlementError,
+    FullSettlementInfo,
+    IFullSettlementInfo,
+    IncompleteSettlementInfoError,
+    SettlementInfo,
+    WrongTypeSettlementError,
+} from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { IncompatibleOrderTypeError, ISettlementDb, WrongOrderTypeError } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
@@ -33,8 +41,16 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const quantity: number = Math.min(buyOrder.quantity, sellOrder.quantity)
     const price: number = (buyOrder.price + sellOrder.price) / 2
     const settlement: JSON = {
-        "buyer": { "id": buyerId },
-        "seller": { "id": sellerId },
+        "buyer": {
+            "id": buyerId,
+            "polymeshDid": buyOrder.polymeshDid,
+            "portfolioId": buyOrder.portfolioId,
+        },
+        "seller": {
+            "id": sellerId,
+            "polymeshDid": sellOrder.polymeshDid,
+            "portfolioId": sellOrder.portfolioId,
+        },
         "quantity": quantity,
         "token": buyOrder.token,
         "price": price,
@@ -80,6 +96,14 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object>
             res.status(400).json({"status": `Order is of wrong type, expectedIsBuy: ${e.expectedIsBuy}`})
         } else if (e instanceof IncompatibleOrderTypeError) {
             res.status(400).json({"status": `Orders are not for same token, ${e.buyToken} / ${e.sellToken}`})
+        } else if (e instanceof IncompleteSettlementInfoError) {
+            res.status(400).json({"status": `missing field ${e.field}`})
+        } else if (e instanceof WrongTypeSettlementError) {
+            res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+        } else if (e instanceof DuplicatePartiesSettlementError) {
+            res.status(400).json({"status": `same buyer and seller: ${e.partyId}`})
+        } else if (e instanceof DuplicatePolymeshDidSettlementError) {
+            res.status(400).json({"status": `same buyer and seller: ${e.polymeshDid}`})
         } else {
             console.log(e)
             res.status(500).json({"status": "internal error"})

@@ -31,8 +31,15 @@ describe("SettlementDbFs Unit Tests", () => {
 
     it("can save settlement info in an empty db", async() => {
         const bareInfo: JSON = <JSON><unknown>{
-            "buyer": { "id": "1" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "1",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+            },
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
@@ -45,8 +52,16 @@ describe("SettlementDbFs Unit Tests", () => {
 
     it("can get saved settlement info", async() => {
         const bareInfo: JSON = <JSON><unknown>{
-            "buyer": { "id": "1" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "1",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "portfolioId": null
+            },
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
@@ -62,8 +77,16 @@ describe("SettlementDbFs Unit Tests", () => {
 
     it("can save and get 2 saved settlement infos", async() => {
         const bareInfo1: JSON = <JSON><unknown>{
-            "buyer": { "id": "1" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "1",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "portfolioId": null,
+            },
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
@@ -71,8 +94,16 @@ describe("SettlementDbFs Unit Tests", () => {
             "isTransferred": false,
         }
         const bareInfo2: JSON = <JSON><unknown>{
-            "buyer": { "id": "3" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "3",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                "portfolioId": 2,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "portfolioId": null,
+            },
             "quantity": 667,
             "token": "ACME",
             "price": 30,
@@ -91,8 +122,16 @@ describe("SettlementDbFs Unit Tests", () => {
 
     it("can save and get the 2 saved settlement infos together", async() => {
         const bareInfo1: JSON = <JSON><unknown>{
-            "buyer": { "id": "1" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "1",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "portfolioId": 1,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "portfolioId": null,
+            },
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
@@ -100,8 +139,16 @@ describe("SettlementDbFs Unit Tests", () => {
             "isTransferred": false,
         }
         const bareInfo2: JSON = <JSON><unknown>{
-            "buyer": { "id": "3" },
-            "seller": { "id": "2" },
+            "buyer": {
+                "id": "3",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                "portfolioId": 2,
+            },
+            "seller": {
+                "id": "2",
+                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "portfolioId": null,
+            },
             "quantity": 667,
             "token": "ACME",
             "price": 30,
