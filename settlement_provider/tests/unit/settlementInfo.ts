@@ -376,7 +376,7 @@ describe("Matching orders Unit Tests", () => {
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
             "portfolioId": 1,
-    } as unknown as JSON)
+        } as unknown as JSON)
         const buyOrder2: OrderInfo = new OrderInfo({
             "isBuy": true,
             "quantity": 15,
@@ -397,7 +397,7 @@ describe("Matching orders Unit Tests", () => {
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
             "portfolioId": 1,
-    } as unknown as JSON)
+        } as unknown as JSON)
         const sellOrder: OrderInfo = new OrderInfo({
             "isBuy": false,
             "quantity": 15,
@@ -460,7 +460,7 @@ describe("Matching orders Unit Tests", () => {
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
             "portfolioId": 1,
-    })
+        })
         const bareSellOrder: JSON = <JSON><unknown>{
             "isBuy": false,
             "quantity": 15,
@@ -481,7 +481,7 @@ describe("Matching orders Unit Tests", () => {
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null
+                "portfolioId": null,
             },
             "quantity": 10,
             "token": "ACME",
@@ -499,7 +499,7 @@ describe("Matching orders Unit Tests", () => {
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
             "portfolioId": 1,
-    }
+        }
         const buyOrder: OrderInfo = new OrderInfo(bareBuyOrder)
         const sellOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": false,
@@ -520,7 +520,7 @@ describe("Matching orders Unit Tests", () => {
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null
+                "portfolioId": null,
             },
             "quantity": 10,
             "token": "ACME",
