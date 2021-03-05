@@ -6,11 +6,14 @@ import {
     FullSettlementInfo,
     IFullSettlementInfo,
     IncompleteSettlementInfoError,
-    SettlementInfo,
     WrongTypeSettlementError,
+    createByMatchingOrders,
+    IncompatibleOrderTypeError,
+    ISettlementInfo,
+    WrongOrderTypeError,
 } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
-import { IncompatibleOrderTypeError, ISettlementDb, WrongOrderTypeError } from "../../src/settlementDb"
+import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 
@@ -28,53 +31,31 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const sellerId: string = <string>req.query.sellerId
     const exchangeDb: IExchangeDb = await exchangeDbFactory()
     const buyOrder: IOrderInfo = await exchangeDb.getOrderInfoById(buyerId)
-    if (!buyOrder.isBuy) {
-        throw new WrongOrderTypeError(true)
-    }
     const sellOrder: IOrderInfo = await exchangeDb.getOrderInfoById(sellerId)
-    if (sellOrder.isBuy) {
-        throw new WrongOrderTypeError(false)
-    }
-    if (buyOrder.token !== sellOrder.token) {
-        throw new IncompatibleOrderTypeError(buyOrder.token, sellOrder.token)
-    }
-    const quantity: number = Math.min(buyOrder.quantity, sellOrder.quantity)
-    const price: number = (buyOrder.price + sellOrder.price) / 2
-    const settlement: JSON = {
-        "buyer": {
-            "id": buyerId,
-            "polymeshDid": buyOrder.polymeshDid,
-            "portfolioId": buyOrder.portfolioId,
-        },
-        "seller": {
-            "id": sellerId,
-            "polymeshDid": sellOrder.polymeshDid,
-            "portfolioId": sellOrder.portfolioId,
-        },
-        "quantity": quantity,
-        "token": buyOrder.token,
-        "price": price,
-        "isPaid": false,
-        "isTransferred": false,
-    } as unknown as JSON
+    const settlement: ISettlementInfo = createByMatchingOrders(
+        buyerId, buyOrder,
+        sellerId, sellOrder)
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    await settlementDb.setSettlementInfo(settlementId, new SettlementInfo(settlement))
-    if (buyOrder.quantity === quantity) {
+    await settlementDb.setSettlementInfo(settlementId, settlement)
+    if (buyOrder.quantity === settlement.quantity) {
         await exchangeDb.deleteOrderInfoById(buyerId)
     } else {
         const orderJson: JSON = buyOrder.toJSON()
-        orderJson["quantity"] -= quantity
+        orderJson["quantity"] -= settlement.quantity
         await exchangeDb.setOrderInfo(buyerId, new OrderInfo(orderJson))
     }
-    if (sellOrder.quantity === quantity) {
+    if (sellOrder.quantity === settlement.quantity) {
         await exchangeDb.deleteOrderInfoById(sellerId)
     } else {
         const orderJson: JSON = sellOrder.toJSON()
-        orderJson["quantity"] -= quantity
+        orderJson["quantity"] -= settlement.quantity
         await exchangeDb.setOrderInfo(sellerId, new OrderInfo(orderJson))
     }
-    return new FullSettlementInfo({...settlement, "id": settlementId} as unknown as JSON)
+    return new FullSettlementInfo({
+        "id": settlementId,
+        ...settlement.toJSON(),
+    } as unknown as JSON)
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object>): Promise<any> {
