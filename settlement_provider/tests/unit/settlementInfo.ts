@@ -305,6 +305,24 @@ describe("Matching orders Unit Tests", () => {
             .that.satisfies((error: IncompatibleOrderTypeError) => error.buyToken === "ACME" && error.sellToken === "ECMN")
     })
 
+    it("cannot construct when same buyer and seller id", async () => {
+        const buyOrder: OrderInfo = new OrderInfo({
+            "isBuy": true,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 33,
+    } as unknown as JSON)
+        const sellOrder: OrderInfo = new OrderInfo({
+            "isBuy": false,
+            "quantity": 15,
+            "token": "ACME",
+            "price": 40,
+        } as unknown as JSON)
+
+        expect(() => createByMatchingOrders("1", buyOrder, "1", sellOrder)).to.throw(DuplicatePartiesSettlementError)
+            .that.satisfies((error: DuplicatePartiesSettlementError) => error.partyId === "1")
+    })
+
     it("creates settlement when got a match, and got correct data, seller has more", async () => {
         const buyOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": true,
