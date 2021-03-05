@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "setup": "env TS_NODE_PROJECT=\"tsconfig.testing.json\" ts-node scripts/setupPreparation.ts",
     "test": "env TS_NODE_PROJECT=\"tsconfig.testing.json\" mocha --require ts-node/register --recursive  tests/**/*.ts"
   },
   "dependencies": {
