@@ -1,4 +1,3 @@
-import { throws } from "assert";
 import { ISettlementInfo, IFullSettlementInfo } from "./settlementInfo"
 
 export interface ISettlementDb {
@@ -16,18 +15,6 @@ export class SettlementDbError extends Error {
 
 export class UnknownSettlementError extends SettlementDbError {
     constructor(public id: any, message?: string) {
-        super(message)
-    }
-}
-
-export class WrongOrderTypeError extends SettlementDbError {
-    constructor(public expectedIsBuy: boolean, message?: string) {
-        super(message)
-    }
-}
-
-export class IncompatibleOrderTypeError extends SettlementDbError {
-    constructor(public buyToken: string, public sellToken: string, message?: string) {
         super(message)
     }
 }

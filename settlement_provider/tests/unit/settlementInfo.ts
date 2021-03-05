@@ -7,7 +7,12 @@ import {
     IncompleteSettlementInfoError,
     WrongTypeSettlementError,
     DuplicatePartiesSettlementError,
+    createByMatchingOrders,
+    WrongOrderTypeError,
+    IncompatibleOrderTypeError,
+    ISettlementInfo,
 } from "../../src/settlementInfo"
+import { OrderInfo } from "../../src/orderInfo"
 
 describe("Settlement Party Unit Tests", () => {
 
@@ -258,6 +263,110 @@ describe("FullSettlementInfo Unit Tests", () => {
         expect(back["price"]).to.equal(33)
         expect(back["isPaid"]).to.be.true
         expect(back["isTransferred"]).to.be.false
+    })
+
+})
+
+describe("Matching orders Unit Tests", () => {
+
+    it("cannot construct if isBuy are not correct", async () => {
+        const buyOrder1: OrderInfo = new OrderInfo({
+            "isBuy": true,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 33,
+        } as unknown as JSON)
+        const buyOrder2: OrderInfo = new OrderInfo({
+            "isBuy": true,
+            "quantity": 15,
+            "token": "ACME",
+            "price": 40,
+        } as unknown as JSON)
+
+        expect(() => createByMatchingOrders("1", buyOrder1, "2", buyOrder2)).to.throw(WrongOrderTypeError)
+            .that.satisfies((error: WrongOrderTypeError) => error.expectedIsBuy === false)
+    })
+
+    it("cannot construct when tokens not matching", async () => {
+        const buyOrder: OrderInfo = new OrderInfo({
+            "isBuy": true,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 33,
+        } as unknown as JSON)
+        const sellOrder: OrderInfo = new OrderInfo({
+            "isBuy": false,
+            "quantity": 15,
+            "token": "ECMN",
+            "price": 40,
+        } as unknown as JSON)
+
+        expect(() => createByMatchingOrders("1", buyOrder, "2", sellOrder)).to.throw(IncompatibleOrderTypeError)
+            .that.satisfies((error: IncompatibleOrderTypeError) => error.buyToken === "ACME" && error.sellToken === "ECMN")
+    })
+
+    it("creates settlement when got a match, and got correct data, seller has more", async () => {
+        const buyOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
+            "isBuy": true,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 33,
+        })
+        const bareSellOrder: JSON = <JSON><unknown>{
+            "isBuy": false,
+            "quantity": 15,
+            "token": "ACME",
+            "price": 35,
+        }
+        const sellOrder: OrderInfo = new OrderInfo(bareSellOrder)
+
+        const settlement: ISettlementInfo = createByMatchingOrders("1", buyOrder, "2", sellOrder)
+
+        expect(settlement.toJSON()).to.deep.equal({
+            "buyer": {
+                "id": "1",
+            },
+            "seller": {
+                "id": "2",
+            },
+            "quantity": 10,
+            "token": "ACME",
+            "price": 34,
+            "isPaid": false,
+            "isTransferred": false,
+        })
+    })
+
+    it("creates settlement when got a match, and got correct data, buyer has more", async () => {
+        const bareBuyOrder: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 15,
+            "token": "ACME",
+            "price": 33,
+        }
+        const buyOrder: OrderInfo = new OrderInfo(bareBuyOrder)
+        const sellOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
+            "isBuy": false,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 35,
+        })
+
+        const settlement: ISettlementInfo = createByMatchingOrders("1", buyOrder, "2", sellOrder)
+
+        expect(settlement.toJSON()).to.deep.equal({
+            "buyer": {
+                "id": "1",
+            },
+            "seller": {
+                "id": "2",
+            },
+            "quantity": 10,
+            "token": "ACME",
+            "price": 34,
+            "isPaid": false,
+            "isTransferred": false,
+        })
     })
 
 })

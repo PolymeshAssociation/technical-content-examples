@@ -1,3 +1,5 @@
+import { IOrderInfo } from "./orderInfo"
+
 export interface ISettlementParty {
     id: string
     toJSON(): JSON
@@ -102,6 +104,34 @@ export class FullSettlementInfo extends SettlementInfo implements IFullSettlemen
 
 }
 
+export function createByMatchingOrders(buyerId: string, buyOrder: IOrderInfo, sellerId: string, sellOrder: IOrderInfo): ISettlementInfo {
+    if (!buyOrder.isBuy) {
+        throw new WrongOrderTypeError(true)
+    }
+    if (sellOrder.isBuy) {
+        throw new WrongOrderTypeError(false)
+    }
+    if (buyOrder.token !== sellOrder.token) {
+        throw new IncompatibleOrderTypeError(buyOrder.token, sellOrder.token)
+    }
+    const quantity: number = Math.min(buyOrder.quantity, sellOrder.quantity)
+    const price: number = (buyOrder.price + sellOrder.price) / 2
+    const settlement: JSON = {
+        "buyer": {
+            "id": buyerId,
+        },
+        "seller": {
+            "id": sellerId,
+        },
+        "quantity": quantity,
+        "token": buyOrder.token,
+        "price": price,
+        "isPaid": false,
+        "isTransferred": false,
+    } as unknown as JSON
+    return new SettlementInfo(settlement)
+}
+
 export class SettlementInfoError extends Error {
     constructor (message?: string) {
         super(message)
@@ -129,6 +159,18 @@ export class DuplicatePartiesSettlementError extends SettlementInfoError {
 
 export class NoActionToDoSettlementError extends SettlementInfoError {
     constructor (public id: string, message?: string) {
+        super(message)
+    }
+}
+
+export class WrongOrderTypeError extends SettlementInfoError {
+    constructor(public expectedIsBuy: boolean, message?: string) {
+        super(message)
+    }
+}
+
+export class IncompatibleOrderTypeError extends SettlementInfoError {
+    constructor(public buyToken: string, public sellToken: string, message?: string) {
         super(message)
     }
 }
