@@ -22,6 +22,16 @@ async function getSettlements(req: NextApiRequest): Promise<IFullSettlementInfo[
     return all.filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId);
 }
 
+async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrderInfo, quantity: number) {
+    if (order.quantity === quantity) {
+        await exchangeDb.deleteOrderInfoById(orderId)
+    } else {
+        const orderJson: JSON = order.toJSON()
+        orderJson["quantity"] -= quantity
+        await exchangeDb.setOrderInfo(orderId, new OrderInfo(orderJson))
+    }
+}
+
 async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const buyerId: string = <string>req.query.buyerId
     const sellerId: string = <string>req.query.sellerId
@@ -34,20 +44,8 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
     await settlementDb.setSettlementInfo(settlementId, settlement)
-    if (buyOrder.quantity === settlement.quantity) {
-        await exchangeDb.deleteOrderInfoById(buyerId)
-    } else {
-        const orderJson: JSON = buyOrder.toJSON()
-        orderJson["quantity"] -= settlement.quantity
-        await exchangeDb.setOrderInfo(buyerId, new OrderInfo(orderJson))
-    }
-    if (sellOrder.quantity === settlement.quantity) {
-        await exchangeDb.deleteOrderInfoById(sellerId)
-    } else {
-        const orderJson: JSON = sellOrder.toJSON()
-        orderJson["quantity"] -= settlement.quantity
-        await exchangeDb.setOrderInfo(sellerId, new OrderInfo(orderJson))
-    }
+    await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
+    await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
     return new FullSettlementInfo({
         "id": settlementId,
         ...settlement.toJSON(),
