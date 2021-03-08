@@ -3,6 +3,7 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
+import { Identity, NumberedPortfolio, Portfolio, } from '@polymathnetwork/polymesh-sdk/types'
 import { NetworkMeta, PolyWallet } from "../src/ui-types"
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
     "id": "",
     "order": Object.assign({}, emptyOrder),
     "modified": false,
+    "portfolios": []
   })
 
   function setStatus(content: string) {
@@ -85,15 +87,43 @@ export default function Home() {
     const api: Polymesh = await getPolyWalletApi()
     setStatus("Fetching your account")
     const did: string = (await api.getCurrentIdentity()).did
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "order": {
-        ...myInfo["order"],
+        ...prevInfo["order"],
         "polymeshDid": did
       },
-      "modified": true
-    })
+      "modified": true,
+      "portfolios": [{ "id": "", "name": "Loading" }]
+    }))
+    setStatus("Account fetched")
+    await setPortfolioChoices(did)
     return did
+  }
+
+  async function setPortfolioChoices(did: string): Promise<string[]> {
+    if (did === "") return []
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Getting the account")
+    const account: Identity = api.getIdentity({ "did": did })
+    setStatus("Getting the portfolios")
+    const portfolios: Portfolio[] = (await account.portfolios.getPortfolios()).slice(1)
+    setStatus("Getting portfolio names")
+    const folioNames = await Promise.all(portfolios.map((portfolio: NumberedPortfolio) => {
+      return portfolio.getName()
+        .then((name: string) => ({
+          "id": portfolio.id.toString(10),
+          "name": name,
+        }))
+    }))
+    folioNames.unshift({ "id": "", "name": "default" })
+    setStatus("Populating portfolios")
+    console.log(JSON.stringify(myInfo.order))
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "portfolios": folioNames
+    }))
+    setStatus("Portfolios populated")
   }
 
   async function submitDidFromPolyWallet(e): Promise<string> {
@@ -108,11 +138,17 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
-        "order": body
+      const portfolios = [{ "id": "", "name": "default" }]
+      if (typeof body["portfolioId"] === "string") portfolios.push({
+        "id": body["portfolioId"],
+        "name": "Loading"
       })
-
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "order": body,
+        "portfolios": portfolios
+      }))
+      setPortfolioChoices(body["polymeshDid"])
     } else {
       setStatus("Something went wrong")
     }
@@ -128,10 +164,10 @@ export default function Home() {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "DELETE" })
     if (response.status == 200) {
       setStatus("Order deleted")
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "order": Object.assign({}, emptyOrder)
-      })
+      }))
     } else {
       setStatus("Something went wrong")
     }
@@ -144,10 +180,10 @@ export default function Home() {
   }
 
   async function sendMyOrder(): Promise<void> {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "modified": false
-    })
+    }))
     setStatus("Submitting order...")
     const response = await fetch(`/api/trader/${myInfo["id"]}`, {
       "method": "PUT",
@@ -157,10 +193,10 @@ export default function Home() {
       setStatus("Order submitted and saved")
     } else {
       setStatus("Something went wrong")
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "modified": true
-      })
+      }))
     }
   }
 
@@ -177,17 +213,19 @@ export default function Home() {
   }
 
   function changeMyOrder(field: string, value: any): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "order": {
-        ...myInfo["order"],
+        ...prevInfo["order"],
         [field]: value
       },
-      "modified": true
-    })
+      "modified": true,
+      "portfolios": field === "polymeshDid" ? [{ "id": "", "name": "Loading" }] : prevInfo["portfolios"]
+    }))
+    if (field === "polymeshDid") setPortfolioChoices(value)
   }
 
-  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
     changeMyOrder(e.target.name, e.target.value)
   }
 
@@ -196,14 +234,14 @@ export default function Home() {
   }
 
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "order": {
-        ...myInfo["order"],
+        ...prevInfo["order"],
         "isBuy": e.target.value === "true"
       },
       "modified": true
-    })
+    }))
   }
 
   return (
@@ -272,8 +310,14 @@ export default function Home() {
             </div>
 
             <div>
-              <label htmlFor="order-portfolioId">The trading portfolio id</label>
-              <input name="portfolioId" id="order-portfolioId" type="text" placeholder="1" value={myInfo["order"]["portfolioId"]} onChange={onMyOrderChanged}></input>
+              <label htmlFor="order-portfolioId">The trading portfolio</label>
+              <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged}>
+                {
+                  myInfo["portfolios"].map((portfolio) => <option value={portfolio.id} selected={portfolio.id == myInfo["order"]["portfolioId"]}>
+                      {portfolio.id} - {portfolio.name}
+                    </option>)
+                }
+              </select>
             </div>
 
             <div className="submit">
