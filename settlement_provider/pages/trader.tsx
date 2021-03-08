@@ -116,14 +116,6 @@ export default function Home() {
     changeMyOrder(e.target.name, parseInt(e.target.value))
   }
 
-  function onMyNullableOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.value === "") {
-      changeMyOrder(e.target.name, null)
-    } else {
-      changeMyOrder(e.target.name, parseInt(e.target.value))
-    }
-  }
-
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo({
       ...myInfo,
@@ -200,7 +192,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-portfolioId">The trading portfolio id</label>
-              <input name="portfolioId" id="order-portfolioId" type="number" placeholder="1" value={myInfo["order"]["portfolioId"]} onChange={onMyNullableOrderNumberChanged}></input>
+              <input name="portfolioId" id="order-portfolioId" type="text" placeholder="1" value={myInfo["order"]["portfolioId"]} onChange={onMyOrderChanged}></input>
             </div>
 
             <div className="submit">

@@ -53,11 +53,14 @@ export class OrderInfo implements IOrderInfo {
             throw new InvalidPolymeshDidError(info["polymeshDid"])
         }
         this.polymeshDid = info["polymeshDid"]
-        if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null) {
+        if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null || info["portfolioId"] === "") {
             this.portfolioId = null
         } else {
             requireDesiredType(info, "portfolioId", "string")
             this.portfolioId = new BigNumber(info["portfolioId"])
+            if (this.portfolioId.toString(10) === "NaN") {
+                throw new WrongNumericValueError("portfolioId", info["portfolioId"])
+            }
         }
     }
 
@@ -107,6 +110,12 @@ export class IncompleteOrderInfoError extends OrderInfoError {
 
 export class WrongTypeOrderError extends OrderInfoError {
     constructor (public field: string, public receivedType: string, message?: string) {
+        super(message)
+    }
+}
+
+export class WrongNumericValueError extends OrderInfoError {
+    constructor (public field: string, public received: string, message?: string) {
         super(message)
     }
 }

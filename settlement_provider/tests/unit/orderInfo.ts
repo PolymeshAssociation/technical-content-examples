@@ -6,6 +6,7 @@ import {
     IncompleteOrderInfoError,
     InvalidPolymeshDidError,
     OrderInfo,
+    WrongNumericValueError,
     WrongTypeOrderError,
     WrongZeroOrderError
 } from "../../src/orderInfo"
@@ -102,7 +103,38 @@ describe("OrderInfo Unit Tests", () => {
             .that.satisfies((error: InvalidPolymeshDidError) => error.polymeshDid === "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc")
     })
 
+    it("cannot construct from bad portfolioId number", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 12345,
+            "token": "ACME",
+            "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": "ab"
+        }
+
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "portfolioId" && error.received === "ab")
+    })
+
     it("can construct from empty portfolioId", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "isBuy": true,
+            "quantity": 12345,
+            "token": "ACME",
+            "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+        }
+
+        const back: JSON = new OrderInfo(<JSON><unknown>{
+            ...bareInfo,
+            "portfolioId": "",
+        }).toJSON()
+
+        expect(back).to.deep.equal(bareInfo)
+    })
+
+    it("can construct from missing portfolioId", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "isBuy": true,
             "quantity": 12345,
