@@ -31,7 +31,7 @@ describe("SettlementEnginePoly Integration Tests", () => {
             }
         })
         const settlementEngine: ISettlementEngine = new SettlementEnginePoly(api, venueId, usdToken)
-        const preconfiguredVenue: Venue = await settlementEngine.getVenue()
+        const preconfiguredVenue: Venue = (await settlementEngine.getVenue()).venue
 
         expect(preconfiguredVenue.id.toString(10)).to.equal(venueId)
     }).timeout(30000)

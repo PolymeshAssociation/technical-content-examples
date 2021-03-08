@@ -6,7 +6,11 @@ export default function Home() {
   const [myInfo, setMyInfo] = useState({
     "traderId": "",
     "info": {
-      "settlements": []
+      "settlements": [],
+      "venue": {
+        "ownerDid": "",
+        "venueId": ""
+      }
     }
   })
 
@@ -29,7 +33,7 @@ export default function Home() {
       const body = await response.json()
       setMyInfo({
         ...myInfo,
-        "info": { "settlements": body }
+        "info": body
       })
     } else {
       setStatus("Something went wrong")

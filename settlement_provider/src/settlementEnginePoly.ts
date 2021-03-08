@@ -10,6 +10,7 @@ import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import {
     ISettlementEngine,
     NonExistentVenueError,
+    VenueInfo,
 } from "./settlementEngine"
 import {
     IPublishedSettlementInfo,
@@ -22,13 +23,16 @@ export class SettlementEnginePoly implements ISettlementEngine {
     constructor(public api: Polymesh, public venueId: string, public usdToken: string) {
     }
 
-    async getVenue(): Promise<Venue> {
+    async getVenue(): Promise<VenueInfo> {
         const nextDaq: CurrentIdentity = await this.api.getCurrentIdentity()
         if (nextDaq === null) throw new NonExistentAccountError(this.api.getAccount().address)
         const venues: Venue[] = await nextDaq.getVenues()
         const venue: Venue = venues.find((found: Venue) => found.id.toString(10) === this.venueId)
         if (typeof venue === "undefined") throw new NonExistentVenueError(this.venueId)
-        return venue
+        return {
+            "owner": nextDaq,
+            "venue": venue
+        }
     }
 
     async publish(settlement: ISettlementInfo): Promise<IPublishedSettlementInfo> {
@@ -48,7 +52,7 @@ export class SettlementEnginePoly implements ISettlementEngine {
                 "to": seller,
             },
         ]
-        const venue: Venue = await this.getVenue()
+        const venue: Venue = (await this.getVenue()).venue
         const settlementQueue: TransactionQueue<Instruction> = await venue.addInstruction({ "legs": legs })
         const instruction: Instruction = await settlementQueue.run()
         return new PublishedSettlementInfo(<JSON><unknown>{

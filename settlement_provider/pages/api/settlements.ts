@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import getConfig from "next/config"
 import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
 import {
     DuplicatePartiesSettlementError,
@@ -19,15 +18,38 @@ import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import settlementEngineFactory from "../../src/settlementEngineFactory"
-import { ISettlementEngine } from "../../src/settlementEngine"
+import { ISettlementEngine, VenueInfo } from "../../src/settlementEngine"
 
-async function getSettlements(req: NextApiRequest): Promise<IFullSettlementInfo[]> {
+interface SimpleVenueInfo {
+    ownerDid: string
+    venueId: string
+}
+
+interface SettlementListInfo {
+    settlements: IFullSettlementInfo[]
+    venue: SimpleVenueInfo
+}
+
+async function getSettlements(req: NextApiRequest): Promise<SettlementListInfo> {
+    const settlementEngine: ISettlementEngine = await settlementEngineFactory()
+    const venueInfo: VenueInfo = await settlementEngine.getVenue()
+    const simpleVenueInfo: SimpleVenueInfo = {
+        "ownerDid": venueInfo.owner.did,
+        "venueId": venueInfo.venue.id.toString(10)
+    }
     const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
     const traderId: string = <string>req.query.traderId
     if (typeof traderId === "undefined") {
-        return all
+        return {
+            "settlements": all,
+            "venue": simpleVenueInfo
+        }
     }
-    return all.filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId);
+    return {
+        "settlements": all
+            .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId),
+        "venue": simpleVenueInfo
+    }
 }
 
 async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrderInfo, quantity: number) {
@@ -41,29 +63,6 @@ async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrd
 }
 
 async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
-    const {
-        serverRuntimeConfig: {
-            polymesh: { accountMnemonic }
-        },
-        publicRuntimeConfig: {
-          appName,
-          polymesh: { nodeUrl, venueId, usdToken }
-        }
-      } = getConfig() || {
-        serverRuntimeConfig: {
-            polymesh: {
-                accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
-            },
-        },
-        publicRuntimeConfig: {
-            appName: "nextDaqSettle",
-            polymesh: {
-                nodeUrl: process.env.POLY_NODE_URL,
-                venueId: process.env.POLY_VENUE_ID,
-                usdToken: process.env.POLY_USD_TOKEN,
-            }
-        },
-    }
     const buyerId: string = <string>req.query.buyerId
     const sellerId: string = <string>req.query.sellerId
     const exchangeDb: IExchangeDb = await exchangeDbFactory()

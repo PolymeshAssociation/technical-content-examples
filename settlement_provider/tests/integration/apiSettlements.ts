@@ -4,6 +4,7 @@ import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect, use } from "chai"
 import { createMocks } from "node-mocks-http"
 import * as nextConfig from "../../next.config.js"
+import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { IAssignedOrderInfo, IOrderInfo, OrderInfo } from "../../src/orderInfo"
 import { IFullSettlementInfo, PublishedSettlementInfo, } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
@@ -24,11 +25,14 @@ describe("/api/settlements Integration Tests", () => {
             nodeUrl, venueId, usdToken,
         } }
     } = nextConfig
+    
     let exchangeDbPath: string, settlementDbPath: string
     let exchangeDb: IExchangeDb, settlementDb: ISettlementDb
     let toRestore: RestoreFn
+    let venueOwner: string
 
-    beforeEach("mock env", async() => {
+    beforeEach("mock env", async function() {
+        this.timeout(20000)
         exchangeDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         settlementDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
@@ -41,6 +45,11 @@ describe("/api/settlements Integration Tests", () => {
         })
         exchangeDb = await exchangeDbFactory()
         settlementDb = await settlementDbFactory()
+        const api = await Polymesh.connect({
+            nodeUrl,
+            accountMnemonic,
+        })
+        venueOwner = (await api.getCurrentIdentity()).did
     })
 
     afterEach("restore env", async() => {
@@ -63,8 +72,14 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
@@ -92,11 +107,17 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([{
-                ...bareInfo,
-                "id": "3",
-            }])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [{
+                    ...bareInfo,
+                    "id": "3",
+                }],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
@@ -142,11 +163,17 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo2, "id": "2"},
-                {...bareInfo1, "id": "3"}
-            ])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo2, "id": "2"},
+                    {...bareInfo1, "id": "3"}
+                ],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
         it("returns the filtered info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
@@ -195,10 +222,16 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo1, "id": "3"}
-            ])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo1, "id": "3"}
+                ],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
     })
 
@@ -212,8 +245,14 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
@@ -241,11 +280,17 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([{
-                ...bareInfo,
-                "id": "3",
-            }])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [{
+                    ...bareInfo,
+                    "id": "3",
+                }],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
             const bareInfo1: JSON = <JSON><unknown>{
@@ -291,11 +336,17 @@ describe("/api/settlements Integration Tests", () => {
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo2, "id": "2"},
-                {...bareInfo1, "id": "3"}
-            ])
-        })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo2, "id": "2"},
+                    {...bareInfo1, "id": "3"}
+                ],
+                "venue": {
+                    "ownerDid": venueOwner,
+                    "venueId": venueId
+                },
+            })
+        }).timeout(20000)
 
     })
 
