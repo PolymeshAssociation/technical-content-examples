@@ -1,11 +1,11 @@
 export interface AddressObject {
-    address: string;
-    name?: string;
+    address: string
+    name?: string
 }
   
 export interface Accounts {
-    get(): Promise<AddressObject[]>;
-    subscribe(handler: (update: AddressObject[]) => void | any): () => {};
+    get(): Promise<AddressObject[]>
+    subscribe(handler: (update: AddressObject[]) => void | any): () => {}
 }
   
 export enum NetworkName {
@@ -13,18 +13,18 @@ export enum NetworkName {
 }
   
 export type NetworkMeta = {
-    name: NetworkName;
-    label?: string;
-    wssUrl: string;
-};
+    name: NetworkName
+    label?: string
+    wssUrl: string
+}
 
 export interface InjectedNetwork {
-    get: () => Promise<NetworkMeta>;
-    subscribe: (cb: (network: NetworkMeta) => void) => () => void;
+    get: () => Promise<NetworkMeta>
+    subscribe: (cb: (network: NetworkMeta) => void) => () => void
 }
 
 export interface PolyWallet {
-    network: InjectedNetwork;
-    accounts: Accounts;
+    network: InjectedNetwork
+    accounts: Accounts
 }
   

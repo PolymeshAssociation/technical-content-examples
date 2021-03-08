@@ -1,6 +1,15 @@
 import Head from "next/head"
+import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
+import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
+import { TransactionQueue } from '@polymathnetwork/polymesh-sdk/internal'
+import {
+  Identity,
+  Instruction,
+  Venue,
+} from '@polymathnetwork/polymesh-sdk/types'
+import { NetworkMeta, PolyWallet } from "../src/ui-types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -46,7 +55,88 @@ export default function Home() {
     await getPendingSettlements(myInfo["traderId"])
   }
 
-  async function sendBuyerPaid(settlementId: string): Promise<Response> {
+  async function getPolyWalletApi(): Promise<Polymesh> {
+    setStatus("Getting your Polymesh Wallet")
+    // Move to top of the file when compilation error no longer present.
+    const {
+      web3Accounts,
+      web3Enable,
+      web3FromAddress,
+      web3ListRpcProviders,
+      web3UseRpcProvider
+    } = require('@polkadot/extension-dapp')
+    
+    const { 
+      publicRuntimeConfig: { 
+        appName,
+        polymesh: { nodeUrl }
+      }
+    } = getConfig()
+    setStatus(`Enabling the app ${appName}`)
+    const polkaDotExtensions = await web3Enable(appName)
+    const polyWallets: PolyWallet[] = polkaDotExtensions.filter(injected => injected["name"] === "polywallet")
+    if (polyWallets.length == 0) {
+      setStatus("You need to install the Polymesh Wallet extension")
+      throw new Error("No Polymesh Wallet")
+    }
+    const polyWallet: PolyWallet = polyWallets[0]
+    setStatus("Verifying network")
+    const network: NetworkMeta = await polyWallet.network.get()
+    if (network["wssUrl"].replace(/\/$/, '') !== nodeUrl.replace(/\/$/, '')) {
+      setStatus(`Your network needs to match ${nodeUrl}`);
+      throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
+    }
+    setStatus("Fetching your account")
+    const myAccounts = await polyWallet.accounts.get()
+    if (myAccounts.length == 0) {
+      setStatus("You need to create an account in the Polymesh Wallet extension")
+      return
+    }
+    const myAccount = myAccounts[0]
+    const myKeyring = new Keyring({
+      type: 'ed25519',
+    })
+    myKeyring.addFromAddress(myAccount.address)
+    const mySigner = polyWallet["signer"]
+    setStatus("Building your API")
+    return await Polymesh.connect({
+      nodeUrl,
+      keyring: myKeyring,
+      signer: mySigner,
+    })
+  }
+
+  async function affirm(instructionId: string): Promise<Instruction> {
+    const {
+      publicRuntimeConfig: {
+        polymesh: { venueId, usdToken }
+      }
+    } = getConfig()
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Getting exchange account")
+    const trader: Identity = await api.getIdentity({ "did": myInfo["info"]["venue"]["ownerDid"]})
+    setStatus("Getting the exchange venue")
+    const tradingVenue: Venue = (await trader.getVenues())
+    .find((venue: Venue) => venue.id.toString(10) == myInfo["info"]["venue"]["venueId"])
+    setStatus("Finding the pending instruction")
+    const myInstruction: Instruction = (await tradingVenue.getPendingInstructions())
+      .find((instruction: Instruction) => instruction.id.toString(10) == instructionId)
+    if (myInstruction == null) {
+      setStatus(`Instruction ${instructionId} not found in the venue, or not pending`)
+      throw new Error(`Instruction not found ${instructionId}`)
+    }
+    setStatus("Setting up affirmation queue")
+    const affirmQueue: TransactionQueue<Instruction> = await myInstruction.affirm()
+    setStatus("Affirming transaction")
+    const updatedInstruction: Instruction = await affirmQueue.run()
+    setStatus("Transaction affirmed")
+    return updatedInstruction
+  }
+
+  async function sendBuyerPays(settlementId: string): Promise<Response> {
+    const mySettlement = myInfo.info.settlements.find((settlement) => settlement["id"] === settlementId)
+    const instructionId: string = mySettlement["instructionId"]
+    const updatedInstruction: Instruction = await affirm(instructionId)
     const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { "method": "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
@@ -57,12 +147,15 @@ export default function Home() {
     return response
   }
 
-  async function submitBuyerPaid(e): Promise<void> {
+  async function submitBuyerPays(e): Promise<void> {
     e.preventDefault()
-    await sendBuyerPaid(e.target.getAttribute("data-settlement-id"))
+    await sendBuyerPays(e.target.getAttribute("data-settlement-id"))
   }
 
-  async function sendSellerTransferred(settlementId: string): Promise<Response> {
+  async function sendSellerTransfers(settlementId: string): Promise<Response> {
+    const mySettlement = myInfo.info.settlements.find((settlement) => settlement["id"] === settlementId)
+    const instructionId: string = mySettlement["instructionId"]
+    const updatedInstruction: Instruction = await affirm(instructionId)
     const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { "method": "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
@@ -73,9 +166,9 @@ export default function Home() {
     return response
   }
 
-  async function submitSellerTransferred(e): Promise<void> {
+  async function submitSellerTransfers(e): Promise<void> {
     e.preventDefault()
-    await sendSellerTransferred(e.target.getAttribute("data-settlement-id"))
+    await sendSellerTransfers(e.target.getAttribute("data-settlement-id"))
   }
 
   return (
@@ -114,7 +207,7 @@ export default function Home() {
             <div className={styles.column}>
               <div className='sell-column'>
 
-                <h3>Update as you go</h3>
+                <h3>Affirm what you recognise</h3>
 
                 {
                   myInfo["info"]["settlements"]
@@ -128,8 +221,8 @@ export default function Home() {
                         <span title="seller id"> {settlement["seller"]["id"]} </span>
                         <span> with the reference </span>
                         <span title="transfer reference">{settlement["id"]} </span>
-                        <button className="submit paid" onClick={submitBuyerPaid} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isPaid"] ? " Paid" : "Mark as paid"}
+                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
+                          {settlement["isPaid"] ? " Paid" : "Affirm payment"}
                         </button>
                       </div>
 
@@ -140,8 +233,8 @@ export default function Home() {
                         <span title="token"> {settlement["token"]} </span>
                         <span> to buyer </span>
                         <span title="buyer id"> {settlement["buyer"]["id"]} </span>
-                        <button className="submit transferred" onClick={submitSellerTransferred} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isTransferred"] ? " Transferred" : "Mark as transferred"}
+                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
+                          {settlement["isTransferred"] ? " Transferred" : "Affirm transfer"}
                         </button>
                       </div>
                     </div>)

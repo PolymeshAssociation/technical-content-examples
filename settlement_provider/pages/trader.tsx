@@ -68,10 +68,6 @@ export default function Home() {
     const myKeyring = new Keyring({
       type: 'ed25519',
     })
-    // The above fails
-    // error - ./node_modules/@polkadot/keyring/node_modules/@polkadot/util-crypto/hd/ledger/derivePrivate.mjs
-    // Can't import the named export 'BN_EIGHT' from non EcmaScript module (only default export is available)
-
     myKeyring.addFromAddress(myAccount.address)
     const mySigner = polyWallet["signer"]
     setStatus("Building your API")
