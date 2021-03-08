@@ -464,7 +464,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
                 "portfolioId": "1",
             }))
             const bareSellOrder: JSON = <JSON><unknown>{
@@ -472,7 +472,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ACME",
                 "price": 35,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
             }
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareSellOrder))
             const { req, res } = createMocks({
@@ -492,12 +492,12 @@ describe("/api/settlements Integration Tests", () => {
                 "id": settlements[0].id,
                 "buyer": {
                     "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
                     "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
                 },
                 "quantity": 10,
                 "token": "ACME",
@@ -527,7 +527,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
                 "portfolioId": "1",
             }
             await exchangeDb.setOrderInfo("1", new OrderInfo(bareBuyOrder))
@@ -536,7 +536,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 35,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
             }))
             const { req, res } = createMocks({
                 "method": "POST",
@@ -555,12 +555,12 @@ describe("/api/settlements Integration Tests", () => {
                 "id": settlements[0].id,
                 "buyer": {
                     "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
                     "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
                 },
                 "quantity": 10,
                 "token": "ACME",
