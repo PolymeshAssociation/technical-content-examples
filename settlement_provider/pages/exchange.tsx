@@ -52,11 +52,14 @@ export default function Home() {
   }
 
   async function createMatch(): Promise<Response> {
+    setStatus("Sending settlement")
     const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo["picked"]["buy"]}&sellerId=${myInfo["picked"]["sell"]}`, {
       "method": "POST"
     })
     if (settlementResponse.status == 200) {
-      setStatus("Settlement posted")
+      const settlement = await settlementResponse.json()
+      console.log(`Settlement posted at instruction ${settlement["instructionId"]}`)
+      setStatus(`Settlement posted at instruction ${settlement["instructionId"]}`)
     } else {
       console.log(settlementResponse.json())
       setStatus("Something went wrong")
