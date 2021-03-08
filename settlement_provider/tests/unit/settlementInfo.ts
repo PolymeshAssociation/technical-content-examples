@@ -2,6 +2,9 @@ import { describe } from "mocha"
 import { expect } from "chai"
 import { BigNumber } from "bignumber.js"
 import {
+    PortfolioLike,
+} from "@polymathnetwork/polymesh-sdk/types"
+import {
     SettlementParty,
     SettlementInfo,
     FullSettlementInfo,
@@ -16,7 +19,7 @@ import {
 } from "../../src/settlementInfo"
 import { OrderInfo, InvalidPolymeshDidError, } from "../../src/orderInfo"
 
-describe("Settlement Party Unit Tests", () => {
+describe("SettlementParty Unit Tests", () => {
 
     it("can construct from JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
@@ -85,6 +88,32 @@ describe("Settlement Party Unit Tests", () => {
         expect(back["id"]).to.equal("1")
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
         expect(info.portfolioId.toString(10)).to.equal("1")
+    })
+
+    it("can convert to numbered PortfolioLike", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "id": "1",
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": "1",
+        }
+        const info = new SettlementParty(bareInfo)
+        const portfolioLike: PortfolioLike = info.toPortfolioLike()
+
+        expect(portfolioLike).to.deep.equal({
+            "identity": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "id": new BigNumber("1")
+        })
+    })
+
+    it("can convert to default PortfolioLike", () => {
+        const bareInfo: JSON = <JSON><unknown>{
+            "id": "1",
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+        }
+        const info = new SettlementParty(bareInfo)
+        const portfolioLike: PortfolioLike = info.toPortfolioLike()
+
+        expect(portfolioLike).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
     })
 
 })

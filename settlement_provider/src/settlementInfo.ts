@@ -1,11 +1,18 @@
 import { BigNumber } from "bignumber.js"
-import { IOrderInfo, InvalidPolymeshDidError } from "./orderInfo"
+import {
+    PortfolioLike,
+} from "@polymathnetwork/polymesh-sdk/types"
+import {
+    IOrderInfo,
+    InvalidPolymeshDidError,
+} from "./orderInfo"
 
 export interface ISettlementParty {
     id: string
     polymeshDid: string
     portfolioId: BigNumber | null
     toJSON(): JSON
+    toPortfolioLike(): PortfolioLike
 }
 
 export interface ISettlementInfo {
@@ -62,6 +69,13 @@ export class SettlementParty implements ISettlementParty {
         }
         if (this.portfolioId) toReturn["portfolioId"] = this.portfolioId.toString(10)
         return toReturn
+    }
+
+    toPortfolioLike(): PortfolioLike {
+        return this.portfolioId ? {
+            "identity": this.polymeshDid,
+            "id": this.portfolioId,
+        } : this.polymeshDid
     }
 }
 
