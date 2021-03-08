@@ -1,6 +1,9 @@
 import Head from "next/head"
+import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
+import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
+import { NetworkMeta, PolyWallet } from "../src/ui-types"
 
 export default function Home() {
   const emptyOrder = {
@@ -20,6 +23,82 @@ export default function Home() {
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
     element.innerHTML = content
+  }
+
+  async function getPolyWalletApi(): Promise<Polymesh> {
+    setStatus("Getting your Polymesh Wallet")
+    // Move to top of the file when compilation error no longer present.
+    const {
+      web3Accounts,
+      web3Enable,
+      web3FromAddress,
+      web3ListRpcProviders,
+      web3UseRpcProvider
+    } = require('@polkadot/extension-dapp')
+    
+    const { 
+      publicRuntimeConfig: { 
+        appName,
+        polymesh: { nodeUrl }
+      }
+    } = getConfig()
+    setStatus(`Enabling the app ${appName}`)
+    const polkaDotExtensions = await web3Enable(appName)
+    const polyWallets: PolyWallet[] = polkaDotExtensions.filter(injected => injected["name"] === "polywallet")
+    if (polyWallets.length == 0) {
+      setStatus("You need to install the Polymesh Wallet extension")
+      throw new Error("No Polymesh Wallet")
+    }
+    const polyWallet: PolyWallet = polyWallets[0]
+    setStatus("Verifying network")
+    const network: NetworkMeta = await polyWallet.network.get()
+    if (network["wssUrl"].replace(/\/$/, '') !== nodeUrl.replace(/\/$/, '')) {
+      setStatus(`Your network needs to match ${nodeUrl}`);
+      throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
+    }
+    setStatus("Fetching your account")
+    const myAccounts = await polyWallet.accounts.get()
+    if (myAccounts.length == 0) {
+      setStatus("You need to create an account in the Polymesh Wallet extension")
+      return
+    }
+    const myAccount = myAccounts[0]
+    const myKeyring = new Keyring({
+      type: 'ed25519',
+    })
+    // The above fails
+    // error - ./node_modules/@polkadot/keyring/node_modules/@polkadot/util-crypto/hd/ledger/derivePrivate.mjs
+    // Can't import the named export 'BN_EIGHT' from non EcmaScript module (only default export is available)
+
+    myKeyring.addFromAddress(myAccount.address)
+    const mySigner = polyWallet["signer"]
+    setStatus("Building your API")
+    return await Polymesh.connect({
+      nodeUrl,
+      keyring: myKeyring,
+      signer: mySigner,
+    })
+  }
+
+  async function setDidFromPolyWallet(): Promise<string> {
+    setStatus("Getting your PolyWallet")
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Fetching your account")
+    const did: string = (await api.getCurrentIdentity()).did
+    setMyInfo({
+      ...myInfo,
+      "order": {
+        ...myInfo["order"],
+        "polymeshDid": did
+      },
+      "modified": true
+    })
+    return did
+  }
+
+  async function submitDidFromPolyWallet(e): Promise<string> {
+    e.preventDefault()
+    return setDidFromPolyWallet()
   }
 
   async function getMyOrder(): Promise<Response> {
@@ -188,6 +267,8 @@ export default function Home() {
             <div>
               <label htmlFor="order-polymeshDid">Your Polymesh did</label>
               <input name="polymeshDid" id="order-polymeshDid" type="text" placeholder="0x12345" value={myInfo["order"]["polymeshDid"]} onChange={onMyOrderChanged}></input>
+              &nbsp;
+              <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""}>Pick it from PolyWallet</button>
             </div>
 
             <div>
