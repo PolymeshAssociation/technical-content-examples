@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next"
+import getConfig from "next/config"
 import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
 import {
     DuplicatePartiesSettlementError,
@@ -40,6 +41,29 @@ async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrd
 }
 
 async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
+    const {
+        serverRuntimeConfig: {
+            polymesh: { accountMnemonic }
+        },
+        publicRuntimeConfig: {
+          appName,
+          polymesh: { nodeUrl, venueId, usdToken }
+        }
+      } = getConfig() || {
+        serverRuntimeConfig: {
+            polymesh: {
+                accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
+            },
+        },
+        publicRuntimeConfig: {
+            appName: "nextDaqSettle",
+            polymesh: {
+                nodeUrl: process.env.POLY_NODE_URL,
+                venueId: process.env.POLY_VENUE_ID,
+                usdToken: process.env.POLY_USD_TOKEN,
+            }
+        },
+    }
     const buyerId: string = <string>req.query.buyerId
     const sellerId: string = <string>req.query.sellerId
     const exchangeDb: IExchangeDb = await exchangeDbFactory()
