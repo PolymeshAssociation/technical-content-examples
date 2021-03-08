@@ -1,9 +1,9 @@
-import { ISettlementInfo, IFullSettlementInfo } from "./settlementInfo"
+import { IFullSettlementInfo, IPublishedSettlementInfo } from "./settlementInfo"
 
 export interface ISettlementDb {
     getSettlements(): Promise<IFullSettlementInfo[]>
-    getSettlementInfoById(id: any): Promise<ISettlementInfo>
-    setSettlementInfo(id: any, info: ISettlementInfo): Promise<void>
+    getSettlementInfoById(id: any): Promise<IPublishedSettlementInfo>
+    setSettlementInfo(id: any, info: IPublishedSettlementInfo): Promise<void>
 }
 
 export class SettlementDbError extends Error {

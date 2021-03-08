@@ -4,7 +4,7 @@ import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect, use } from "chai"
 import { createMocks } from "node-mocks-http"
 import { IAssignedOrderInfo, IOrderInfo, OrderInfo } from "../../src/orderInfo"
-import { IFullSettlementInfo, SettlementInfo } from "../../src/settlementInfo"
+import { IFullSettlementInfo, PublishedSettlementInfo, } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
@@ -67,10 +67,11 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET"
             })
@@ -98,6 +99,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
@@ -114,11 +116,12 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
+                "instructionId": "446",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 "method": "GET"
             })
@@ -146,6 +149,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
@@ -162,11 +166,12 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
+                "instructionId": "446",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 "method": "GET",
                 "query": {
@@ -211,10 +216,11 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET"
             })
@@ -242,6 +248,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
@@ -258,11 +265,12 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
+                "instructionId": "446",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 "method": "GET"
             })

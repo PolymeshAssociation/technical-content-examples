@@ -11,7 +11,11 @@ import {
     ISettlementEngine,
     NonExistentVenueError,
 } from "./settlementEngine"
-import { ISettlementInfo } from "./settlementInfo"
+import {
+    IPublishedSettlementInfo,
+    ISettlementInfo,
+    PublishedSettlementInfo,
+} from "./settlementInfo"
 
 export class SettlementEnginePoly implements ISettlementEngine {
 
@@ -27,19 +31,9 @@ export class SettlementEnginePoly implements ISettlementEngine {
         return venue
     }
 
-    async publish(settlement: ISettlementInfo): Promise<Instruction> {
-        const seller: PortfolioLike = settlement.seller.portfolioId === null
-            ? settlement.seller.polymeshDid
-            : {
-                "identity": settlement.seller.polymeshDid,
-                "id": new BigNumber(settlement.seller.portfolioId),
-            }
-        const buyer: PortfolioLike = settlement.buyer.portfolioId === null
-            ? settlement.buyer.polymeshDid
-            : {
-                "identity": settlement.buyer.polymeshDid,
-                "id": new BigNumber(settlement.buyer.portfolioId),
-            }
+    async publish(settlement: ISettlementInfo): Promise<IPublishedSettlementInfo> {
+        const seller: PortfolioLike = settlement.seller.toPortfolioLike()
+        const buyer: PortfolioLike = settlement.buyer.toPortfolioLike()
         const legs = [
             {
                 "token": settlement.token,
@@ -56,7 +50,11 @@ export class SettlementEnginePoly implements ISettlementEngine {
         ]
         const venue: Venue = await this.getVenue()
         const settlementQueue: TransactionQueue<Instruction> = await venue.addInstruction({ "legs": legs })
-        return await settlementQueue.run()
+        const instruction: Instruction = await settlementQueue.run()
+        return new PublishedSettlementInfo(<JSON><unknown>{
+            ...settlement.toJSON(),
+            "instructionId": instruction.id.toString(10)
+        })
     }
 
 }

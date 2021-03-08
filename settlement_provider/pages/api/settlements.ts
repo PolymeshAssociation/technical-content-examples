@@ -11,11 +11,14 @@ import {
     IncompatibleOrderTypeError,
     ISettlementInfo,
     WrongOrderTypeError,
+    IPublishedSettlementInfo,
 } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
+import settlementEngineFactory from "../../src/settlementEngineFactory"
+import { ISettlementEngine } from "../../src/settlementEngine"
 
 async function getSettlements(req: NextApiRequest): Promise<IFullSettlementInfo[]> {
     const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
@@ -42,17 +45,19 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const exchangeDb: IExchangeDb = await exchangeDbFactory()
     const buyOrder: IOrderInfo = await exchangeDb.getOrderInfoById(buyerId)
     const sellOrder: IOrderInfo = await exchangeDb.getOrderInfoById(sellerId)
-    const settlement: ISettlementInfo = createByMatchingOrders(
+    const matchedSettlement: ISettlementInfo = createByMatchingOrders(
         buyerId, buyOrder,
         sellerId, sellOrder)
+    const settlementEngine: ISettlementEngine = await settlementEngineFactory()
+    const settlement: IPublishedSettlementInfo = await settlementEngine.publish(matchedSettlement)
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
     await settlementDb.setSettlementInfo(settlementId, settlement)
-    await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
-    await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
+    await reduceOrder(exchangeDb, buyerId, buyOrder, matchedSettlement.quantity)
+    await reduceOrder(exchangeDb, sellerId, sellOrder, matchedSettlement.quantity)
     return new FullSettlementInfo({
         "id": settlementId,
-        ...settlement.toJSON(),
+        ...matchedSettlement.toJSON(),
     } as unknown as JSON)
 }
 

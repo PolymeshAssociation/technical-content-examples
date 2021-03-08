@@ -5,6 +5,7 @@ import {
 import {
     IOrderInfo,
     InvalidPolymeshDidError,
+    WrongNumericValueError,
 } from "./orderInfo"
 
 export interface ISettlementParty {
@@ -26,7 +27,11 @@ export interface ISettlementInfo {
     toJSON(): JSON
 }
 
-export interface IFullSettlementInfo extends ISettlementInfo {
+export interface IPublishedSettlementInfo extends ISettlementInfo {
+    instructionId: BigNumber
+}
+
+export interface IFullSettlementInfo extends IPublishedSettlementInfo {
     id: string
 }
 
@@ -125,7 +130,26 @@ export class SettlementInfo implements ISettlementInfo {
 
 }
 
-export class FullSettlementInfo extends SettlementInfo implements IFullSettlementInfo {
+export class PublishedSettlementInfo extends SettlementInfo implements IPublishedSettlementInfo {
+    instructionId: BigNumber
+
+    constructor(info: JSON) {
+        super(info)
+        requireDesiredType(info, "instructionId", "string")
+        this.instructionId = new BigNumber(info["instructionId"])
+        if (this.instructionId.toString(10) === "NaN") {
+            throw new WrongNumericValueError("instructionId", info["instructionId"])
+        }
+    }
+
+    toJSON(): JSON {
+        const json = super.toJSON()
+        json["instructionId"] = this.instructionId.toString(10)
+        return json
+    }
+   
+}
+export class FullSettlementInfo extends PublishedSettlementInfo implements IFullSettlementInfo {
     id: string
 
     constructor(info: JSON) {

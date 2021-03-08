@@ -3,8 +3,8 @@ import { promisify } from "util"
 import {
     FullSettlementInfo,
     IFullSettlementInfo,
-    ISettlementInfo,
-    SettlementInfo
+    IPublishedSettlementInfo,
+    PublishedSettlementInfo,
 } from "./settlementInfo"
 import { ISettlementDb, UnknownSettlementError } from "./settlementDb"
 
@@ -37,13 +37,13 @@ export class SettlementDbFs implements ISettlementDb {
                 [])
     }
 
-    async getSettlementInfoById(id: string): Promise<ISettlementInfo> {
+    async getSettlementInfoById(id: string): Promise<IPublishedSettlementInfo> {
         const info: JSON = (await getDb(this.dbPath))[id]
         if (typeof info === "undefined") throw new UnknownSettlementError(id)
-        return new SettlementInfo(info)
+        return new PublishedSettlementInfo(info)
     }
 
-    async setSettlementInfo(id: string, info: ISettlementInfo): Promise<void> {
+    async setSettlementInfo(id: string, info: IPublishedSettlementInfo): Promise<void> {
         const db:JSON  = await getDb(this.dbPath)
         db[id] = info.toJSON()
         return saveDb(this.dbPath, db)

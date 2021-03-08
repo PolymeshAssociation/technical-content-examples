@@ -2,7 +2,11 @@ import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { IFullSettlementInfo, ISettlementInfo, SettlementInfo } from "../../src/settlementInfo"
+import {
+    IFullSettlementInfo,
+    IPublishedSettlementInfo,
+    PublishedSettlementInfo,
+} from "../../src/settlementInfo"
 import { SettlementDbFs } from "../../src/settlementDbFs"
 import { ISettlementDb } from "../../src/settlementDb"
 use(require("chai-as-promised"))
@@ -43,11 +47,12 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "instructionId": "445",
             "isPaid": true,
             "isTransferred": false,
         }
 
-        await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo))
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo))
     })
 
     it("can get saved settlement info", async() => {
@@ -64,13 +69,14 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "instructionId": "445",
             "isPaid": true,
             "isTransferred": false,
         }
 
-        await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo))
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo))
 
-        const retrieved: SettlementInfo = await settlementDb.getSettlementInfoById("1")
+        const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("1")
         expect(retrieved.toJSON()).to.deep.equal(bareInfo)
     })
 
@@ -88,6 +94,7 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "instructionId": "445",
             "isPaid": true,
             "isTransferred": false,
         }
@@ -104,15 +111,16 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "instructionId": "446",
             "isPaid": false,
             "isTransferred": false,
         }
 
-        await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo1))
-        await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo1))
+        await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
 
-        const retrieved1: ISettlementInfo = await settlementDb.getSettlementInfoById("1")
-        const retrieved2: ISettlementInfo = await settlementDb.getSettlementInfoById("2")
+        const retrieved1: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("1")
+        const retrieved2: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("2")
         expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
         expect(retrieved2.toJSON()).to.deep.equal(bareInfo2)
     })
@@ -131,6 +139,7 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "price": 33,
+            "instructionId": "445",
             "isPaid": true,
             "isTransferred": false,
         }
@@ -147,12 +156,13 @@ describe("SettlementDbFs Unit Tests", () => {
             "quantity": 667,
             "token": "ACME",
             "price": 30,
+            "instructionId": "446",
             "isPaid": false,
             "isTransferred": false,
         }
 
-        await settlementDb.setSettlementInfo("1", new SettlementInfo(bareInfo1))
-        await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo1))
+        await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
 
         const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
         expect(retrieved[0].toJSON()).to.deep.equal({...bareInfo1, "id": "1"})

@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import {
-    SettlementInfo,
     ISettlementInfo,
     IncompleteSettlementInfoError,
     WrongTypeSettlementError,
     DuplicatePartiesSettlementError,
     NoActionToDoSettlementError,
     DuplicatePolymeshDidSettlementError,
+    PublishedSettlementInfo,
+    IPublishedSettlementInfo,
 } from "../../../src/settlementInfo"
 import { ISettlementDb, UnknownSettlementError } from "../../../src/settlementDb"
 import settlementDbFactory from "../../../src/settlementDbFactory"
@@ -18,7 +19,7 @@ async function getSettlementInfoById(req: NextApiRequest): Promise<ISettlementIn
 async function setSettlementInfo(req: NextApiRequest): Promise<void> {
     const id = <string>req.query.id
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    const settlement: ISettlementInfo = new SettlementInfo(typeof req.body === "string"
+    const settlement: IPublishedSettlementInfo = new PublishedSettlementInfo(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
     await settlementDb.setSettlementInfo(id, settlement)

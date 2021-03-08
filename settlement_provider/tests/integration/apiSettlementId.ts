@@ -3,7 +3,7 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
-import { ISettlementInfo, SettlementInfo } from "../../src/settlementInfo"
+import { IPublishedSettlementInfo, PublishedSettlementInfo, } from "../../src/settlementInfo"
 import { ISettlementDb } from "../../src/settlementDb"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import handleSettlementId from "../../pages/api/settlement/[id]"
@@ -60,10 +60,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET",
                 "query": {
@@ -95,6 +96,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
@@ -110,7 +112,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("4")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("4")
             expect(retrieved.toJSON()).to.deep.equal(bareInfo)
         })
 
@@ -129,6 +131,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
+                    "instructionId": "445",
                     "isPaid": true,
                     "isTransferred": false,
                 }
@@ -156,6 +159,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
+                    "instructionId": "445",
                     "isPaid": true,
                     "isTransferred": false,
                 }
@@ -186,6 +190,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
+                    "instructionId": "445",
                     "isPaid": true,
                     "isTransferred": false,
                 }
@@ -216,6 +221,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
+                    "instructionId": "445",
                     "isPaid": true,
                     "isTransferred": false,
                 }
@@ -245,10 +251,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
@@ -261,7 +268,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isPaid": true})
         })
 
@@ -279,10 +286,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
@@ -295,7 +303,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isTransferred": true})
         })
 
@@ -313,10 +321,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": false,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
@@ -330,7 +339,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({...bareInfo, "isPaid": true, "isTransferred": true})
         })
 
@@ -348,10 +357,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
@@ -378,10 +388,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
+                "instructionId": "445",
                 "isPaid": true,
                 "isTransferred": false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "PATCH",
                 "query": {
