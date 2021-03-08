@@ -34,7 +34,7 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -55,12 +55,11 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null
             },
             "quantity": 12345,
             "token": "ACME",
@@ -80,12 +79,11 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 12345,
             "token": "ACME",
@@ -97,12 +95,11 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "3",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-                "portfolioId": 2,
+                "portfolioId": "2",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 667,
             "token": "ACME",
@@ -125,12 +122,11 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 12345,
             "token": "ACME",
@@ -142,12 +138,11 @@ describe("SettlementDbFs Unit Tests", () => {
             "buyer": {
                 "id": "3",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-                "portfolioId": 2,
+                "portfolioId": "2",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 667,
             "token": "ACME",

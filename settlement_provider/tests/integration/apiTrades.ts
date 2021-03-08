@@ -44,14 +44,15 @@ describe("/api/trades Integration Tests", () => {
         })
 
         it("returns the info on previously set info", async () => {
-            await exchangeDb.setOrderInfo("3", new OrderInfo({
+            const bareInfo: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
-            } as unknown as JSON))
+                "portfolioId": "1",
+            }
+            await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
                 "method": "GET"
             })
@@ -61,31 +62,28 @@ describe("/api/trades Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([{
                 "id": "3",
-                "isBuy": false,
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                ...bareInfo,
             }])
         })
 
         it("returns the info on previously set double info", async () => {
-            await exchangeDb.setOrderInfo("3", new OrderInfo({
+            const bareInfo1: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
-            } as unknown as JSON))
-            await exchangeDb.setOrderInfo("2", new OrderInfo({
+                "portfolioId": "1",
+            }
+            const bareInfo2: JSON = <JSON><unknown>{
                 "isBuy": true,
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-            } as unknown as JSON))
+            }
+            await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo1))
+            await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
             const { req, res } = createMocks({
                 "method": "GET"
             })
@@ -96,21 +94,11 @@ describe("/api/trades Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal([
                 {
                     "id": "2",
-                    "isBuy": true,
-                    "quantity": 543,
-                    "token": "ACME",
-                    "price": 30,
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-                    "portfolioId": null
+                    ...bareInfo2,
                 },
                 {
                     "id": "3",
-                    "isBuy": false,
-                    "quantity": 12345,
-                    "token": "ACME",
-                    "price": 33,
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    ...bareInfo1,
                 }
             ])
         })

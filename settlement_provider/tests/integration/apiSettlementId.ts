@@ -51,12 +51,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -87,12 +86,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -126,7 +124,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "buyer": {
                         "id": "1",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        "portfolioId": 1,
+                        "portfolioId": "1",
                     },
                     "quantity": 12345,
                     "token": "ACME",
@@ -152,7 +150,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "buyer": {
                         "id": "1",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        "portfolioId": 1,
+                        "portfolioId": "1",
                     },
                     "seller": "2",
                     "quantity": 12345,
@@ -179,12 +177,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "buyer": {
                         "id": "1",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        "portfolioId": 1,
+                        "portfolioId": "1",
                     },
                     "seller": {
                         "id": "1",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                        "portfolioId": null,
                     },
                     "quantity": 12345,
                     "token": "ACME",
@@ -210,12 +207,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "buyer": {
                         "id": "1",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        "portfolioId": 1,
+                        "portfolioId": "1",
                     },
                     "seller": {
                         "id": "2",
                         "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        "portfolioId": null,
                     },
                     "quantity": 12345,
                     "token": "ACME",
@@ -240,12 +236,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -275,12 +270,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -310,12 +304,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -346,12 +339,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",
@@ -377,12 +369,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "buyer": {
                     "id": "1",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                    "portfolioId": null,
                 },
                 "quantity": 12345,
                 "token": "ACME",

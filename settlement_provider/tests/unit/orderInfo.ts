@@ -19,7 +19,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         const info = new OrderInfo(bareInfo)
@@ -29,7 +29,7 @@ describe("OrderInfo Unit Tests", () => {
         expect(info.token).to.equal("ACME")
         expect(info.price).to.equal(33)
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.portfolioId).to.equal(1)
+        expect(info.portfolioId.toString(10)).to.equal("1")
     })
 
     it("cannot construct from incomplete JSON", () => {
@@ -38,7 +38,7 @@ describe("OrderInfo Unit Tests", () => {
             "quantity": 12345,
             "token": "ACME",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(IncompleteOrderInfoError)
@@ -52,7 +52,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
@@ -67,7 +67,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
@@ -81,7 +81,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 0,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
@@ -95,7 +95,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(InvalidPolymeshDidError)
@@ -113,10 +113,7 @@ describe("OrderInfo Unit Tests", () => {
 
         const back: JSON = new OrderInfo(bareInfo).toJSON()
 
-        expect(back).to.deep.equal({
-            ...bareInfo,
-            "portfolioId": null
-        })
+        expect(back).to.deep.equal(bareInfo)
     })
 
     it("can convert to JSON", () => {
@@ -126,7 +123,7 @@ describe("OrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         const back: JSON = new OrderInfo(bareInfo).toJSON()
@@ -146,7 +143,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         const info: IAssignedOrderInfo = new AssignedOrderInfo(bareInfo)
@@ -157,7 +154,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
         expect(info.token).to.equal("ACME")
         expect(info.price).to.equal(33)
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.portfolioId).to.equal(1)
+        expect(info.portfolioId.toString(10)).to.equal("1")
     })
 
     it("cannot construct from incomplete JSON", () => {
@@ -180,7 +177,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         expect(() => new AssignedOrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
@@ -196,7 +193,7 @@ describe("AssignedOrderInfo Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
 
         const back: JSON = new AssignedOrderInfo(bareInfo).toJSON()

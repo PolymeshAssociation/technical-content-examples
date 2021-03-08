@@ -1,10 +1,12 @@
+import { BigNumber } from "bignumber.js"
+
 export interface IOrderInfo {
     isBuy: boolean
     quantity: number
     token: string
     price: number
     polymeshDid: string
-    portfolioId: number | null
+    portfolioId: BigNumber | null
     toJSON(): JSON
 }
 
@@ -29,7 +31,7 @@ export class OrderInfo implements IOrderInfo {
     token: string
     price: number
     polymeshDid: string
-    portfolioId: number | null
+    portfolioId: BigNumber | null
 
     constructor(info: JSON) {
         requireDesiredType(info, "isBuy", "boolean")
@@ -54,20 +56,21 @@ export class OrderInfo implements IOrderInfo {
         if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null) {
             this.portfolioId = null
         } else {
-            requireDesiredType(info, "portfolioId", "number")
-            this.portfolioId = info["portfolioId"]
+            requireDesiredType(info, "portfolioId", "string")
+            this.portfolioId = new BigNumber(info["portfolioId"])
         }
     }
 
     toJSON(): JSON {
-        return <JSON><unknown>{
+        const toReturn: JSON = <JSON><unknown>{
             "isBuy": this.isBuy,
             "quantity": this.quantity,
             "token": this.token,
             "price": this.price,
             "polymeshDid": this.polymeshDid,
-            "portfolioId": this.portfolioId,
         }
+        if (this.portfolioId) toReturn["portfolioId"] = this.portfolioId.toString(10)
+        return toReturn
     }
 
 }

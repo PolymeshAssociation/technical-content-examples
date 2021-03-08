@@ -1,9 +1,10 @@
+import { BigNumber } from "bignumber.js"
 import { IOrderInfo, InvalidPolymeshDidError } from "./orderInfo"
 
 export interface ISettlementParty {
     id: string
     polymeshDid: string
-    portfolioId: number | null
+    portfolioId: BigNumber | null
     toJSON(): JSON
 }
 
@@ -36,7 +37,7 @@ const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
 export class SettlementParty implements ISettlementParty {
     id: string
     polymeshDid: string
-    portfolioId: number | null
+    portfolioId: BigNumber | null
 
     constructor(info: JSON) {
         requireDesiredType(info, "id", "string")
@@ -49,17 +50,18 @@ export class SettlementParty implements ISettlementParty {
         if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null) {
             this.portfolioId = null
         } else {
-            requireDesiredType(info, "portfolioId", "number")
-            this.portfolioId = info["portfolioId"]
+            requireDesiredType(info, "portfolioId", "string")
+            this.portfolioId = new BigNumber(info["portfolioId"])
         }
     }
 
     toJSON(): JSON {
-        return <JSON><unknown>{
+        const toReturn: JSON = <JSON><unknown>{
             "id": this.id,
             "polymeshDid": this.polymeshDid,
-            "portfolioId": this.portfolioId,
         }
+        if (this.portfolioId) toReturn["portfolioId"] = this.portfolioId.toString(10)
+        return toReturn
     }
 }
 
@@ -142,12 +144,12 @@ export function createByMatchingOrders(buyerId: string, buyOrder: IOrderInfo, se
         "buyer": {
             "id": buyerId,
             "polymeshDid": buyOrder.polymeshDid,
-            "portfolioId": buyOrder.portfolioId,
+            "portfolioId": buyOrder.portfolioId?.toString(10),
         },
         "seller": {
             "id": sellerId,
             "polymeshDid": sellOrder.polymeshDid,
-            "portfolioId": sellOrder.portfolioId,
+            "portfolioId": sellOrder.portfolioId?.toString(10),
         },
         "quantity": quantity,
         "token": buyOrder.token,

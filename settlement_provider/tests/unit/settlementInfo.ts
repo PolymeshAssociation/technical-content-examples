@@ -1,5 +1,6 @@
 import { describe } from "mocha"
 import { expect } from "chai"
+import { BigNumber } from "bignumber.js"
 import {
     SettlementParty,
     SettlementInfo,
@@ -21,19 +22,19 @@ describe("Settlement Party Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "1",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         const info = new SettlementParty(bareInfo)
 
         expect(info.id).to.equal("1")
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.portfolioId).to.equal(1)
+        expect(info.portfolioId.toString(10)).to.equal("1")
     })
 
     it("cannot construct from incomplete JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         expect(() => new SettlementParty(bareInfo)).to.throw(IncompleteSettlementInfoError)
             .that.satisfies((error: IncompleteSettlementInfoError) => error.field === "id")
@@ -43,7 +44,7 @@ describe("Settlement Party Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "1",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         expect(() => new SettlementParty(bareInfo)).to.throw(InvalidPolymeshDidError)
             .that.satisfies((error: InvalidPolymeshDidError) => error.polymeshDid === "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc")
@@ -65,7 +66,7 @@ describe("Settlement Party Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": 1,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         expect(() => new SettlementParty(bareInfo)).to.throw(WrongTypeSettlementError)
             .that.satisfies((error: WrongTypeSettlementError) => error.field === "id"
@@ -76,14 +77,14 @@ describe("Settlement Party Unit Tests", () => {
         const bareInfo: JSON = <JSON><unknown>{
             "id": "1",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         const info = new SettlementParty(bareInfo)
         const back = info.toJSON()
 
         expect(back["id"]).to.equal("1")
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.portfolioId).to.equal(1)
+        expect(info.portfolioId.toString(10)).to.equal("1")
     })
 
 })
@@ -95,7 +96,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
                 },
             "seller": {
                 "id": "2",
@@ -111,7 +112,7 @@ describe("SettlementInfo Unit Tests", () => {
 
         expect(info.buyer.id).to.equal("1")
         expect(info.buyer.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.buyer.portfolioId).to.equal(1)
+        expect(info.buyer.portfolioId.toString(10)).to.equal("1")
         expect(info.seller.id).to.equal("2")
         expect(info.seller.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2")
         expect(info.seller.portfolioId).to.be.null
@@ -127,7 +128,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -147,7 +148,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -169,7 +170,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "1",
@@ -190,7 +191,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -211,7 +212,7 @@ describe("SettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -229,12 +230,11 @@ describe("SettlementInfo Unit Tests", () => {
         expect(back["buyer"]).to.deep.equal({
             "id": "1",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         })
         expect(back["seller"]).to.deep.equal({
             "id": "2",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-            "portfolioId": null,
         })
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
@@ -253,7 +253,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -270,7 +270,7 @@ describe("FullSettlementInfo Unit Tests", () => {
         expect(info.id).to.equal("3")
         expect(info.buyer.id).to.equal("1")
         expect(info.buyer.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-        expect(info.buyer.portfolioId).to.equal(1)
+        expect(info.buyer.portfolioId.toString(10)).to.equal("1")
         expect(info.seller.id).to.equal("2")
         expect(info.seller.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2")
         expect(info.seller.portfolioId).to.be.null
@@ -287,7 +287,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -308,7 +308,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -331,7 +331,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
@@ -350,12 +350,11 @@ describe("FullSettlementInfo Unit Tests", () => {
         expect(back["buyer"]).to.deep.equal({
             "id": "1",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         })
         expect(back["seller"]).to.deep.equal({
             "id": "2",
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-            "portfolioId": null,
         })
         expect(back["quantity"]).to.equal(12345)
         expect(back["token"]).to.equal("ACME")
@@ -375,7 +374,7 @@ describe("Matching orders Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         } as unknown as JSON)
         const buyOrder2: OrderInfo = new OrderInfo({
             "isBuy": true,
@@ -396,7 +395,7 @@ describe("Matching orders Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         } as unknown as JSON)
         const sellOrder: OrderInfo = new OrderInfo({
             "isBuy": false,
@@ -417,7 +416,7 @@ describe("Matching orders Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
     } as unknown as JSON)
         const sellOrder: OrderInfo = new OrderInfo({
             "isBuy": false,
@@ -438,7 +437,7 @@ describe("Matching orders Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
     } as unknown as JSON)
         const sellOrder: OrderInfo = new OrderInfo({
             "isBuy": false,
@@ -459,7 +458,7 @@ describe("Matching orders Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         })
         const bareSellOrder: JSON = <JSON><unknown>{
             "isBuy": false,
@@ -476,12 +475,11 @@ describe("Matching orders Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 10,
             "token": "ACME",
@@ -492,15 +490,14 @@ describe("Matching orders Unit Tests", () => {
     })
 
     it("creates settlement when got a match, and got correct data, buyer has more", async () => {
-        const bareBuyOrder: JSON = <JSON><unknown>{
+        const buyOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": true,
             "quantity": 15,
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
-        }
-        const buyOrder: OrderInfo = new OrderInfo(bareBuyOrder)
+            "portfolioId": "1",
+        })
         const sellOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": false,
             "quantity": 10,
@@ -515,12 +512,11 @@ describe("Matching orders Unit Tests", () => {
             "buyer": {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                "portfolioId": null,
             },
             "quantity": 10,
             "token": "ACME",

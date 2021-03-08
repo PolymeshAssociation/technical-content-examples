@@ -53,7 +53,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "token": "ACME",
                 "price": 33,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             }
             await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
@@ -80,7 +80,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "token": "ACME",
                 "price": 33,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             }
             const { req, res } = createMocks({
                 "method": "PUT",
@@ -109,7 +109,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "token": "ACME",
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 }
             })
 
@@ -131,7 +131,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "token": "ACME",
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 }
             })
 
@@ -153,7 +153,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "token": "ACME",
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 }
             })
 
@@ -175,7 +175,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "token": "ACME",
                     "price": 0,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 }
             })
 
@@ -197,7 +197,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "token": "ACME",
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc",
-                    "portfolioId": 1,
+                    "portfolioId": "1",
                 }
             })
 
@@ -229,10 +229,7 @@ describe("/api/trader/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
             const order = await exchangeDb.getOrderInfoById("4")
-            expect(order.toJSON()).to.deep.equal({
-                ...bareInfo,
-                "portfolioId": null
-            })
+            expect(order.toJSON()).to.deep.equal(bareInfo)
         })
 
     })
@@ -246,7 +243,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "token": "ACME",
                 "price": 33,
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                "portfolioId": 1,
+                "portfolioId": "1",
             } as unknown as JSON))
             const { req, res } = createMocks({
                 "method": "DELETE",

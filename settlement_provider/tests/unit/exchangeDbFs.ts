@@ -37,7 +37,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
     })
@@ -49,7 +49,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
 
@@ -64,7 +64,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
@@ -72,7 +72,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 30,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-            "portfolioId": 2,
+            "portfolioId": "2",
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
@@ -91,7 +91,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": '1',
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
@@ -99,7 +99,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 30,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-            "portfolioId": 2,
+            "portfolioId": "2",
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
@@ -117,7 +117,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 33,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            "portfolioId": 1,
+            "portfolioId": "1",
         }
         const bareInfo2: JSON = <JSON><unknown>{
             "isBuy": false,
@@ -125,7 +125,7 @@ describe("ExchangeDbFs Unit Tests", () => {
             "token": "ACME",
             "price": 30,
             "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-            "portfolioId": 3,
+            "portfolioId": "3",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
