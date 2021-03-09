@@ -41,12 +41,8 @@ describe("CustomerInfo Unit Tests", () => {
             "valid": true,
         }
         const info = new CustomerInfo(bareInfo)
-        const back = info.toJSON()
 
-        expect(back["name"]).to.equal("John Doe")
-        expect(back["country"]).to.equal("Gb")
-        expect(back["passport"]).to.equal("12345")
-        expect(back["valid"]).to.be.true
+        expect(info.toJSON()).to.deep.equal(bareInfo)
     })
 
     it("can patch name with single JSON info", () => {
@@ -61,12 +57,11 @@ describe("CustomerInfo Unit Tests", () => {
         info.patch(<JSON><unknown>{
             "name": "Jane Doe"
         })
-        const back = info.toJSON()
 
-        expect(back["name"]).to.equal("Jane Doe")
-        expect(back["country"]).to.equal("Gb")
-        expect(back["passport"]).to.equal("12345")
-        expect(back["valid"]).to.be.true
+        expect(info.toJSON()).to.deep.equal({
+            ...bareInfo,
+            "name": "Jane Doe",
+        })
     })
 
     it("can patch name with partial JSON info", () => {
@@ -82,12 +77,12 @@ describe("CustomerInfo Unit Tests", () => {
             "name": "Jane Doe",
             "valid": false,
         })
-        const back = info.toJSON()
 
-        expect(back["name"]).to.equal("Jane Doe")
-        expect(back["country"]).to.equal("Gb")
-        expect(back["passport"]).to.equal("12345")
-        expect(back["valid"]).to.be.false
+        expect(info.toJSON()).to.deep.equal({
+            ...bareInfo,
+            "name": "Jane Doe",
+            "valid": false,
+        })
     })
 
 })

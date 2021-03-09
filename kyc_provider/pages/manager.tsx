@@ -22,10 +22,10 @@ export default function Home() {
   }
 
   function onCustomerIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "id": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "id": e.target.value,
+    }))
   }
 
   async function getCustomerInfo(): Promise<Response> {
@@ -35,10 +35,10 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
-        "info": body
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "info": body,
+      }))
     } else {
       setStatus("Something went wrong")
     }
@@ -51,19 +51,19 @@ export default function Home() {
   }
 
   async function sendValidInfo(valid: boolean): Promise<void> {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "info": {
-        ...myInfo["info"],
-        "valid": valid
-      }
-    })
+        ...prevInfo["info"],
+        "valid": valid,
+      },
+    }))
     setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PATCH",
       "body": JSON.stringify({
-        "valid": valid
-      })
+        "valid": valid,
+      }),
     })
     if (response.status == 200) {
       setStatus("Info submitted and saved")

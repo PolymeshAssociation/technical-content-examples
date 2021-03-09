@@ -13,7 +13,7 @@ export default function Home() {
       "passport": "",
       "valid": false,
     },
-    "modified": false
+    "modified": false,
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -24,18 +24,18 @@ export default function Home() {
 
   async function getMyInfo(): Promise<Response> {
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, { "method": "GET" })
+    const body = await response.json()
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
     } else if (response.status == 200) {
       setStatus("Info fetched")
-      const body = await response.json()
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "info": body
-      })
+      }))
       
     } else {
-      setStatus("Something went wrong")
+      setStatus(`Something went wrong ${body["status"]}`)
     }
     return response
   }
@@ -46,23 +46,24 @@ export default function Home() {
   }
 
   async function sendMyInfo(): Promise<void> {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "modified": false
-    })
+    }))
     setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PUT",
       "body": JSON.stringify(myInfo["info"])
     })
+    const body = await response.json()
     if (response.status == 200) {
-      setStatus("Info submitted and saved")
+      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "modified": true
-      })
+      }))
     }
   }
 
@@ -72,32 +73,32 @@ export default function Home() {
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "id": e.target.value
-    })
+    }))
   }
 
   function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "info": {
-        ...myInfo["info"],
+        ...prevInfo["info"],
         [e.target.name]: e.target.value
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
   }
 
   function onCountryChanged(countryCode: CountryInfo, target: object): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "info": {
-        ...myInfo["info"],
+        ...prevInfo["info"],
         [target["name"]]: countryCode.value
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
   }
 
   return (
