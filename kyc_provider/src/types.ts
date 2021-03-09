@@ -5,7 +5,7 @@ export declare type CountryInfo = {
     value: string
     label: string
 }
-  
+
 export function getCountryList(): CountryInfo[] {
     return Object.entries(countries.getNames("en", { select: "official" })).map(([code, countryName]) => {
         return {

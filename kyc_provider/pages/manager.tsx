@@ -12,7 +12,7 @@ export default function Home() {
       "country": "",
       "passport": "",
       "valid": false,
-    }
+    },
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -65,8 +65,9 @@ export default function Home() {
         "valid": valid,
       }),
     })
+    const body = await response.json()
     if (response.status == 200) {
-      setStatus("Info submitted and saved")
+      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
       await getCustomerInfo()

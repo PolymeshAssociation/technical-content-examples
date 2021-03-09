@@ -19,14 +19,14 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
         })
         customerDb = await customerDbFactory()
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
         await fsPromises.unlink(dbPath)
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns 404 on get unknown", async () => {
             const { req, res } = createMocks({
                 "method": "GET",
@@ -40,7 +40,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
         })
-    
+
         it("returns the info on previously set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "name": "John Doe",
@@ -66,7 +66,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
     })
 
     describe("PUT", () => {
-    
+
         it("returns 200 on set info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "name": "John Doe",
@@ -88,7 +88,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
             expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal(bareInfo)
         })
-    
+
         it("returns 200 on set info missing valid", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "name": "John Doe",
@@ -116,7 +116,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
     })
 
     describe("PATCH", () => {
-    
+
         it("returns 404 on patch unknown", async () => {
             const { req, res } = createMocks({
                 "method": "PATCH",
@@ -134,7 +134,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "not found"})
         })
-    
+
         it("returns 200 on patch existing info", async () => {
             const bareInfo: JSON = <JSON><unknown>{
                 "name": "John Doe",

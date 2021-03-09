@@ -33,7 +33,6 @@ export default function Home() {
         ...prevInfo,
         "info": body
       }))
-      
     } else {
       setStatus(`Something went wrong ${body["status"]}`)
     }
@@ -59,7 +58,7 @@ export default function Home() {
     if (response.status == 200) {
       setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
-      setStatus("Something went wrong")
+      setStatus(`Something went wrong: ${body["status"]}`)
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "modified": true
@@ -75,7 +74,7 @@ export default function Home() {
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      "id": e.target.value
+      "id": e.target.value,
     }))
   }
 
@@ -84,7 +83,7 @@ export default function Home() {
       ...prevInfo,
       "info": {
         ...prevInfo["info"],
-        [e.target.name]: e.target.value
+        [e.target.name]: e.target.value,
       },
       "modified": true,
     }))
@@ -95,7 +94,7 @@ export default function Home() {
       ...prevInfo,
       "info": {
         ...prevInfo["info"],
-        [target["name"]]: countryCode.value
+        [target["name"]]: countryCode.value,
       },
       "modified": true,
     }))
