@@ -37,9 +37,9 @@ export default function Home() {
       web3ListRpcProviders,
       web3UseRpcProvider
     } = require('@polkadot/extension-dapp')
-    
-    const { 
-      publicRuntimeConfig: { 
+
+    const {
+      publicRuntimeConfig: {
         appName,
         polymesh: { nodeUrl }
       }
@@ -137,12 +137,12 @@ export default function Home() {
       const portfolios = [{ "id": "", "name": "default" }]
       if (typeof body["portfolioId"] === "string") portfolios.push({
         "id": body["portfolioId"],
-        "name": "Loading"
+        "name": "Loading",
       })
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "order": body,
-        "portfolios": portfolios
+        "portfolios": portfolios,
       }))
       setPortfolioChoices(body["polymeshDid"])
     } else {
@@ -162,7 +162,7 @@ export default function Home() {
       setStatus("Order deleted")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "order": Object.assign({}, emptyOrder)
+        "order": Object.assign({}, emptyOrder),
       }))
     } else {
       setStatus("Something went wrong")
@@ -178,12 +178,12 @@ export default function Home() {
   async function sendMyOrder(): Promise<void> {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      "modified": false
+      "modified": false,
     }))
     setStatus("Submitting order...")
     const response = await fetch(`/api/trader/${myInfo["id"]}`, {
       "method": "PUT",
-      "body": JSON.stringify(myInfo["order"])
+      "body": JSON.stringify(myInfo["order"]),
     })
     if (response.status == 200) {
       setStatus("Order submitted and saved")
@@ -191,7 +191,7 @@ export default function Home() {
       setStatus("Something went wrong")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "modified": true
+        "modified": true,
       }))
     }
   }
@@ -202,10 +202,10 @@ export default function Home() {
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "id": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "id": e.target.value,
+    }))
   }
 
   function changeMyOrder(field: string, value: any): void {
@@ -234,9 +234,9 @@ export default function Home() {
       ...prevInfo,
       "order": {
         ...prevInfo["order"],
-        "isBuy": e.target.value === "true"
+        "isBuy": e.target.value === "true",
       },
-      "modified": true
+      "modified": true,
     }))
   }
 

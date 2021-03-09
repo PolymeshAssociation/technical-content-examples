@@ -17,15 +17,15 @@ use(require("chai-as-promised"))
 const exists = promisify(existsAsync)
 
 describe("/api/settlements Integration Tests", () => {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
         } },
         publicRuntimeConfig: { polymesh: {
             nodeUrl, venueId, usdToken,
-        } }
+        } },
     } = nextConfig
-    
+
     let exchangeDbPath: string, settlementDbPath: string
     let exchangeDb: IExchangeDb, settlementDb: ISettlementDb
     let toRestore: RestoreFn
@@ -66,7 +66,7 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -76,7 +76,7 @@ describe("/api/settlements Integration Tests", () => {
                 "settlements": [],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -101,7 +101,7 @@ describe("/api/settlements Integration Tests", () => {
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -114,7 +114,7 @@ describe("/api/settlements Integration Tests", () => {
                 }],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -157,7 +157,7 @@ describe("/api/settlements Integration Tests", () => {
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -166,11 +166,11 @@ describe("/api/settlements Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "settlements": [
                     {...bareInfo2, "id": "2"},
-                    {...bareInfo1, "id": "3"}
+                    {...bareInfo1, "id": "3"},
                 ],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -215,8 +215,8 @@ describe("/api/settlements Integration Tests", () => {
             const { req, res } = createMocks({
                 "method": "GET",
                 "query": {
-                    "traderId": "1"
-                }
+                    "traderId": "1",
+                },
             })
 
             await handleSettlements(req, res)
@@ -224,11 +224,11 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "settlements": [
-                    {...bareInfo1, "id": "3"}
+                    {...bareInfo1, "id": "3"},
                 ],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -239,7 +239,7 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -249,7 +249,7 @@ describe("/api/settlements Integration Tests", () => {
                 "settlements": [],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -274,7 +274,7 @@ describe("/api/settlements Integration Tests", () => {
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -287,7 +287,7 @@ describe("/api/settlements Integration Tests", () => {
                 }],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -330,7 +330,7 @@ describe("/api/settlements Integration Tests", () => {
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
@@ -339,11 +339,11 @@ describe("/api/settlements Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({
                 "settlements": [
                     {...bareInfo2, "id": "2"},
-                    {...bareInfo1, "id": "3"}
+                    {...bareInfo1, "id": "3"},
                 ],
                 "venue": {
                     "ownerDid": venueOwner,
-                    "venueId": venueId
+                    "venueId": venueId,
                 },
             })
         }).timeout(20000)
@@ -366,7 +366,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -389,7 +389,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -419,7 +419,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -449,7 +449,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -480,7 +480,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -543,7 +543,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)

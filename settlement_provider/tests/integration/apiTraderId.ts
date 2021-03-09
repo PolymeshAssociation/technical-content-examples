@@ -18,7 +18,7 @@ describe("/api/trader/[id] Integration Tests", () => {
     beforeEach("mock env", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "EXCHANGE_DB_PATH": dbPath
+            "EXCHANGE_DB_PATH": dbPath,
         })
         exchangeDb = await exchangeDbFactory()
     })
@@ -37,7 +37,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -60,7 +60,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -87,7 +87,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "query": {
                     "id": "4",
                 },
-                "body": bareInfo
+                "body": bareInfo,
             })
 
             await handleTraderId(req, res)
@@ -110,7 +110,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
                     "portfolioId": "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -132,7 +132,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
                     "portfolioId": "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -154,7 +154,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "price": 33,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
                     "portfolioId": "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -176,7 +176,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "price": 0,
                     "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
                     "portfolioId": "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -249,7 +249,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "DELETE",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -264,7 +264,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "DELETE",
                 "query": {
                     "id": "4",
-                }
+                },
             })
 
             await handleTraderId(req, res)

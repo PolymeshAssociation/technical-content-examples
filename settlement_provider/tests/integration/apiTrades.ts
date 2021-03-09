@@ -18,7 +18,7 @@ describe("/api/trades Integration Tests", () => {
     beforeEach("mock env", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "EXCHANGE_DB_PATH": dbPath
+            "EXCHANGE_DB_PATH": dbPath,
         })
         exchangeDb = await exchangeDbFactory()
     })
@@ -34,7 +34,7 @@ describe("/api/trades Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -54,7 +54,7 @@ describe("/api/trades Integration Tests", () => {
             }
             await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -85,7 +85,7 @@ describe("/api/trades Integration Tests", () => {
             await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo1))
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -99,7 +99,7 @@ describe("/api/trades Integration Tests", () => {
                 {
                     "id": "3",
                     ...bareInfo1,
-                }
+                },
             ])
         })
 

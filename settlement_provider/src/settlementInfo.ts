@@ -147,7 +147,7 @@ export class PublishedSettlementInfo extends SettlementInfo implements IPublishe
         json["instructionId"] = this.instructionId.toString(10)
         return json
     }
-   
+
 }
 export class FullSettlementInfo extends PublishedSettlementInfo implements IFullSettlementInfo {
     id: string

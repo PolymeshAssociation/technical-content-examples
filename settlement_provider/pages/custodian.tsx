@@ -18,9 +18,9 @@ export default function Home() {
       "settlements": [],
       "venue": {
         "ownerDid": "",
-        "venueId": ""
-      }
-    }
+        "venueId": "",
+      },
+    },
   })
 
   function setStatus(content: string) {
@@ -29,10 +29,10 @@ export default function Home() {
   }
 
   function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "traderId": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "traderId": e.target.value,
+    }))
   }
 
   async function getPendingSettlements(traderId: string): Promise<Response> {
@@ -40,10 +40,10 @@ export default function Home() {
     if (response.status == 200) {
       setStatus("Settlements fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
-        "info": body
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "info": body,
+      }))
     } else {
       setStatus("Something went wrong")
     }
@@ -63,13 +63,13 @@ export default function Home() {
       web3Enable,
       web3FromAddress,
       web3ListRpcProviders,
-      web3UseRpcProvider
+      web3UseRpcProvider,
     } = require('@polkadot/extension-dapp')
-    
-    const { 
-      publicRuntimeConfig: { 
+
+    const {
+      publicRuntimeConfig: {
         appName,
-        polymesh: { nodeUrl }
+        polymesh: { nodeUrl },
       }
     } = getConfig()
     setStatus(`Enabling the app ${appName}`)
@@ -109,7 +109,7 @@ export default function Home() {
   async function affirm(instructionId: string): Promise<Instruction> {
     const {
       publicRuntimeConfig: {
-        polymesh: { venueId, usdToken }
+        polymesh: { venueId, usdToken, },
       }
     } = getConfig()
     const api: Polymesh = await getPolyWalletApi()

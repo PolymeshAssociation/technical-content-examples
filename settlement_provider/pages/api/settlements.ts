@@ -35,20 +35,20 @@ async function getSettlements(req: NextApiRequest): Promise<SettlementListInfo> 
     const venueInfo: VenueInfo = await settlementEngine.getVenue()
     const simpleVenueInfo: SimpleVenueInfo = {
         "ownerDid": venueInfo.owner.did,
-        "venueId": venueInfo.venue.id.toString(10)
+        "venueId": venueInfo.venue.id.toString(10),
     }
     const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
     const traderId: string = <string>req.query.traderId
     if (typeof traderId === "undefined") {
         return {
             "settlements": all,
-            "venue": simpleVenueInfo
+            "venue": simpleVenueInfo,
         }
     }
     return {
         "settlements": all
             .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId),
-        "venue": simpleVenueInfo
+        "venue": simpleVenueInfo,
     }
 }
 
@@ -75,12 +75,12 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const settlement: IPublishedSettlementInfo = await settlementEngine.publish(matchedSettlement)
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    await settlementDb.setSettlementInfo(settlementId, settlement)
-    await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
-    await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
+    await settlementDb.setSettlementInfo(settlementId, matchedSettlement)
+    await reduceOrder(exchangeDb, buyerId, buyOrder, matchedSettlement.quantity)
+    await reduceOrder(exchangeDb, sellerId, sellOrder, matchedSettlement.quantity)
     return new FullSettlementInfo({
         "id": settlementId,
-        ...settlement.toJSON(),
+        ...matchedSettlement.toJSON(),
     } as unknown as JSON)
 }
 
