@@ -16,7 +16,7 @@ import {
     OrderInfo,
 } from "../../src/orderInfo"
 
-describe("Settlement Party Unit Tests", () => {
+describe("SettlementParty Unit Tests", () => {
 
     it("can construct from JSON", () => {
         const bareInfo: JSON = <JSON><unknown>{
@@ -292,7 +292,7 @@ describe("Matching orders Unit Tests", () => {
             "quantity": 10,
             "token": "ACME",
             "price": 33,
-    } as unknown as JSON)
+        } as unknown as JSON)
         const sellOrder: OrderInfo = new OrderInfo({
             "isBuy": false,
             "quantity": 15,
