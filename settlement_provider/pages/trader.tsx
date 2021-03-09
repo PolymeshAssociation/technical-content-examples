@@ -27,10 +27,10 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
-        "order": body
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "order": body,
+      }))
 
     } else {
       setStatus("Something went wrong")
@@ -47,10 +47,10 @@ export default function Home() {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "DELETE" })
     if (response.status == 200) {
       setStatus("Order deleted")
-      setMyInfo({
-        ...myInfo,
-        "order": Object.assign({}, emptyOrder)
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "order": Object.assign({}, emptyOrder),
+      }))
     } else {
       setStatus("Something went wrong")
     }
@@ -63,23 +63,23 @@ export default function Home() {
   }
 
   async function sendMyOrder(): Promise<void> {
-    setMyInfo({
-      ...myInfo,
-      "modified": false
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "modified": false,
+    }))
     setStatus("Submitting order...")
     const response = await fetch(`/api/trader/${myInfo["id"]}`, {
       "method": "PUT",
-      "body": JSON.stringify(myInfo["order"])
+      "body": JSON.stringify(myInfo["order"]),
     })
     if (response.status == 200) {
       setStatus("Order submitted and saved")
     } else {
       setStatus("Something went wrong")
-      setMyInfo({
-        ...myInfo,
-        "modified": true
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "modified": true,
+      }))
     }
   }
 
@@ -89,21 +89,21 @@ export default function Home() {
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "id": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "id": e.target.value,
+    }))
   }
 
   function changeMyOrder(field: string, value: any): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "order": {
-        ...myInfo["order"],
-        [field]: value
+        ...prevInfo["order"],
+        [field]: value,
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
   }
 
   function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -115,14 +115,14 @@ export default function Home() {
   }
 
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "order": {
-        ...myInfo["order"],
-        "isBuy": e.target.value === "true"
+        ...prevInfo["order"],
+        "isBuy": e.target.value === "true",
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
   }
 
   return (

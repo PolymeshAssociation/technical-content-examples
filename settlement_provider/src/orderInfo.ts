@@ -43,12 +43,13 @@ export class OrderInfo implements IOrderInfo {
     }
 
     toJSON(): JSON {
-        return <JSON><unknown>{
+        const toReturn: JSON = <JSON><unknown>{
             "isBuy": this.isBuy,
             "quantity": this.quantity,
             "token": this.token,
             "price": this.price,
         }
+        return toReturn
     }
 
 }

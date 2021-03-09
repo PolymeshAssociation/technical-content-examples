@@ -18,7 +18,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
     beforeEach("mock env", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "SETTLEMENT_DB_PATH": dbPath
+            "SETTLEMENT_DB_PATH": dbPath,
         })
         settlementDb = await settlementDbFactory()
     })
@@ -37,7 +37,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -65,7 +65,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -97,7 +97,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "query": {
                     "id": "4",
                 },
-                "body": bareInfo
+                "body": bareInfo,
             })
 
             await handleSettlementId(req, res)
@@ -123,7 +123,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "price": 33,
                     "isPaid": true,
                     "isTransferred": false,
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -148,7 +148,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "price": 33,
                     "isPaid": true,
                     "isTransferred": false,
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -157,7 +157,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "wrong type string on field seller"})
         })
 
-        it("returns 400 on set info same buyer and seller", async () => {
+        it("returns 400 on set info same buyer and seller id", async () => {
             const { req, res } = createMocks({
                 "method": "PUT",
                 "query": {
@@ -175,7 +175,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "price": 33,
                     "isPaid": true,
                     "isTransferred": false,
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -208,7 +208,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "query": {
                     "id": "3",
                     "isPaid": "",
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -239,7 +239,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "query": {
                     "id": "3",
                     "isTransferred": "",
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -271,7 +271,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     "id": "3",
                     "isTransferred": "",
                     "isPaid": "",
-                }
+                },
             })
 
             await handleSettlementId(req, res)
@@ -301,7 +301,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "method": "PATCH",
                 "query": {
                     "id": "3",
-                }
+                },
             })
             await handleSettlementId(req, res)
 
@@ -329,7 +329,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 "query": {
                     "id": "4",
                     "isPaid": "",
-                }
+                },
             })
 
             await handleSettlementId(req, res)

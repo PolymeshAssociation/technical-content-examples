@@ -1,4 +1,6 @@
-import { IOrderInfo } from "./orderInfo"
+import {
+    IOrderInfo,
+} from "./orderInfo"
 
 export interface ISettlementParty {
     id: string
@@ -38,9 +40,10 @@ export class SettlementParty implements ISettlementParty {
     }
 
     toJSON(): JSON {
-        return <JSON><unknown>{
+        const toReturn: JSON = <JSON><unknown>{
             "id": this.id,
         }
+        return toReturn
     }
 }
 

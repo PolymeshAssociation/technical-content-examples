@@ -44,13 +44,15 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [],
+            })
         })
 
         it("returns the info on previously set info", async () => {
@@ -69,16 +71,18 @@ describe("/api/settlements Integration Tests", () => {
             }
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([{
-                ...bareInfo,
-                "id": "3",
-            }])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [{
+                    ...bareInfo,
+                    "id": "3",
+                }],
+            })
         })
 
         it("returns the info on previously set double info", async () => {
@@ -111,16 +115,18 @@ describe("/api/settlements Integration Tests", () => {
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo2, "id": "2"},
-                {...bareInfo1, "id": "3"}
-            ])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo2, "id": "2"},
+                    {...bareInfo1, "id": "3"},
+                ],
+            })
         })
 
         it("returns the filtered info on previously set double info", async () => {
@@ -155,16 +161,18 @@ describe("/api/settlements Integration Tests", () => {
             const { req, res } = createMocks({
                 "method": "GET",
                 "query": {
-                    "traderId": "1"
-                }
+                    "traderId": "1",
+                },
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo1, "id": "3"}
-            ])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo1, "id": "3"},
+                ],
+            })
         })
 
     })
@@ -173,13 +181,15 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [],
+            })
         })
 
         it("returns the info on previously set info", async () => {
@@ -198,16 +208,18 @@ describe("/api/settlements Integration Tests", () => {
             }
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([{
-                ...bareInfo,
-                "id": "3",
-            }])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [{
+                    ...bareInfo,
+                    "id": "3",
+                }],
+            })
         })
 
         it("returns the info on previously set double info", async () => {
@@ -240,16 +252,18 @@ describe("/api/settlements Integration Tests", () => {
             await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal([
-                {...bareInfo2, "id": "2"},
-                {...bareInfo1, "id": "3"}
-            ])
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                "settlements": [
+                    {...bareInfo2, "id": "2"},
+                    {...bareInfo1, "id": "3"},
+                ],
+            })
         })
 
     })
@@ -268,7 +282,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -289,7 +303,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -316,7 +330,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -343,7 +357,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -371,7 +385,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)
@@ -428,7 +442,7 @@ describe("/api/settlements Integration Tests", () => {
                 "query": {
                     "buyerId": "1",
                     "sellerId": "2",
-                }
+                },
             })
 
             await handleSettlements(req, res)

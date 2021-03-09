@@ -18,7 +18,7 @@ describe("/api/trader/[id] Integration Tests", () => {
     beforeEach("mock env", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "EXCHANGE_DB_PATH": dbPath
+            "EXCHANGE_DB_PATH": dbPath,
         })
         exchangeDb = await exchangeDbFactory()
     })
@@ -37,7 +37,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -58,7 +58,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "GET",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -83,7 +83,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "query": {
                     "id": "4",
                 },
-                "body": bareInfo
+                "body": bareInfo,
             })
 
             await handleTraderId(req, res)
@@ -104,7 +104,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -124,7 +124,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 33,
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -144,7 +144,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 0,
                     "token": "ACME",
                     "price": 33,
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -164,7 +164,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     "quantity": 12345,
                     "token": "ACME",
                     "price": 0,
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -188,7 +188,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "DELETE",
                 "query": {
                     "id": "3",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -203,7 +203,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                 "method": "DELETE",
                 "query": {
                     "id": "4",
-                }
+                },
             })
 
             await handleTraderId(req, res)

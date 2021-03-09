@@ -6,8 +6,8 @@ export default function Home() {
   const [myInfo, setMyInfo] = useState({
     "traderId": "",
     "info": {
-      "settlements": []
-    }
+      "settlements": [],
+    },
   })
 
   function setStatus(content: string) {
@@ -16,10 +16,10 @@ export default function Home() {
   }
 
   function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "traderId": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "traderId": e.target.value,
+    }))
   }
 
   async function getPendingSettlements(traderId: string): Promise<Response> {
@@ -27,10 +27,10 @@ export default function Home() {
     if (response.status == 200) {
       setStatus("Settlements fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
-        "info": { "settlements": body }
-      })
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "info": body,
+      }))
     } else {
       setStatus("Something went wrong")
     }
@@ -42,7 +42,7 @@ export default function Home() {
     await getPendingSettlements(myInfo["traderId"])
   }
 
-  async function sendBuyerPaid(settlementId: string): Promise<Response> {
+  async function sendBuyerPays(settlementId: string): Promise<Response> {
     const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { "method": "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
@@ -53,12 +53,12 @@ export default function Home() {
     return response
   }
 
-  async function submitBuyerPaid(e): Promise<void> {
+  async function submitBuyerPays(e): Promise<void> {
     e.preventDefault()
-    await sendBuyerPaid(e.target.getAttribute("data-settlement-id"))
+    await sendBuyerPays(e.target.getAttribute("data-settlement-id"))
   }
 
-  async function sendSellerTransferred(settlementId: string): Promise<Response> {
+  async function sendSellerTransfers(settlementId: string): Promise<Response> {
     const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { "method": "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
@@ -69,9 +69,9 @@ export default function Home() {
     return response
   }
 
-  async function submitSellerTransferred(e): Promise<void> {
+  async function submitSellerTransfers(e): Promise<void> {
     e.preventDefault()
-    await sendSellerTransferred(e.target.getAttribute("data-settlement-id"))
+    await sendSellerTransfers(e.target.getAttribute("data-settlement-id"))
   }
 
   return (
@@ -124,7 +124,7 @@ export default function Home() {
                         <span title="seller id"> {settlement["seller"]["id"]} </span>
                         <span> with the reference </span>
                         <span title="transfer reference">{settlement["id"]} </span>
-                        <button className="submit paid" onClick={submitBuyerPaid} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
+                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
                           {settlement["isPaid"] ? " Paid" : "Mark as paid"}
                         </button>
                       </div>
@@ -136,7 +136,7 @@ export default function Home() {
                         <span title="token"> {settlement["token"]} </span>
                         <span> to buyer </span>
                         <span title="buyer id"> {settlement["buyer"]["id"]} </span>
-                        <button className="submit transferred" onClick={submitSellerTransferred} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
+                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
                           {settlement["isTransferred"] ? " Transferred" : "Mark as transferred"}
                         </button>
                       </div>

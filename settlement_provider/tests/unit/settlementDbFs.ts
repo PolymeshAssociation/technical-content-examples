@@ -2,7 +2,11 @@ import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { IFullSettlementInfo, ISettlementInfo, SettlementInfo } from "../../src/settlementInfo"
+import {
+    IFullSettlementInfo,
+    ISettlementInfo,
+    SettlementInfo,
+} from "../../src/settlementInfo"
 import { SettlementDbFs } from "../../src/settlementDbFs"
 import { ISettlementDb } from "../../src/settlementDb"
 use(require("chai-as-promised"))

@@ -5,12 +5,12 @@ import styles from "../styles/Home.module.css"
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
     "info": {
-      "orders": []
+      "orders": [],
     },
     "picked": {
       "sell": "",
-      "buy": ""
-    }
+      "buy": "",
+    },
   })
 
   function setStatus(content: string) {
@@ -23,12 +23,12 @@ export default function Home() {
     if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "info": {
-          "orders": body
-        }
-      })
+          "orders": body,
+        },
+      }))
     } else {
       setStatus(`Something went wrong ${response.status}`)
     }
@@ -41,22 +41,26 @@ export default function Home() {
 
   function onTradeSelected(isBuy: boolean) {
     return function(e: React.MouseEvent<HTMLElement, MouseEvent>): void {
-      setMyInfo({
-        ...myInfo,
+      const tradeId = e.currentTarget.getAttribute("data-trade-id")
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "picked": {
-          ...myInfo["picked"],
-          [ isBuy ? "buy" : "sell" ]: e.currentTarget.getAttribute("data-trade-id")
-        }
-      })
+          ...prevInfo["picked"],
+          [ isBuy ? "buy" : "sell" ]: tradeId,
+        },
+      }))
     }
   }
 
   async function createMatch(): Promise<Response> {
+    setStatus("Sending settlement")
     const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo["picked"]["buy"]}&sellerId=${myInfo["picked"]["sell"]}`, {
       "method": "POST"
     })
     if (settlementResponse.status == 200) {
-      setStatus("Settlement posted")
+      const settlement = await settlementResponse.json()
+      console.log(`Settlement posted at instruction ${settlement["id"]}`)
+      setStatus(`Settlement posted at instruction ${settlement["id"]}`)
     } else {
       console.log(settlementResponse.json())
       setStatus("Something went wrong")

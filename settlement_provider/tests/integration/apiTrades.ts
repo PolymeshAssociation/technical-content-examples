@@ -18,7 +18,7 @@ describe("/api/trades Integration Tests", () => {
     beforeEach("mock env", async() => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "EXCHANGE_DB_PATH": dbPath
+            "EXCHANGE_DB_PATH": dbPath,
         })
         exchangeDb = await exchangeDbFactory()
     })
@@ -34,7 +34,7 @@ describe("/api/trades Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -44,14 +44,15 @@ describe("/api/trades Integration Tests", () => {
         })
 
         it("returns the info on previously set info", async () => {
-            await exchangeDb.setOrderInfo("3", new OrderInfo({
+            const bareInfo: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
-            } as unknown as JSON))
+            }
+            await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -59,28 +60,27 @@ describe("/api/trades Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal([{
                 "id": "3",
-                "isBuy": false,
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
+                ...bareInfo,
             }])
         })
 
         it("returns the info on previously set double info", async () => {
-            await exchangeDb.setOrderInfo("3", new OrderInfo({
+            const bareInfo1: JSON = <JSON><unknown>{
                 "isBuy": false,
                 "quantity": 12345,
                 "token": "ACME",
                 "price": 33,
-            } as unknown as JSON))
-            await exchangeDb.setOrderInfo("2", new OrderInfo({
+            }
+            const bareInfo2: JSON = <JSON><unknown>{
                 "isBuy": true,
                 "quantity": 543,
                 "token": "ACME",
                 "price": 30,
-            } as unknown as JSON))
+            }
+            await exchangeDb.setOrderInfo("3", new OrderInfo(bareInfo1))
+            await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET"
+                "method": "GET",
             })
 
             await handleTrades(req, res)
@@ -89,18 +89,12 @@ describe("/api/trades Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal([
                 {
                     "id": "2",
-                    "isBuy": true,
-                    "quantity": 543,
-                    "token": "ACME",
-                    "price": 30,
+                    ...bareInfo2,
                 },
                 {
                     "id": "3",
-                    "isBuy": false,
-                    "quantity": 12345,
-                    "token": "ACME",
-                    "price": 33,
-                }
+                    ...bareInfo1,
+                },
             ])
         })
 

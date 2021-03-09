@@ -12,7 +12,9 @@ import {
     IncompatibleOrderTypeError,
     ISettlementInfo,
 } from "../../src/settlementInfo"
-import { OrderInfo } from "../../src/orderInfo"
+import {
+    OrderInfo,
+} from "../../src/orderInfo"
 
 describe("Settlement Party Unit Tests", () => {
 
@@ -151,17 +153,7 @@ describe("SettlementInfo Unit Tests", () => {
         const info = new SettlementInfo(bareInfo)
         const back = info.toJSON()
 
-        expect(back["buyer"]).to.deep.equal({
-            "id": "1",
-        })
-        expect(back["seller"]).to.deep.equal({
-            "id": "2",
-        })
-        expect(back["quantity"]).to.equal(12345)
-        expect(back["token"]).to.equal("ACME")
-        expect(back["price"]).to.equal(33)
-        expect(back["isPaid"]).to.be.false
-        expect(back["isTransferred"]).to.be.false
+        expect(back).to.deep.equal(bareInfo)
     })
 
 })
@@ -251,18 +243,7 @@ describe("FullSettlementInfo Unit Tests", () => {
         const info = new FullSettlementInfo(bareInfo)
         const back = info.toJSON()
 
-        expect(back["id"]).to.equal("3")
-        expect(back["buyer"]).to.deep.equal({
-            "id": "1",
-        })
-        expect(back["seller"]).to.deep.equal({
-            "id": "2",
-        })
-        expect(back["quantity"]).to.equal(12345)
-        expect(back["token"]).to.equal("ACME")
-        expect(back["price"]).to.equal(33)
-        expect(back["isPaid"]).to.be.true
-        expect(back["isTransferred"]).to.be.false
+        expect(back).to.deep.equal(bareInfo)
     })
 
 })
@@ -356,13 +337,12 @@ describe("Matching orders Unit Tests", () => {
     })
 
     it("creates settlement when got a match, and got correct data, buyer has more", async () => {
-        const bareBuyOrder: JSON = <JSON><unknown>{
+        const buyOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": true,
             "quantity": 15,
             "token": "ACME",
             "price": 33,
-        }
-        const buyOrder: OrderInfo = new OrderInfo(bareBuyOrder)
+        })
         const sellOrder: OrderInfo = new OrderInfo(<JSON><unknown>{
             "isBuy": false,
             "quantity": 10,

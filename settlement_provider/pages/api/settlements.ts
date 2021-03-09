@@ -1,9 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
 import {
-    createByMatchingOrders,
+    DuplicatePartiesSettlementError,
     FullSettlementInfo,
     IFullSettlementInfo,
+    IncompleteSettlementInfoError,
+    WrongTypeSettlementError,
+    createByMatchingOrders,
     IncompatibleOrderTypeError,
     ISettlementInfo,
     WrongOrderTypeError,
@@ -13,13 +16,22 @@ import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 
-async function getSettlements(req: NextApiRequest): Promise<IFullSettlementInfo[]> {
+interface SettlementListInfo {
+    settlements: IFullSettlementInfo[]
+}
+
+async function getSettlements(req: NextApiRequest): Promise<SettlementListInfo> {
     const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
     const traderId: string = <string>req.query.traderId
     if (typeof traderId === "undefined") {
-        return all
+        return {
+            "settlements": all,
+        }
     }
-    return all.filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId);
+    return {
+        "settlements": all
+            .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId),
+    }
 }
 
 async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrderInfo, quantity: number) {
@@ -38,17 +50,17 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const exchangeDb: IExchangeDb = await exchangeDbFactory()
     const buyOrder: IOrderInfo = await exchangeDb.getOrderInfoById(buyerId)
     const sellOrder: IOrderInfo = await exchangeDb.getOrderInfoById(sellerId)
-    const settlement: ISettlementInfo = createByMatchingOrders(
+    const matchedSettlement: ISettlementInfo = createByMatchingOrders(
         buyerId, buyOrder,
         sellerId, sellOrder)
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    await settlementDb.setSettlementInfo(settlementId, settlement)
-    await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
-    await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
+    await settlementDb.setSettlementInfo(settlementId, matchedSettlement)
+    await reduceOrder(exchangeDb, buyerId, buyOrder, matchedSettlement.quantity)
+    await reduceOrder(exchangeDb, sellerId, sellOrder, matchedSettlement.quantity)
     return new FullSettlementInfo({
         "id": settlementId,
-        ...settlement.toJSON(),
+        ...matchedSettlement.toJSON(),
     } as unknown as JSON)
 }
 
@@ -71,7 +83,13 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object>
             res.status(400).json({"status": `Order is of wrong type, expectedIsBuy: ${e.expectedIsBuy}`})
         } else if (e instanceof IncompatibleOrderTypeError) {
             res.status(400).json({"status": `Orders are not for same token, ${e.buyToken} / ${e.sellToken}`})
-        } else {
+        } else if (e instanceof IncompleteSettlementInfoError) {
+            res.status(400).json({"status": `missing field ${e.field}`})
+        } else if (e instanceof WrongTypeSettlementError) {
+            res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+        } else if (e instanceof DuplicatePartiesSettlementError) {
+            res.status(400).json({"status": `same buyer and seller: ${e.partyId}`})
+       } else {
             console.log(e)
             res.status(500).json({"status": "internal error"})
         }
