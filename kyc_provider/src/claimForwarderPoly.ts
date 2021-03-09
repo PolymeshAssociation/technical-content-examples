@@ -3,7 +3,8 @@ import {
     IClaimForwarder,
     ClaimsAddedResult, ClaimsRevokedResult,
     ClaimForwarderError, NonExistentKycIdentityError,
-    NoClaimForCustomerError, InvalidCustomerError, IncompleteCustomerError
+    NoClaimForCustomerError, InvalidCustomerError, IncompleteCustomerError,
+    NonExistentCustomerPolymeshIdError,
 } from "./claimForwarder"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity, ScopeType, ClaimType, ClaimData } from "@polymathnetwork/polymesh-sdk/types"
@@ -52,15 +53,25 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         return providerId
     }
 
+    async hasValidIdentity(customer: ICustomerInfo): Promise<boolean> {
+        return customer.polymeshDid !== null &&
+            this.api.isIdentityValid({ "identity": customer.polymeshDid })
+    }
+
     async getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData> {
-        const customerIdentity: Identity = this.api.getIdentity({ did: customer.polymeshDid })
-        if (!(await this.api.isIdentityValid({ identity: customerIdentity }))) {
+        if (!customer.valid) {
+            throw new InvalidCustomerError(customer)
+        }
+        if (customer.polymeshDid === null) {
             throw new IncompleteCustomerError(customer)
+        }
+        if (!(await this.hasValidIdentity(customer))) {
+            throw new NonExistentCustomerPolymeshIdError(customer)
         }
 
         const myId = await this.api.getCurrentIdentity() // TODO
         const issuedClaims = await this.api.claims.getIdentitiesWithClaims({
-            targets: [customerIdentity],
+            targets: [customer.polymeshDid],
             trustedClaimIssuers: [await this.api.getCurrentIdentity()],
             claimTypes: [ ClaimType.Jurisdiction ],
             includeExpired: false,
@@ -84,14 +95,6 @@ export class ClaimForwarderPoly implements IClaimForwarder {
     }
 
     async addJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsAddedResult> {
-        if (!customer.valid) {
-            throw new InvalidCustomerError(customer)
-        }
-        const customerIdentity: Identity = this.api.getIdentity({ did: customer.polymeshDid })
-        if (!(await this.api.isIdentityValid({ identity: customerIdentity }))) {
-            throw new IncompleteCustomerError(customer)
-        }
-
         let claim: ClaimData
         try {
             claim = await this.getJurisdictionClaim(customer)
@@ -105,7 +108,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         }
         const queue: TransactionQueue<void> = await this.api.claims.addClaims({
             claims: [{
-                target: customerIdentity,
+                target: customer.polymeshDid,
                 claim: {
                     type: ClaimType.Jurisdiction,
                     code: customer.jurisdiction,

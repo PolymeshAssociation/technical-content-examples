@@ -94,18 +94,18 @@ export default function Home() {
 
   async function getMyInfo(): Promise<Response> {
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, { "method": "GET" })
+    const body = await response.json()
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
     } else if (response.status == 200) {
       setStatus("Info fetched")
-      const body = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "info": body
       }))
 
     } else {
-      setStatus("Something went wrong")
+      setStatus(`Something went wrong ${body["status"]}`)
     }
     return response
   }
@@ -125,11 +125,11 @@ export default function Home() {
       "method": "PUT",
       "body": JSON.stringify(myInfo["info"])
     })
+    const body = await response.json()
     if (response.status == 200) {
-      const body = await response.json()
       setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
-      setStatus("Something went wrong")
+      setStatus(`Something went wrong: ${body["status"]}`)
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "modified": true

@@ -3,6 +3,7 @@ import { ICustomerInfo } from "./customerInfo"
 
 export interface IClaimForwarder {
     getServiceProviderIdentity(): Promise<Identity>
+    hasValidIdentity(customer: ICustomerInfo): Promise<boolean>
     getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData>
     addJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsAddedResult>
     revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResult>
@@ -42,6 +43,12 @@ export class InvalidCustomerError extends ClaimForwarderError {
 }
 
 export class IncompleteCustomerError extends ClaimForwarderError {
+    constructor (public customer: ICustomerInfo) {
+        super()
+    }
+}
+
+export class NonExistentCustomerPolymeshIdError extends ClaimForwarderError {
     constructor (public customer: ICustomerInfo) {
         super()
     }

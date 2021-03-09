@@ -3,7 +3,7 @@ import { CustomerInfo, ICustomerInfo, InvalidCountryCodeError, InvalidPolymeshDi
 import { UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 import ClaimForwarderFactory from "../../../src/claimForwarderFactory"
-import { ClaimsAddedResult } from "../../../src/claimForwarder"
+import { ClaimsAddedResult, NonExistentCustomerPolymeshIdError } from "../../../src/claimForwarder"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
     return await (await customerDbFactory()).getCustomerInfoById(<string>req.query.id)
@@ -15,13 +15,17 @@ async function setCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult |
     const customerInfo = new CustomerInfo(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
-    await customerDb.setCustomerInfo(id, customerInfo)
-    if (customerInfo.valid && customerInfo.polymeshDid !== null) {
+    let toReturn = null
+    if (customerInfo.polymeshDid !== null) {
         const claimForwarder = await ClaimForwarderFactory()
-        return await claimForwarder.addJurisdictionClaim(customerInfo)
-    } else {
-        return null
+        if (customerInfo.valid) {
+            toReturn = await claimForwarder.addJurisdictionClaim(customerInfo)
+        } else if (!(await claimForwarder.hasValidIdentity(customerInfo))) {
+            throw new NonExistentCustomerPolymeshIdError(customerInfo)
+        }
     }
+    await customerDb.setCustomerInfo(id, customerInfo)
+    return toReturn
 }
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult | null> {
@@ -31,13 +35,17 @@ async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResul
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
-    await customerDb.setCustomerInfo(id, customerInfo)
-    if (customerInfo.valid && customerInfo.polymeshDid !== null) {
+    let toReturn = null
+    if (customerInfo.polymeshDid !== null) {
         const claimForwarder = await ClaimForwarderFactory()
-        return await claimForwarder.addJurisdictionClaim(customerInfo)
-    } else {
-        return null
+         if (customerInfo.valid) {
+            toReturn = await claimForwarder.addJurisdictionClaim(customerInfo)
+        } else if (!(await claimForwarder.hasValidIdentity(customerInfo))) {
+            throw new NonExistentCustomerPolymeshIdError(customerInfo)
+        }
     }
+    await customerDb.setCustomerInfo(id, customerInfo)
+    return toReturn
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object | ICustomerInfo>): Promise<any> {
@@ -70,6 +78,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({"status": `invalid country code ${e.countryCode}`})
         } else if (e instanceof InvalidPolymeshDidError) {
             res.status(400).json({"status": `invalid Polymesh Did ${e.polymeshDid}`})
+        } else if (e instanceof NonExistentCustomerPolymeshIdError) {
+            res.status(400).json({"status": `non-existent Polymesh Did ${e.customer.polymeshDid}`})
         } else {
             res.status(500).json({"status": "internal error"})
         }

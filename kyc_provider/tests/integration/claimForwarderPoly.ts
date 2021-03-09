@@ -3,8 +3,9 @@ import { expect, use } from "chai"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import * as nextConfig from "../../next.config.js"
 import { CustomerInfo } from "../../src/customerInfo"
-import { ClaimForwarderPoly } from "../../src/claimForwarderPoly"
-import { ClaimData, ClaimType, CountryCode, ScopedClaim, ScopeType } from "@polymathnetwork/polymesh-sdk/types"
+import { ClaimForwarderPoly, TooManyClaimsCustomerError } from "../../src/claimForwarderPoly"
+import { ClaimData, ClaimType, CountryCode, ScopeType } from "@polymathnetwork/polymesh-sdk/types"
+import { NonExistentCustomerPolymeshIdError } from "../../src/claimForwarder.js"
 use(require("chai-as-promised"))
 
 describe("ClaimForwarderPoly Integration Tests", () => {
@@ -46,8 +47,24 @@ describe("ClaimForwarderPoly Integration Tests", () => {
         }
         const info = new CustomerInfo(bareInfo)
 
-        await expect(claimForwarder.getJurisdictionClaim(info))
-            .to.eventually.throw
+        await expect(claimForwarder.getJurisdictionClaim(info)).to.be.eventually.rejected
+            .that.satisfies((error: TooManyClaimsCustomerError) => error.count === 2)
+    }).timeout(30000)
+
+    it("throws when trying to add a claim on an unknown identity", async() => {
+        const claimForwarder = new ClaimForwarderPoly(api)
+        const bareInfo: JSON = <JSON><unknown>{
+            "name": "OnTrust",
+            "country": "Gb",
+            "passport": "12345",
+            "valid": true,
+            "jurisdiction": "Ie",
+            "polymeshDid":  "0x".padEnd(66, "0"),
+        }
+        const info = new CustomerInfo(bareInfo)
+        expect(await claimForwarder.hasValidIdentity(info)).to.be.false
+        await expect(claimForwarder.addJurisdictionClaim(info)).to.be.eventually.rejected
+            .that.satisfies((error: NonExistentCustomerPolymeshIdError) => error.customer.polymeshDid === "0x".padEnd(66, "0"))
     }).timeout(30000)
 
     it("can get claim on known identity", async() => {

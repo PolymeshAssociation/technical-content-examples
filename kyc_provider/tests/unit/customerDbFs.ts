@@ -4,6 +4,7 @@ import { expect, use } from "chai"
 import { CountryCode } from "@polymathnetwork/polymesh-sdk/generated/types"
 import { CustomerInfo } from "../../src/customerInfo"
 import { CustomerDbFs } from "../../src/customerDbFs"
+import { UnknownCustomerError } from "../../src/customerDb"
 use(require("chai-as-promised"))
 
 describe("CustomerDbFs Unit Tests", () => {
@@ -19,8 +20,8 @@ describe("CustomerDbFs Unit Tests", () => {
 
     it("throws when missing id", async() => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
-        await expect(db.getCustomerInfoById("1"))
-            .to.eventually.throw
+        await expect(db.getCustomerInfoById("1")).to.be.eventually.rejected
+            .that.satisfies((error: UnknownCustomerError) => error.id === "1")
     })
 
     it("can save customer info in an empty db", async() => {
@@ -84,19 +85,8 @@ describe("CustomerDbFs Unit Tests", () => {
         const retrieved1: CustomerInfo = await db.getCustomerInfoById("1")
         const retrieved2: CustomerInfo = await db.getCustomerInfoById("2")
 
-        expect(retrieved1.name).to.equal("John Doe")
-        expect(retrieved1.country).to.equal(CountryCode["Gb"])
-        expect(retrieved1.passport).to.equal("12345")
-        expect(retrieved1.valid).to.be.true
-        expect(retrieved1.jurisdiction).to.equal(CountryCode["Ie"])
-        expect(retrieved1.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
-
-        expect(retrieved2.name).to.equal("Jane Doe")
-        expect(retrieved2.country).to.equal(CountryCode["Gb"])
-        expect(retrieved2.passport).to.equal("12346")
-        expect(retrieved2.valid).to.be.false
-        expect(retrieved2.jurisdiction).to.equal(CountryCode["Fr"])
-        expect(retrieved2.polymeshDid).to.equal("0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde")
+        expect(retrieved1.toJSON()).to.deep.equal(bareInfo1)
+        expect(retrieved2.toJSON()).to.deep.equal(bareInfo2)
     })
 
 })
