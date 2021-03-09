@@ -67,8 +67,8 @@ export default function Home() {
         "valid": valid,
       }),
     })
+    const body = await response.json()
     if (response.status == 200) {
-      const body = await response.json()
       setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
