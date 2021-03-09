@@ -103,7 +103,6 @@ export default function Home() {
         ...prevInfo,
         "info": body
       }))
-
     } else {
       setStatus(`Something went wrong ${body["status"]}`)
     }

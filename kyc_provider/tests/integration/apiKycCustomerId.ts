@@ -171,7 +171,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 "body": {
                     "passport": "12346",
                     "valid": false,
-                }
+                },
             })
 
             await handleKycCustomerId(req, res)
@@ -206,7 +206,6 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "ok"})
-
             expect((await customerDb.getCustomerInfoById("3")).toJSON()).to.deep.equal({
                 ...bareInfo,
                 "passport": "12346",
