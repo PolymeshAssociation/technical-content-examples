@@ -6,12 +6,12 @@ export declare type CountryInfo = {
     value: string
     label: string
 }
-  
+
 export function getCountryList(): CountryInfo[] {
     return Object.values(CountryCode).sort().map((code: string) => {
         return {
             "value": code,
-            "label": countries.getName(code.toUpperCase(), "en") || code
+            "label": countries.getName(code.toUpperCase(), "en") || code,
         }
     })
 }

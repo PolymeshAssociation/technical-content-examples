@@ -138,7 +138,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         })
         await revokeQueue.run()
         // revokeQueue.transactions.map(tx => tx.txHash) // TODO
-    
+
         // TODO forward the queue so it can be monitored?
 
         return new ClaimsRevokedResultPoly(true)

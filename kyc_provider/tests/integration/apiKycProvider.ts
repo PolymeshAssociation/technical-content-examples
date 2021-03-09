@@ -5,15 +5,15 @@ import * as nextConfig from "../../next.config.js"
 import handleKycProvider from "../../pages/api/kycProvider"
 
 describe("/api/kycProvider Integration Tests", () => {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
-            middlewareKey
-        } },
+            middlewareKey,
+        }, },
         publicRuntimeConfig: { polymesh: {
-            nodeUrl
-        } }
+            nodeUrl,
+        }, },
     } = nextConfig
     let toRestore: RestoreFn
 
@@ -22,16 +22,16 @@ describe("/api/kycProvider Integration Tests", () => {
             "POLY_NODE_URL": nodeUrl,
             "POLY_ACCOUNT_MNEMONIC": accountMnemonic,
             "MIDDLEWARE_LINK": middlewareLink,
-            "MIDDLEWARE_KEY": middlewareKey
+            "MIDDLEWARE_KEY": middlewareKey,
         })
     })
-    
+
     afterEach("restore env", async() => {
         toRestore()
     })
-    
+
     describe("GET", () => {
-    
+
         it("returns 200", async () => {
             const { req, res } = createMocks({ "method": "GET" })
 
@@ -40,7 +40,7 @@ describe("/api/kycProvider Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())["did"]).to.match(/^0x[0-9a-fA-F]{64}$/)
         }).timeout(20000)
-    
+
     })
 
 })

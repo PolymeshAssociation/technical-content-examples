@@ -16,9 +16,9 @@ export default function Home() {
       "passport": "",
       "valid": false,
       "jurisdiction": "",
-      "polymeshDid": ""
+      "polymeshDid": "",
     },
-    "modified": false
+    "modified": false,
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -49,9 +49,9 @@ export default function Home() {
       web3ListRpcProviders,
       web3UseRpcProvider
     } = require('@polkadot/extension-dapp')
-    
-    const { 
-      publicRuntimeConfig: { 
+
+    const {
+      publicRuntimeConfig: {
         appName,
         // TODO remove middlewareLink and middlewareKey if still undesirable
         polymesh: { nodeUrl, middlewareLink, middlewareKey }
@@ -99,11 +99,11 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Info fetched")
       const body = await response.json()
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "info": body
-      })
-      
+      }))
+
     } else {
       setStatus("Something went wrong")
     }
@@ -116,10 +116,10 @@ export default function Home() {
   }
 
   async function sendMyInfo(): Promise<void> {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "modified": false
-    })
+    }))
     setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
       "method": "PUT",
@@ -130,10 +130,10 @@ export default function Home() {
       setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
     } else {
       setStatus("Something went wrong")
-      setMyInfo({
-        ...myInfo,
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
         "modified": true
-      })
+      }))
     }
   }
 
@@ -143,32 +143,54 @@ export default function Home() {
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
-      "id": e.target.value
-    })
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "id": e.target.value,
+    }))
   }
 
   function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "info": {
-        ...myInfo["info"],
-        [e.target.name]: e.target.value
+        ...prevInfo["info"],
+        [e.target.name]: e.target.value,
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
   }
 
   function onCountryChanged(countryCode: CountryInfo, target: object): void {
-    setMyInfo({
-      ...myInfo,
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
       "info": {
-        ...myInfo["info"],
-        [target["name"]]: countryCode.value
+        ...prevInfo["info"],
+        [target["name"]]: countryCode.value,
       },
-      "modified": true
-    })
+      "modified": true,
+    }))
+  }
+
+  async function setDidFromPolyWallet(): Promise<string> {
+    setStatus("Getting your PolyWallet")
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Fetching your account")
+    const did: string = (await api.getCurrentIdentity()).did
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "info": {
+        ...prevInfo["info"],
+        "polymeshDid": did,
+      },
+      "modified": true,
+    }))
+    setStatus("Account fetched")
+    return did
+  }
+
+  async function submitDidFromPolyWallet(e): Promise<string> {
+    e.preventDefault()
+    return setDidFromPolyWallet()
   }
 
   async function fetchMyClaim(e): Promise<ClaimData | null> {
@@ -273,8 +295,10 @@ export default function Home() {
             <legend>Your info relevant to Polymesh</legend>
 
             <div>
-              <label htmlFor="customer-polymeshId">Your Polymesh did</label>
-              <input name="polymeshDid" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshDid"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
+              <label htmlFor="customer-polymeshDid">Your Polymesh did</label>
+              <input name="polymeshDid" id="customer-polymeshDid" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshDid"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
+              &nbsp;
+              <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""}>Pick it from PolyWallet</button>
             </div>
 
             <div className="submit">

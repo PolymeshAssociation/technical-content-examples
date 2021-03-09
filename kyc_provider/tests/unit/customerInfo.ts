@@ -12,7 +12,7 @@ describe("CustomerInfo Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -30,7 +30,7 @@ describe("CustomerInfo Unit Tests", () => {
             "country": "Gb",
             "passport": "12345",
             "valid": true,
-            "jurisdiction": "Ie"
+            "jurisdiction": "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -63,7 +63,7 @@ describe("CustomerInfo Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
         const back = info.toJSON()
@@ -83,12 +83,12 @@ describe("CustomerInfo Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
 
         info.patch(<JSON><unknown>{
-            "name": "Jane Doe"
+            "name": "Jane Doe",
         })
         const back = info.toJSON()
 
@@ -107,14 +107,14 @@ describe("CustomerInfo Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
 
         info.patch(<JSON><unknown>{
             "name": "Jane Doe",
             "valid": false,
-            "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
+            "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde",
         })
         const back = info.toJSON()
 
@@ -132,7 +132,7 @@ describe("CustomerInfo Unit Tests", () => {
             "country": "Gb",
             "passport": "12345",
             "valid": true,
-            "jurisdiction": "Ie"
+            "jurisdiction": "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 

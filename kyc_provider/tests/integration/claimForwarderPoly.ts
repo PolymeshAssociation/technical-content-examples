@@ -7,15 +7,15 @@ import { ClaimForwarderPoly } from "../../src/claimForwarderPoly"
 use(require("chai-as-promised"))
 
 describe("ClaimForwarderPoly Integration Tests", () => {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
-            middlewareKey
-        } },
+            middlewareKey,
+        }, },
         publicRuntimeConfig: { polymesh: {
-            nodeUrl
-        } }
+            nodeUrl,
+        }, },
     } = nextConfig
 
     beforeEach("prepare api", async() => {
@@ -27,8 +27,8 @@ describe("ClaimForwarderPoly Integration Tests", () => {
             accountMnemonic,
             middleware: {
                 link: middlewareLink,
-                key: middlewareKey
-            }
+                key: middlewareKey,
+            },
         })
         const claimForwarder = new ClaimForwarderPoly(api)
         const alice = await api.getCurrentIdentity()
@@ -38,7 +38,7 @@ describe("ClaimForwarderPoly Integration Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid":  alice.did
+            "polymeshDid":  alice.did,
         }
         const info = new CustomerInfo(bareInfo)
 

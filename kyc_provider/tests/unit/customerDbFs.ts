@@ -31,7 +31,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -45,7 +45,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -67,7 +67,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12345",
             "valid": true,
             "jurisdiction": "Ie",
-            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
         const info1 = new CustomerInfo(bareInfo1)
         const bareInfo2: JSON = <JSON><unknown>{
@@ -76,7 +76,7 @@ describe("CustomerDbFs Unit Tests", () => {
             "passport": "12346",
             "valid": false,
             "jurisdiction": "Fr",
-            "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde"
+            "polymeshDid": "0x1234567890abcdef0123456789abcdef01234567890abcdef0123456789abcde",
         }
         const info2 = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)

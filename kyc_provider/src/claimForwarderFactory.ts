@@ -4,7 +4,7 @@ import { ClaimForwarderPoly } from "./claimForwarderPoly"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 
 export default async function(): Promise<IClaimForwarder> {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
