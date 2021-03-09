@@ -131,7 +131,7 @@ describe("SettlementInfo Unit Tests", () => {
                 "id": "1",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
                 "portfolioId": "1",
-                },
+            },
             "seller": {
                 "id": "2",
                 "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
@@ -592,6 +592,27 @@ describe("Matching orders Unit Tests", () => {
 
         expect(() => createByMatchingOrders("1", buyOrder, "2", sellOrder)).to.throw(IncompatibleOrderTypeError)
             .that.satisfies((error: IncompatibleOrderTypeError) => error.buyToken === "ACME" && error.sellToken === "ECMN")
+    })
+
+    it("cannot construct when same buyer and seller id", async () => {
+        const buyOrder: OrderInfo = new OrderInfo({
+            "isBuy": true,
+            "quantity": 10,
+            "token": "ACME",
+            "price": 33,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+            "portfolioId": "1",
+        } as unknown as JSON)
+        const sellOrder: OrderInfo = new OrderInfo({
+            "isBuy": false,
+            "quantity": 15,
+            "token": "ACME",
+            "price": 40,
+            "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+        } as unknown as JSON)
+
+        expect(() => createByMatchingOrders("1", buyOrder, "1", sellOrder)).to.throw(DuplicatePartiesSettlementError)
+            .that.satisfies((error: DuplicatePartiesSettlementError) => error.partyId === "1")
     })
 
     it("creates settlement when got a match, and got correct data, seller has more", async () => {

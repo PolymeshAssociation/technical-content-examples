@@ -20,10 +20,10 @@ describe("/api/settlements Integration Tests", () => {
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
-        } },
+        }, },
         publicRuntimeConfig: { polymesh: {
             nodeUrl, venueId, usdToken,
-        } },
+        }, },
     } = nextConfig
 
     let exchangeDbPath: string, settlementDbPath: string

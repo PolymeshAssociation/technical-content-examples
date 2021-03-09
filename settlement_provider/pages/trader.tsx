@@ -19,7 +19,7 @@ export default function Home() {
     "id": "",
     "order": Object.assign({}, emptyOrder),
     "modified": false,
-    "portfolios": []
+    "portfolios": [],
   })
 
   function setStatus(content: string) {
@@ -41,7 +41,7 @@ export default function Home() {
     const {
       publicRuntimeConfig: {
         appName,
-        polymesh: { nodeUrl }
+        polymesh: { nodeUrl, },
       }
     } = getConfig()
     setStatus(`Enabling the app ${appName}`)
@@ -90,7 +90,7 @@ export default function Home() {
         "polymeshDid": did
       },
       "modified": true,
-      "portfolios": [{ "id": "", "name": "Loading" }]
+      "portfolios": [{ "id": "", "name": "Loading" }],
     }))
     setStatus("Account fetched")
     await setPortfolioChoices(did)
@@ -117,7 +117,7 @@ export default function Home() {
     console.log(JSON.stringify(myInfo.order))
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      "portfolios": folioNames
+      "portfolios": folioNames,
     }))
     setStatus("Portfolios populated")
   }
@@ -213,10 +213,10 @@ export default function Home() {
       ...prevInfo,
       "order": {
         ...prevInfo["order"],
-        [field]: value
+        [field]: value,
       },
       "modified": true,
-      "portfolios": field === "polymeshDid" ? [{ "id": "", "name": "Loading" }] : prevInfo["portfolios"]
+      "portfolios": field === "polymeshDid" ? [{ "id": "", "name": "Loading" }] : prevInfo["portfolios"],
     }))
     if (field === "polymeshDid") setPortfolioChoices(value)
   }

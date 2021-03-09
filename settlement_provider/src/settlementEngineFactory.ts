@@ -8,32 +8,32 @@ export default async function(): Promise<ISettlementEngine> {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
-            middlewareKey
-        } },
+            middlewareKey,
+        }, },
         publicRuntimeConfig: { polymesh: {
             nodeUrl,
             venueId,
             usdToken,
-        } }
+        }, },
     } = getConfig() || {
         "serverRuntimeConfig": { polymesh: {
             "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
             "middlewareLink": process.env.MIDDLEWARE_LINK,
             "middlewareKey": process.env.MIDDLEWARE_KEY,
-        } },
+        }, },
         "publicRuntimeConfig": { polymesh: {
             "nodeUrl": process.env.POLY_NODE_URL,
             "venueId": process.env.POLY_VENUE_ID,
             "usdToken": process.env.POLY_USD_TOKEN,
-        } }
+        }, },
     }
     const api = await Polymesh.connect({
         nodeUrl,
         accountMnemonic,
         middleware: {
             link: middlewareLink,
-            key: middlewareKey
-        }
+            key: middlewareKey,
+        },
     })
     return new SettlementEnginePoly(api, venueId, usdToken)
 }

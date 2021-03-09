@@ -75,7 +75,7 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const settlement: IPublishedSettlementInfo = await settlementEngine.publish(matchedSettlement)
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    await settlementDb.setSettlementInfo(settlementId, matchedSettlement)
+    await settlementDb.setSettlementInfo(settlementId, settlement)
     await reduceOrder(exchangeDb, buyerId, buyOrder, matchedSettlement.quantity)
     await reduceOrder(exchangeDb, sellerId, sellOrder, matchedSettlement.quantity)
     return new FullSettlementInfo({
