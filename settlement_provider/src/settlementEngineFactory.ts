@@ -4,7 +4,7 @@ import { ISettlementEngine } from "./settlementEngine"
 import { SettlementEnginePoly } from "./settlementEnginePoly"
 
 export default async function(): Promise<ISettlementEngine> {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,

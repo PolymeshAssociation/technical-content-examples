@@ -29,7 +29,7 @@ import * as nextConfig from "../next.config.js"
 import { SettlementEnginePoly } from "../src/settlementEnginePoly"
 import { ISettlementEngine } from "../src/settlementEngine"
 
-const { 
+const {
     serverRuntimeConfig: { polymesh: {
         accountMnemonic,
         middlewareLink,
@@ -71,7 +71,7 @@ getApi()
         if (me === null) throw new Error("You do not have an account open. Go to https://dashboard.polymesh.live/")
         const balance: AccountBalance = await api.getAccount().getBalance()
         logVisible(`Your account is ${me.did}, you have ${balance.free} free POLYX and ${balance.locked} locked ones`)
-        
+
         // Preset venue
         const myVenues: Venue[] = await me.getVenues()
         const engine: ISettlementEngine = new SettlementEnginePoly(api, venueId, usdToken)
