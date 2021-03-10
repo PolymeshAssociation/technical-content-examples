@@ -12,7 +12,7 @@
   "dependencies": {
     "@polkadot/extension-dapp": "0.23.1",
     "@polkadot/types": "3.5.1",
-    "@polymathnetwork/polymesh-sdk": "4.0.0-alpha.32",
+    "@polymathnetwork/polymesh-sdk": "5.0.0-beta.9",
     "next": "10.0.6",
     "react": "17.0.1",
     "react-dom": "17.0.1"
