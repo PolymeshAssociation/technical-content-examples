@@ -5,6 +5,7 @@ import {
     NumberedPortfolio,
     Portfolio,
 } from "@polymathnetwork/polymesh-sdk/types"
+import { PolymeshCreator } from "./types"
 import {
     AssignedOrderInfo,
     IAssignedOrderInfo,
@@ -29,7 +30,9 @@ const saveDb = async function(dbPath: string,db: JSON): Promise<void> {
 
 export class ExchangeDbFs implements IExchangeDb {
 
-    constructor(public dbPath: string, public api: Polymesh) {
+    private api?: Polymesh | null = null
+
+    constructor(public dbPath: string, public apiCreator: PolymeshCreator) {
     }
 
     async getOrders(): Promise<IAssignedOrderInfo[]> {
@@ -48,6 +51,7 @@ export class ExchangeDbFs implements IExchangeDb {
     }
 
     async setOrderInfo(id: string, info: IOrderInfo): Promise<void> {
+        this.api = this.api || await this.apiCreator()
         if (!(await this.api.isIdentityValid({ "identity": info.polymeshDid }))) {
             throw new NonExistentCustomerPolymeshIdError(info.polymeshDid)
         }

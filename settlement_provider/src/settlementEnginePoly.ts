@@ -17,13 +17,17 @@ import {
     ISettlementInfo,
     PublishedSettlementInfo,
 } from "./settlementInfo"
+import { PolymeshCreator } from "./types"
 
 export class SettlementEnginePoly implements ISettlementEngine {
 
-    constructor(public api: Polymesh, public venueId: string, public usdToken: string) {
+    private api?: Polymesh | null = null
+
+    constructor(public apiCreator: PolymeshCreator, public venueId: string, public usdToken: string) {
     }
 
     async getVenue(): Promise<VenueInfo> {
+        this.api = this.api || await this.apiCreator()
         const nextDaq: CurrentIdentity = await this.api.getCurrentIdentity()
         if (nextDaq === null) throw new NonExistentAccountError(this.api.getAccount().address)
         const venues: Venue[] = await nextDaq.getVenues()

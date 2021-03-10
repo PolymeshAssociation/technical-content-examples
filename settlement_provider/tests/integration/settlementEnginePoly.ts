@@ -5,6 +5,7 @@ import { Venue } from "@polymathnetwork/polymesh-sdk/types"
 import * as nextConfig from "../../next.config.js"
 import { SettlementEnginePoly } from "../../src/settlementEnginePoly"
 import { ISettlementEngine } from "../../src/settlementEngine"
+import { PolymeshCreator } from "../../src/types.js"
 use(require("chai-as-promised"))
 
 describe("SettlementEnginePoly Integration Tests", () => {
@@ -22,7 +23,7 @@ describe("SettlementEnginePoly Integration Tests", () => {
     } = nextConfig
 
     it("getVenue works for the configured account", async() => {
-        const api = await Polymesh.connect({
+        const apiCreator: PolymeshCreator = async() => Polymesh.connect({
             nodeUrl,
             accountMnemonic,
             middleware: {
@@ -30,7 +31,10 @@ describe("SettlementEnginePoly Integration Tests", () => {
                 key: middlewareKey
             }
         })
-        const settlementEngine: ISettlementEngine = new SettlementEnginePoly(api, venueId, usdToken)
+        const settlementEngine: ISettlementEngine = new SettlementEnginePoly(
+            apiCreator,
+            venueId,
+            usdToken)
         const preconfiguredVenue: Venue = (await settlementEngine.getVenue()).venue
 
         expect(preconfiguredVenue.id.toString(10)).to.equal(venueId)

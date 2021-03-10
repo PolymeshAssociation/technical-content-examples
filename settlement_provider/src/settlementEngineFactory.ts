@@ -27,13 +27,15 @@ export default async function(): Promise<ISettlementEngine> {
             "usdToken": process.env.POLY_USD_TOKEN,
         }, },
     }
-    const api = await Polymesh.connect({
-        nodeUrl,
-        accountMnemonic,
-        middleware: {
-            link: middlewareLink,
-            key: middlewareKey,
-        },
-    })
-    return new SettlementEnginePoly(api, venueId, usdToken)
+    return new SettlementEnginePoly(
+        async() => Polymesh.connect({
+            nodeUrl,
+            accountMnemonic,
+            middleware: {
+                link: middlewareLink,
+                key: middlewareKey,
+            },
+        }),
+        venueId,
+        usdToken)
 }

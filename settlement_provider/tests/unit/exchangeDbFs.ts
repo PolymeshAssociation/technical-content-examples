@@ -32,7 +32,7 @@ describe("ExchangeDbFs Unit Tests", () => {
         this.timeout(30000)
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         mockedApi = <Polymesh><unknown>{}
-        exchangeDb = new ExchangeDbFs(dbPath, mockedApi)
+        exchangeDb = new ExchangeDbFs(dbPath, async() => mockedApi)
     })
 
     afterEach("clear dbStore", async() => {

@@ -23,9 +23,11 @@ export default async function(): Promise<IExchangeDb> {
             "nodeUrl": process.env.POLY_NODE_URL,
         }, },
     }
-    const api = await Polymesh.connect({
-        nodeUrl,
-        accountMnemonic,
-    })
-    return new ExchangeDbFs(exchangeDbPath, api)
+    return new ExchangeDbFs(
+        exchangeDbPath,
+        async() => Polymesh.connect({
+            nodeUrl,
+            accountMnemonic,
+        })
+    )
 }

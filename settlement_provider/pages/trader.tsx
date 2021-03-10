@@ -131,6 +131,12 @@ export default function Home() {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "GET" })
     if (response.status == 404) {
       setStatus("Order not found, enter your order info")
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "order": Object.assign({}, emptyOrder),
+        "modified": false,
+        "portfolios": []
+      }))
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()
@@ -307,9 +313,9 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-portfolioId">The trading portfolio</label>
-              <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged}>
+              <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged} defaultValue={myInfo["order"]["portfolioId"]}>
                 {
-                  myInfo["portfolios"].map((portfolio) => <option value={portfolio.id} selected={portfolio.id == myInfo["order"]["portfolioId"]}>
+                  myInfo["portfolios"].map((portfolio, index) => <option value={portfolio.id} key={index}>
                       {portfolio.id} - {portfolio.name}
                     </option>)
                 }
