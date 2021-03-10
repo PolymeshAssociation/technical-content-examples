@@ -17,6 +17,8 @@ use(require("chai-as-promised"))
 const exists = promisify(existsAsync)
 
 describe("/api/settlements Integration Tests", () => {
+    const onTrustDid = "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e"
+    const safeHandsDid = "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78"
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
@@ -358,7 +360,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             } as unknown as JSON))
             const { req, res } = createMocks({
@@ -373,7 +375,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 1"})
-        })
+        }).timeout(30000)
 
         it("returns 404 on missing sell order", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -381,7 +383,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             } as unknown as JSON))
             const { req, res } = createMocks({
@@ -396,7 +398,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 2"})
-        })
+        }).timeout(30000)
 
         it("returns 400 if isBuy are not correct", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -404,7 +406,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             } as unknown as JSON))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
@@ -412,7 +414,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ACME",
                 "price": 40,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                "polymeshDid": onTrustDid,
             } as unknown as JSON))
             const { req, res } = createMocks({
                 "method": "POST",
@@ -426,7 +428,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order is of wrong type, expectedIsBuy: false"})
-        })
+        }).timeout(30000)
 
         it("returns 400 when tokens not matching", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -434,7 +436,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             } as unknown as JSON))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
@@ -442,7 +444,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ECMN",
                 "price": 40,
-                "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                "polymeshDid": onTrustDid,
             } as unknown as JSON))
             const { req, res } = createMocks({
                 "method": "POST",
@@ -456,15 +458,15 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({"status": "Orders are not for same token, ACME / ECMN"})
-        })
+        }).timeout(30000)
 
-        it.skip("returns 200 when got a match, and got correct data, seller has more", async () => {
+        it("returns 200 when got a match, and got correct data, seller has more", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo(<JSON><unknown>{
                 "isBuy": true,
                 "quantity": 10,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             }))
             const bareSellOrder: JSON = <JSON><unknown>{
@@ -472,7 +474,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 15,
                 "token": "ACME",
                 "price": 35,
-                "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
+                "polymeshDid": onTrustDid,
             }
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareSellOrder))
             const { req, res } = createMocks({
@@ -492,16 +494,17 @@ describe("/api/settlements Integration Tests", () => {
                 "id": settlements[0].id,
                 "buyer": {
                     "id": "1",
-                    "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
+                    "polymeshDid": safeHandsDid,
                     "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
-                    "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
+                    "polymeshDid": onTrustDid,
                 },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
+                "instructionId": settlements[0].instructionId.toString(10),
                 "isPaid": false,
                 "isTransferred": false,
             })
@@ -519,15 +522,15 @@ describe("/api/settlements Integration Tests", () => {
                 "id": "2",
                 "quantity": 5,
             })
-        }).timeout(20000)
+        }).timeout(120000)
 
-        it.skip("returns 200 when got a match, and got correct data, buyer has more", async () => {
+        it("returns 200 when got a match, and got correct data, buyer has more", async () => {
             const bareBuyOrder: JSON = <JSON><unknown>{
                 "isBuy": true,
                 "quantity": 15,
                 "token": "ACME",
                 "price": 33,
-                "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
+                "polymeshDid": safeHandsDid,
                 "portfolioId": "1",
             }
             await exchangeDb.setOrderInfo("1", new OrderInfo(bareBuyOrder))
@@ -536,7 +539,7 @@ describe("/api/settlements Integration Tests", () => {
                 "quantity": 10,
                 "token": "ACME",
                 "price": 35,
-                "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
+                "polymeshDid": onTrustDid,
             }))
             const { req, res } = createMocks({
                 "method": "POST",
@@ -555,16 +558,17 @@ describe("/api/settlements Integration Tests", () => {
                 "id": settlements[0].id,
                 "buyer": {
                     "id": "1",
-                    "polymeshDid": "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78",
+                    "polymeshDid": safeHandsDid,
                     "portfolioId": "1",
                 },
                 "seller": {
                     "id": "2",
-                    "polymeshDid": "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e",
+                    "polymeshDid": onTrustDid,
                 },
                 "quantity": 10,
                 "token": "ACME",
                 "price": 34,
+                "instructionId": settlements[0].instructionId.toString(10),
                 "isPaid": false,
                 "isTransferred": false,
             })
@@ -582,7 +586,7 @@ describe("/api/settlements Integration Tests", () => {
                 "id": "1",
                 "quantity": 5,
             })
-        }).timeout(20000)
+        }).timeout(120000)
 
     })
 

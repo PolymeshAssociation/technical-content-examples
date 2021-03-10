@@ -131,3 +131,15 @@ export class InvalidPolymeshDidError extends OrderInfoError {
         super(message)
     }
 }
+
+export class NonExistentCustomerPolymeshIdError extends OrderInfoError {
+    constructor (public polymeshDid: string) {
+        super()
+    }
+}
+
+export class InvalidPortfolioError extends OrderInfoError {
+    constructor (public polymeshDid: string, public portfolioId: BigNumber, message?: string) {
+        super(message)
+    }
+}

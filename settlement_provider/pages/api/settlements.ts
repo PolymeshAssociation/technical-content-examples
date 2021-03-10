@@ -76,11 +76,11 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     const settlementId: string = Math.round(Math.random() * Number.MAX_SAFE_INTEGER).toString(10)
     const settlementDb: ISettlementDb = await settlementDbFactory()
     await settlementDb.setSettlementInfo(settlementId, settlement)
-    await reduceOrder(exchangeDb, buyerId, buyOrder, matchedSettlement.quantity)
-    await reduceOrder(exchangeDb, sellerId, sellOrder, matchedSettlement.quantity)
+    await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
+    await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
     return new FullSettlementInfo({
         "id": settlementId,
-        ...matchedSettlement.toJSON(),
+        ...settlement.toJSON(),
     } as unknown as JSON)
 }
 

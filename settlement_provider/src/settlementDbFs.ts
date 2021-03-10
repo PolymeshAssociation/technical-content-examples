@@ -22,10 +22,8 @@ const saveDb = async function(dbPath: string,db: JSON): Promise<void> {
 
 export class SettlementDbFs implements ISettlementDb {
 
-    private dbPath: string
-
-    constructor(dbPath: string) {
-        this.dbPath = dbPath
+    constructor(public dbPath: string) {
+        if (typeof dbPath !== "string") throw new Error("Settlement dbPath must be a string")
     }
 
     async getSettlements(): Promise<IFullSettlementInfo[]> {
