@@ -87,7 +87,7 @@ export default function Home() {
       ...prevInfo,
       "order": {
         ...prevInfo["order"],
-        "polymeshDid": did
+        "polymeshDid": did,
       },
       "modified": true,
       "portfolios": [{ "id": "", "name": "Loading" }],
@@ -135,7 +135,7 @@ export default function Home() {
         ...prevInfo,
         "order": Object.assign({}, emptyOrder),
         "modified": false,
-        "portfolios": []
+        "portfolios": [],
       }))
     } else if (response.status == 200) {
       setStatus("Order fetched")
