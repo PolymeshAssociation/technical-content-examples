@@ -24,6 +24,11 @@ export default function Home() {
     const response = await fetch(`/api/trader/${myInfo["id"]}`, { "method": "GET" })
     if (response.status == 404) {
       setStatus("Order not found, enter your order info")
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        "order": Object.assign({}, emptyOrder),
+        "modified": false,
+      }))
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()

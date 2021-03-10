@@ -1,6 +1,11 @@
 import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
-import { AssignedOrderInfo, IAssignedOrderInfo, IOrderInfo, OrderInfo } from "./orderInfo"
+import {
+    AssignedOrderInfo,
+    IAssignedOrderInfo,
+    IOrderInfo,
+    OrderInfo,
+} from "./orderInfo"
 import { IExchangeDb, UnknownTraderError } from "./exchangeDb"
 
 const exists = promisify(existsAsync)
@@ -17,10 +22,7 @@ const saveDb = async function(dbPath: string,db: JSON): Promise<void> {
 
 export class ExchangeDbFs implements IExchangeDb {
 
-    private dbPath: string
-
-    constructor(dbPath: string) {
-        this.dbPath = dbPath
+    constructor(public dbPath: string) {
     }
 
     async getOrders(): Promise<IAssignedOrderInfo[]> {

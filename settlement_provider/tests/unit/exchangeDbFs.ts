@@ -2,7 +2,11 @@ import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { IAssignedOrderInfo, IOrderInfo, OrderInfo } from "../../src/orderInfo"
+import {
+    IAssignedOrderInfo,
+    IOrderInfo,
+    OrderInfo,
+} from "../../src/orderInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ExchangeDbFs } from "../../src/exchangeDbFs"
 use(require("chai-as-promised"))
