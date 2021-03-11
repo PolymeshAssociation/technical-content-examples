@@ -8,18 +8,23 @@ import { NetworkMeta, PolyWallet } from "../src/ui-types"
 
 export default function Home() {
   const emptyOrder = {
-    "isBuy": true,
-    "quantity": "",
-    "token": "",
-    "price": "",
-    "polymeshDid": "",
-    "portfolioId": null,
+    "isBuy": true as boolean,
+    "quantity": "" as string,
+    "token": "" as string,
+    "price": "" as string,
+    "polymeshDid": "" as string,
+    "portfolioId": null as null | string,
   }
   const [myInfo, setMyInfo] = useState({
-    "id": "",
+    "id": "" as string,
     "order": Object.assign({}, emptyOrder),
-    "modified": false,
-    "portfolios": [],
+    "modified": false as boolean,
+    "portfolios": [] as ShortPortfolioPresentation[],
+
+  interface ShortPortfolioPresentation {
+    id: string
+    name: string
+  }
   })
 
   function setStatus(content: string) {
@@ -110,7 +115,7 @@ export default function Home() {
     setStatus("Getting the portfolios")
     const portfolios: Portfolio[] = (await account.portfolios.getPortfolios()).slice(1)
     setStatus("Getting portfolio names")
-    const folioNames = await Promise.all(portfolios.map((portfolio: NumberedPortfolio) => {
+    const folioNames: ShortPortfolioPresentation[] = await Promise.all(portfolios.map((portfolio: NumberedPortfolio) => {
       return portfolio.getName()
         .then((name: string) => ({
           "id": portfolio.id.toString(10),
@@ -145,7 +150,7 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()
-      const portfolios = [{ "id": "", "name": "default" }]
+      const portfolios: ShortPortfolioPresentation[] = [{ "id": "", "name": "default" }]
       if (typeof body["portfolioId"] === "string") portfolios.push({
         "id": body["portfolioId"],
         "name": "Loading",
@@ -284,7 +289,7 @@ export default function Home() {
           </fieldset>
 
           <fieldset className={styles.card}>
-            <legend>Your order info</legend>
+            <legend>Order info</legend>
 
             <div>
               <label htmlFor="order-is-buy">Buy</label>
@@ -310,17 +315,17 @@ export default function Home() {
             </div>
 
             <div>
-              <label htmlFor="order-polymeshDid">Your Polymesh did</label>
+              <label htmlFor="order-polymeshDid">Trader's Polymesh did</label>
               <input name="polymeshDid" id="order-polymeshDid" type="text" placeholder="0x12345" value={myInfo["order"]["polymeshDid"]} onChange={onMyOrderChanged}></input>
               &nbsp;
               <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""}>Pick it from PolyWallet</button>
             </div>
 
             <div>
-              <label htmlFor="order-portfolioId">The trading portfolio</label>
+              <label htmlFor="order-portfolioId">Trading portfolio</label>
               <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged} defaultValue={myInfo["order"]["portfolioId"]}>
                 {
-                  myInfo["portfolios"].map((portfolio, index) => <option value={portfolio.id} key={index}>
+                  myInfo["portfolios"].map((portfolio: ShortPortfolioPresentation, index: number) => <option value={portfolio.id} key={index}>
                       {portfolio.id} - {portfolio.name}
                     </option>)
                 }

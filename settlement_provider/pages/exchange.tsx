@@ -5,13 +5,20 @@ import styles from "../styles/Home.module.css"
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
     "info": {
-      "orders": [],
+      "orders": [] as Order[],
     },
     "picked": {
-      "sell": "",
-      "buy": "",
+      "sell": "" as string,
+      "buy": "" as string,
     },
   })
+
+  interface Order {
+    id: string
+    token: string
+    price: number
+    quantity: string
+  }
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -22,7 +29,7 @@ export default function Home() {
     const response = await fetch(`/api/trades`, { "method": "GET" })
     if (response.status == 200) {
       setStatus("Info fetched")
-      const body = await response.json()
+      const body: Order[] = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "info": {
@@ -41,7 +48,7 @@ export default function Home() {
 
   function onTradeSelected(isBuy: boolean) {
     return function(e: React.MouseEvent<HTMLElement, MouseEvent>): void {
-      const tradeId = e.currentTarget.getAttribute("data-trade-id")
+      const tradeId: string = e.currentTarget.getAttribute("data-order-id")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         "picked": {
@@ -107,13 +114,13 @@ export default function Home() {
 
                 {
                   myInfo["info"]["orders"]
-                    .filter((trade) => !trade["isBuy"])
+                    .filter((order) => !order["isBuy"])
                     .sort((left, right) => left.price - right.price)
-                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === trade.id ? styles.selected : ""}`} key={`order-sell-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(false)}>
-                      <span title="Trader id">{trade.id} - </span>
-                      <span title="Quantity">{trade.quantity} </span>
-                      of <span title="Ticker">{trade.token}</span>,
-                      <b title="Price in USD / token"> @ {trade.price} </b>
+                    .map((order) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === order.id ? styles.selected : ""}`} key={`order-sell-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(false)}>
+                      <span title="Trader id">{order.id} - </span>
+                      <span title="Quantity">{order.quantity} </span>
+                      of <span title="Ticker">{order.token}</span>,
+                      <b title="Price in USD / token"> @ {order.price} </b>
                     </div>)
                 }
 
@@ -127,13 +134,13 @@ export default function Home() {
 
                 {
                   myInfo["info"]["orders"]
-                    .filter((trade) => trade["isBuy"])
+                    .filter((order) => order["isBuy"])
                     .sort((left, right) => right.price - left.price)
-                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === trade.id ? styles.selected : ""}`} key={`order-buy-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(true)}>
-                      <b title="Price in USD / token"> @ {trade.price}</b>,
-                      <span title="Quantity"> {trade.quantity}</span> of
-                      <span title="Ticker"> {trade.token}</span>
-                      <span title="Trader id"> - {trade.id}</span>
+                    .map((order) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === order.id ? styles.selected : ""}`} key={`order-buy-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(true)}>
+                      <b title="Price in USD / token"> @ {order.price}</b>,
+                      <span title="Quantity"> {order.quantity}</span> of
+                      <span title="Ticker"> {order.token}</span>
+                      <span title="Trader id"> - {order.id}</span>
                     </div>)
                 }
 
