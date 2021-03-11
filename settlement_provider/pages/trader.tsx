@@ -28,10 +28,12 @@ export default function Home() {
   }
 
   async function getPolyWalletApi(): Promise<Polymesh> {
+    if (typeof (window || {})["api"] !== "undefined") return (window || {})["api"]
     setStatus("Getting your Polymesh Wallet")
     // Move to top of the file when compilation error no longer present.
     const {
       web3Accounts,
+      web3AccountsSubscribe,
       web3Enable,
       web3FromAddress,
       web3ListRpcProviders,
@@ -58,6 +60,8 @@ export default function Home() {
       setStatus(`Your network needs to match ${nodeUrl}`);
       throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
     }
+    polyWallet.network.subscribe(() => window.location.reload())
+    web3AccountsSubscribe(() => window.location.reload())
     setStatus("Fetching your account")
     const myAccounts = await polyWallet.accounts.get()
     if (myAccounts.length == 0) {
@@ -70,12 +74,13 @@ export default function Home() {
     })
     myKeyring.addFromAddress(myAccount.address)
     const mySigner = polyWallet["signer"]
-    setStatus("Building your API")
-    return await Polymesh.connect({
+    setStatus("Building your API");
+    (window || {})["api"] = await Polymesh.connect({
       nodeUrl,
       keyring: myKeyring,
       signer: mySigner,
     })
+    return (window || {})["api"]
   }
 
   async function setDidFromPolyWallet(): Promise<string> {
