@@ -1,13 +1,15 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import { FullSettlementJson } from "../src/settlementInfo"
+import { SettlementListJson } from "../src/ui-types"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "traderId": "",
+    "traderId": "" as string,
     "info": {
       "settlements": [],
-    },
+    } as SettlementListJson,
   })
 
   function setStatus(content: string) {
@@ -18,7 +20,7 @@ export default function Home() {
   function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      "traderId": e.target.value,
+      traderId: e.target.value,
     }))
   }
 
@@ -26,10 +28,10 @@ export default function Home() {
     const response = await fetch(`/api/settlements/?traderId=${traderId}`, { "method": "GET" })
     if (response.status == 200) {
       setStatus("Settlements fetched")
-      const body = await response.json()
+      const body: SettlementListJson = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "info": body,
+        info: body,
       }))
     } else {
       setStatus("Something went wrong")
@@ -39,14 +41,14 @@ export default function Home() {
 
   async function submitGetPendingSettlements(e): Promise<void> {
     e.preventDefault() // prevent page from submitting form
-    await getPendingSettlements(myInfo["traderId"])
+    await getPendingSettlements(myInfo.traderId)
   }
 
   async function sendBuyerPays(settlementId: string): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { "method": "PATCH" })
+    const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
-      await getPendingSettlements(myInfo["traderId"])
+      await getPendingSettlements(myInfo.traderId)
     } else {
       setStatus("Something went wrong")
     }
@@ -59,10 +61,10 @@ export default function Home() {
   }
 
   async function sendSellerTransfers(settlementId: string): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { "method": "PATCH" })
+    const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
-      await getPendingSettlements(myInfo["traderId"])
+      await getPendingSettlements(myInfo.traderId)
     } else {
       setStatus("Something went wrong")
     }
@@ -95,11 +97,11 @@ export default function Home() {
 
             <div>
               <label htmlFor="custodian-traderId" className={styles.hasTitle} title="Given to the trader when they registered with NextDaq. As of now, just pick one.">Their id</label>
-              <input name="traderId" id="custodian-traderId" type="number" placeholder="1" value={myInfo["traderId"]} onChange={onTraderIdChanged}></input>
+              <input name="traderId" id="custodian-traderId" type="number" placeholder="1" value={myInfo.traderId} onChange={onTraderIdChanged}></input>
             </div>
 
             <div className="submit">
-              <button className="submit traderId" onClick={submitGetPendingSettlements} disabled={myInfo["traderId"] === ""}>Fetch their pending settlements</button>
+              <button className="submit traderId" onClick={submitGetPendingSettlements} disabled={myInfo.traderId === ""}>Fetch their pending settlements</button>
             </div>
 
           </fieldset>
@@ -113,31 +115,31 @@ export default function Home() {
                 <h3>Update as you go</h3>
 
                 {
-                  myInfo["info"]["settlements"]
-                    .map((settlement) => <div className={`${styles.card} ${styles.unbreakable}`}>
-                      <div data-trader-id={settlement["buyer"]["id"]}>
-                        Buyer <b title="buyer id">{settlement["buyer"]["id"]}</b>
+                  myInfo.info.settlements
+                    .map((settlement: FullSettlementJson) => <div className={`${styles.card} ${styles.unbreakable}`}>
+                      <div data-trader-id={settlement.buyer.id}>
+                        Buyer <b title="buyer id">{settlement.buyer.id}</b>
                         <span> to pay </span>
-                        <span title="amount"> {settlement["price"] * settlement["quantity"]} </span>
+                        <span title="amount"> {parseInt(settlement.price) * parseInt(settlement.quantity)} </span>
                         <span title="currency"> USD </span>
                         <span> to seller </span>
-                        <span title="seller id"> {settlement["seller"]["id"]} </span>
+                        <span title="seller id"> {settlement.seller.id} </span>
                         <span> with the reference </span>
-                        <span title="transfer reference">{settlement["id"]} </span>
-                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isPaid"] ? " Paid" : "Mark as paid"}
+                        <span title="transfer reference">{settlement.id} </span>
+                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo.traderId !== settlement.buyer.id || settlement.isPaid} data-settlement-id={settlement.id}>
+                          {settlement.isPaid ? " Paid" : "Mark as paid"}
                         </button>
                       </div>
 
-                      <div data-trader-id={settlement["seller"]["id"]}>
-                        Seller <b title="seller id"> {settlement["seller"]["id"]}</b>
+                      <div data-trader-id={settlement.seller.id}>
+                        Seller <b title="seller id"> {settlement.seller.id}</b>
                         <span> to transfer </span>
-                        <span title="quantity"> {settlement["quantity"]} </span>
-                        <span title="token"> {settlement["token"]} </span>
+                        <span title="quantity"> {settlement.quantity} </span>
+                        <span title="token"> {settlement.token} </span>
                         <span> to buyer </span>
-                        <span title="buyer id"> {settlement["buyer"]["id"]} </span>
-                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isTransferred"] ? " Transferred" : "Mark as transferred"}
+                        <span title="buyer id"> {settlement.buyer.id} </span>
+                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo.traderId !== settlement.seller.id || settlement.isTransferred} data-settlement-id={settlement.id}>
+                          {settlement.isTransferred ? " Transferred" : "Mark as transferred"}
                         </button>
                       </div>
                     </div>)

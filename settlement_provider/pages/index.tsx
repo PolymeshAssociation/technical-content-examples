@@ -19,15 +19,15 @@ export default function Home() {
         <h2>Where to?</h2>
 
         <a href="trader" className={styles.card}>
-            View or add your orders on the trader's page
+          View or add your orders on the trader's page
         </a>
 
         <a href="exchange" className={styles.card}>
-            Match NextDaq orders on the algorithm page
+          Match NextDaq orders on the algorithm page
         </a>
 
         <a href="custodian" className={styles.card}>
-            Enter info for your matched trade on the custodian page
+          Enter info for your matched trade on the custodian page
         </a>
 
       </main>

@@ -1,21 +1,32 @@
+export interface OrderJson {
+    isBuy: boolean
+    quantity: string
+    token: string
+    price: string
+}
 export interface IOrderInfo {
     isBuy: boolean
     quantity: number
     token: string
     price: number
-    toJSON(): JSON
+    toJSON(): OrderJson
+}
+
+export interface AssignedOrderJson extends OrderJson {
+    id: string
 }
 
 export interface IAssignedOrderInfo extends IOrderInfo {
     id: string
+    toJSON(): AssignedOrderJson
 }
 
-function requireDesiredType(info: JSON, field: string, receivedType: string) {
-    if (typeof info[field] === "undefined") {
+function requireDesiredType(info: any, field: string, receivedType: string) {
+    if (typeof info === "undefined") {
         throw new IncompleteOrderInfoError(field)
     }
-    if (typeof info[field] !== receivedType) {
-        throw new WrongTypeOrderError(field, typeof info[field])
+    if (typeof info !== receivedType) {
+        throw new WrongTypeOrderError(field, typeof info)
     }
 }
 
@@ -25,31 +36,30 @@ export class OrderInfo implements IOrderInfo {
     token: string
     price: number
 
-    constructor(info: JSON) {
-        requireDesiredType(info, "isBuy", "boolean")
-        this.isBuy = info["isBuy"]
-        requireDesiredType(info, "quantity", "number")
-        this.quantity = info["quantity"]
+    constructor(info: OrderJson) {
+        requireDesiredType(info.isBuy, "isBuy", "boolean")
+        this.isBuy = info.isBuy
+        requireDesiredType(info.quantity, "quantity", "string")
+        this.quantity = parseInt(info.quantity)
         if (this.quantity === 0) {
             throw new WrongZeroOrderError("quantity")
         }
-        requireDesiredType(info, "token", "string")
-        this.token = info["token"]
-        requireDesiredType(info, "price", "number")
-        this.price = info["price"]
+        requireDesiredType(info.token, "token", "string")
+        this.token = info.token
+        requireDesiredType(info.price, "price", "string")
+        this.price = parseInt(info.price)
         if (this.price === 0) {
             throw new WrongZeroOrderError("price")
         }
     }
 
-    toJSON(): JSON {
-        const toReturn: JSON = <JSON><unknown>{
+    toJSON(): OrderJson {
+        return {
             "isBuy": this.isBuy,
-            "quantity": this.quantity,
+            "quantity": this.quantity.toString(10),
             "token": this.token,
-            "price": this.price,
+            "price": this.price.toString(10),
         }
-        return toReturn
     }
 
 }
@@ -57,41 +67,42 @@ export class OrderInfo implements IOrderInfo {
 export class AssignedOrderInfo extends OrderInfo implements IAssignedOrderInfo {
     id: string
 
-    constructor(info: JSON) {
+    constructor(info: AssignedOrderJson) {
         super(info)
-        requireDesiredType(info, "id", "string")
-        this.id = info["id"]
+        requireDesiredType(info.id, "id", "string")
+        this.id = info.id
     }
 
-    toJSON(): JSON {
-        const json = super.toJSON()
-        json["id"] = this.id
-        return json
+    toJSON(): AssignedOrderJson {
+        return {
+            id: this.id,
+            ...super.toJSON(),
+        }
     }
 
 }
 
 export class OrderInfoError extends Error {
-    constructor (message?: string) {
+    constructor(message?: string) {
         super(message)
         Error.apply(this, arguments)
     }
 }
 
 export class IncompleteOrderInfoError extends OrderInfoError {
-    constructor (public field: string, message?: string) {
+    constructor(public field: string, message?: string) {
         super(message)
     }
 }
 
 export class WrongTypeOrderError extends OrderInfoError {
-    constructor (public field: string, public receivedType: string, message?: string) {
+    constructor(public field: string, public receivedType: string, message?: string) {
         super(message)
     }
 }
 
 export class WrongZeroOrderError extends OrderInfoError {
-    constructor (public field: string, message?: string) {
+    constructor(public field: string, message?: string) {
         super(message)
     }
 }

@@ -1,15 +1,17 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import { AssignedOrderJson } from "../src/orderInfo"
+import { FullSettlementJson } from "../src/settlementInfo"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "info": {
-      "orders": [],
+    info: {
+      orders: [] as AssignedOrderJson[],
     },
-    "picked": {
-      "sell": "",
-      "buy": "",
+    picked: {
+      sell: "" as string,
+      buy: "" as string,
     },
   })
 
@@ -19,14 +21,14 @@ export default function Home() {
   }
 
   async function getOrdersInfo(): Promise<Response> {
-    const response = await fetch(`/api/trades`, { "method": "GET" })
+    const response = await fetch(`/api/trades`, { method: "GET" })
     if (response.status == 200) {
       setStatus("Info fetched")
-      const body = await response.json()
+      const body: AssignedOrderJson[] = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "info": {
-          "orders": body,
+        info: {
+          orders: body,
         },
       }))
     } else {
@@ -40,13 +42,13 @@ export default function Home() {
   }
 
   function onTradeSelected(isBuy: boolean) {
-    return function(e: React.MouseEvent<HTMLElement, MouseEvent>): void {
-      const tradeId = e.currentTarget.getAttribute("data-trade-id")
+    return function (e: React.MouseEvent<HTMLElement, MouseEvent>): void {
+      const tradeId: string = e.currentTarget.getAttribute("data-order-id")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "picked": {
-          ...prevInfo["picked"],
-          [ isBuy ? "buy" : "sell" ]: tradeId,
+        picked: {
+          ...prevInfo.picked,
+          [isBuy ? "buy" : "sell"]: tradeId,
         },
       }))
     }
@@ -54,13 +56,13 @@ export default function Home() {
 
   async function createMatch(): Promise<Response> {
     setStatus("Sending settlement")
-    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo["picked"]["buy"]}&sellerId=${myInfo["picked"]["sell"]}`, {
-      "method": "POST"
+    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo.picked.buy}&sellerId=${myInfo.picked.sell}`, {
+      method: "POST"
     })
     if (settlementResponse.status == 200) {
-      const settlement = await settlementResponse.json()
-      console.log(`Settlement posted at instruction ${settlement["id"]}`)
-      setStatus(`Settlement posted at instruction ${settlement["id"]}`)
+      const settlement: FullSettlementJson = await settlementResponse.json()
+      console.log(`Settlement posted at instruction ${settlement.id}`)
+      setStatus(`Settlement posted at instruction ${settlement.id}`)
     } else {
       console.log(settlementResponse.json())
       setStatus("Something went wrong")
@@ -95,7 +97,7 @@ export default function Home() {
         <form lang="en">
 
           <div className="submit">
-            <button className="submit match" onClick={submitMatch} disabled={myInfo["picked"]["buy"] === "" || myInfo["picked"]["sell"] === ""}>Submit the match</button>
+            <button className="submit match" onClick={submitMatch} disabled={myInfo.picked.buy === "" || myInfo.picked.sell === ""}>Submit the match</button>
           </div>
 
           <div className={styles.row}>
@@ -106,14 +108,14 @@ export default function Home() {
                 <h3>Pick 1 sell order</h3>
 
                 {
-                  myInfo["info"]["orders"]
-                    .filter((trade) => !trade["isBuy"])
-                    .sort((left, right) => left.price - right.price)
-                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === trade.id ? styles.selected : ""}`} key={`order-sell-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(false)}>
-                      <span title="Trader id">{trade.id} - </span>
-                      <span title="Quantity">{trade.quantity} </span>
-                      of <span title="Ticker">{trade.token}</span>,
-                      <b title="Price in USD / token"> @ {trade.price} </b>
+                  myInfo.info.orders
+                    .filter((order: AssignedOrderJson) => !order.isBuy)
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => parseInt(left.price) - parseInt(right.price))
+                    .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.sell === order.id ? styles.selected : ""}`} key={`order-sell-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(false)}>
+                      <span title="Trader id">{order.id} - </span>
+                      <span title="Quantity">{order.quantity} </span>
+                      of <span title="Ticker">{order.token}</span>,
+                      <b title="Price in USD / token"> @ {order.price} </b>
                     </div>)
                 }
 
@@ -123,17 +125,17 @@ export default function Home() {
             <div className={styles.column}>
               <div className='buy-column'>
 
-              <h3>Pick 1 buy order</h3>
+                <h3>Pick 1 buy order</h3>
 
                 {
-                  myInfo["info"]["orders"]
-                    .filter((trade) => trade["isBuy"])
-                    .sort((left, right) => right.price - left.price)
-                    .map((trade) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === trade.id ? styles.selected : ""}`} key={`order-buy-${trade.id}`} data-trade-id={trade.id} onClick={onTradeSelected(true)}>
-                      <b title="Price in USD / token"> @ {trade.price}</b>,
-                      <span title="Quantity"> {trade.quantity}</span> of
-                      <span title="Ticker"> {trade.token}</span>
-                      <span title="Trader id"> - {trade.id}</span>
+                  myInfo.info.orders
+                    .filter((order: AssignedOrderJson) => order.isBuy)
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => parseInt(right.price) - parseInt(left.price))
+                    .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.buy === order.id ? styles.selected : ""}`} key={`order-buy-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(true)}>
+                      <b title="Price in USD / token"> @ {order.price}</b>,
+                      <span title="Quantity"> {order.quantity}</span> of
+                      <span title="Ticker"> {order.token}</span>
+                      <span title="Trader id"> - {order.id}</span>
                     </div>)
                 }
 

@@ -2,7 +2,7 @@ import getConfig from 'next/config'
 import { IExchangeDb } from "./exchangeDb"
 import { ExchangeDbFs } from "./exchangeDbFs"
 
-export default async function(): Promise<IExchangeDb> {
+export default async function (): Promise<IExchangeDb> {
     const {
         serverRuntimeConfig: {
             exchangeDbPath,

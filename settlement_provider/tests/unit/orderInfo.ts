@@ -2,9 +2,11 @@ import { describe } from "mocha"
 import { expect } from "chai"
 import {
     AssignedOrderInfo,
+    AssignedOrderJson,
     IAssignedOrderInfo,
     IncompleteOrderInfoError,
     OrderInfo,
+    OrderJson,
     WrongTypeOrderError,
     WrongZeroOrderError
 } from "../../src/orderInfo"
@@ -12,11 +14,11 @@ import {
 describe("OrderInfo Unit Tests", () => {
 
     it("can construct from JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
         const info = new OrderInfo(bareInfo)
@@ -28,10 +30,10 @@ describe("OrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from incomplete JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
+        const bareInfo: OrderJson = <OrderJson><unknown>{
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(IncompleteOrderInfoError)
@@ -39,11 +41,11 @@ describe("OrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from wrong type in JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": "true",
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: OrderJson = <OrderJson><unknown>{
+            isBuy: "true",
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
@@ -52,11 +54,11 @@ describe("OrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from empty quantity", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": true,
-            "quantity": 0,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "0",
+            token: "ACME",
+            price: "33",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
@@ -64,11 +66,11 @@ describe("OrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from empty price", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 0,
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "0",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
@@ -76,14 +78,14 @@ describe("OrderInfo Unit Tests", () => {
     })
 
     it("can convert to JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
-        const back: JSON = new OrderInfo(bareInfo).toJSON()
+        const back: OrderJson = new OrderInfo(bareInfo).toJSON()
 
         expect(back).to.deep.equal(bareInfo)
     })
@@ -93,12 +95,12 @@ describe("OrderInfo Unit Tests", () => {
 describe("AssignedOrderInfo Unit Tests", () => {
 
     it("can construct from JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "id": "2",
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: AssignedOrderJson = {
+            id: "2",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
         const info: IAssignedOrderInfo = new AssignedOrderInfo(bareInfo)
@@ -111,11 +113,11 @@ describe("AssignedOrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from incomplete JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "id": "2",
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
+        const bareInfo: AssignedOrderJson = <AssignedOrderJson><unknown>{
+            id: "2",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
         }
 
         expect(() => new AssignedOrderInfo(bareInfo)).to.throw(IncompleteOrderInfoError)
@@ -123,12 +125,12 @@ describe("AssignedOrderInfo Unit Tests", () => {
     })
 
     it("cannot construct from wrong type in JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "id": 2,
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: AssignedOrderJson = <AssignedOrderJson><unknown>{
+            id: 2,
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
         expect(() => new AssignedOrderInfo(bareInfo)).to.throw(WrongTypeOrderError)
@@ -137,15 +139,15 @@ describe("AssignedOrderInfo Unit Tests", () => {
     })
 
     it("can convert to JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "id": "2",
-            "isBuy": true,
-            "quantity": 12345,
-            "token": "ACME",
-            "price": 33,
+        const bareInfo: AssignedOrderJson = {
+            id: "2",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
 
-        const back: JSON = new AssignedOrderInfo(bareInfo).toJSON()
+        const back: AssignedOrderJson = new AssignedOrderInfo(bareInfo).toJSON()
 
         expect(back).to.deep.equal(bareInfo)
     })
