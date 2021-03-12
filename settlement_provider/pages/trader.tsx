@@ -1,8 +1,7 @@
 import Head from "next/head"
-import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
-import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
+import { Polymesh, } from '@polymathnetwork/polymesh-sdk'
 import {
   Authorization,
   AuthorizationRequest,
@@ -10,7 +9,6 @@ import {
   Portfolio,
   ResultSet,
 } from '@polymathnetwork/polymesh-sdk/types'
-import { NetworkMeta, PolyWallet } from "../src/ui-types"
 import {
   CurrentIdentity,
   DefaultPortfolio,
@@ -18,6 +16,7 @@ import {
   NumberedPortfolio,
   TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal"
+import { getPolyWalletApi } from "../src/ui-helpers"
 
 export default function Home() {
   const emptyOrder = {
@@ -66,65 +65,9 @@ export default function Home() {
     element.innerHTML = content
   }
 
-  async function getPolyWalletApi(): Promise<Polymesh> {
-    if (typeof (window || {})["api"] !== "undefined") return (window || {})["api"]
-    setStatus("Getting your Polymesh Wallet")
-    // Move to top of the file when compilation error no longer present.
-    const {
-      web3Accounts,
-      web3AccountsSubscribe,
-      web3Enable,
-      web3FromAddress,
-      web3ListRpcProviders,
-      web3UseRpcProvider
-    } = require('@polkadot/extension-dapp')
-
-    const {
-      publicRuntimeConfig: {
-        appName,
-        polymesh: { nodeUrl, },
-      }
-    } = getConfig()
-    setStatus(`Enabling the app ${appName}`)
-    const polkaDotExtensions = await web3Enable(appName)
-    const polyWallets: PolyWallet[] = polkaDotExtensions.filter(injected => injected["name"] === "polywallet")
-    if (polyWallets.length == 0) {
-      setStatus("You need to install the Polymesh Wallet extension")
-      throw new Error("No Polymesh Wallet")
-    }
-    const polyWallet: PolyWallet = polyWallets[0]
-    setStatus("Verifying network")
-    const network: NetworkMeta = await polyWallet.network.get()
-    if (network["wssUrl"].replace(/\/$/, '') !== nodeUrl.replace(/\/$/, '')) {
-      setStatus(`Your network needs to match ${nodeUrl}`);
-      throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
-    }
-    polyWallet.network.subscribe(() => window.location.reload())
-    web3AccountsSubscribe(() => window.location.reload())
-    setStatus("Fetching your account")
-    const myAccounts = await polyWallet.accounts.get()
-    if (myAccounts.length == 0) {
-      setStatus("You need to create an account in the Polymesh Wallet extension")
-      return
-    }
-    const myAccount = myAccounts[0]
-    const myKeyring = new Keyring({
-      type: 'ed25519',
-    })
-    myKeyring.addFromAddress(myAccount.address)
-    const mySigner = polyWallet["signer"]
-    setStatus("Building your API");
-    (window || {})["api"] = await Polymesh.connect({
-      nodeUrl,
-      keyring: myKeyring,
-      signer: mySigner,
-    })
-    return (window || {})["api"]
-  }
-
   async function setDidFromPolyWallet(): Promise<string> {
     setStatus("Getting your PolyWallet")
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your account")
     const did: string = (await api.getCurrentIdentity()).did
     setMyInfo((prevInfo) => ({
@@ -144,7 +87,7 @@ export default function Home() {
 
   async function setPortfolioChoices(did: string): Promise<string[]> {
     if (did === "") return []
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Getting the account")
     const account: Identity = api.getIdentity({ "did": did })
     setStatus("Getting the portfolios")
@@ -313,7 +256,7 @@ export default function Home() {
   }
 
   async function setCustodianFor(polymeshDid: string, portfolioId: string | null) {
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     const who: Identity = api.getIdentity({ "did": polymeshDid })
     setStatus(`Finding selected portfolio ${portfolioId}`)
     const found: Portfolio = await findPortfolio(who, portfolioId)
@@ -335,7 +278,7 @@ export default function Home() {
 
   async function onCustodianChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const newCustodian: string = e.target.value
-    const myDid: string = (await (await getPolyWalletApi()).getCurrentIdentity()).did
+    const myDid: string = (await (await getPolyWalletApi(setStatus)).getCurrentIdentity()).did
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       "custodianDid": newCustodian,
@@ -345,7 +288,7 @@ export default function Home() {
 
   async function inviteCustodian(): Promise<void> {
     setStatus(`Inviting custodian ${myInfo["custodianDid"]}...`)
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Getting your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
     setStatus("Fetching your portfolios")
@@ -367,7 +310,7 @@ export default function Home() {
       ...prevInfo,
       "custodiedPortfolios": [ "Loading custodied portfolios..." ],
     }))
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
     setStatus("Fetching your custodied portfolios")
@@ -428,7 +371,7 @@ export default function Home() {
       ...prevInfo,
       "custodyRequests": [ "Loading custody requests..." ],
     }))
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
     setStatus("Fetching your custody requests")
@@ -503,7 +446,7 @@ export default function Home() {
       ...prevInfo,
       "custodyRequestsOut": [ "Loading custody requests..." ],
     }))
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
     setStatus("Fetching your outgoing custody requests")
