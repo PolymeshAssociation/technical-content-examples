@@ -3,7 +3,7 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
-import { Identity, NumberedPortfolio, Portfolio, } from '@polymathnetwork/polymesh-sdk/types'
+import { Identity, Portfolio, ResultSet, } from '@polymathnetwork/polymesh-sdk/types'
 import { NetworkMeta, PolyWallet } from "../src/ui-types"
 import {
   CurrentIdentity,
@@ -249,6 +249,7 @@ export default function Home() {
   }
 
   async function changeMyOrder(field: string, value: any): Promise<void> {
+    console.log(field, value)
     if (field === "portfolioId" && value === "") value = null
     setMyInfo((prevInfo) => ({
       ...prevInfo,
@@ -339,6 +340,48 @@ export default function Home() {
   async function submitInviteCustodian(e): Promise<void> {
     e.preventDefault()
     inviteCustodian()
+  }
+
+  async function loadCustodiedPortfolios(): Promise<void> {
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodiedPortfolios": [ "Loading custodied portfolios..." ],
+    }))
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Fetching your identity")
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching your custodied portfolios")
+    const custodied: ResultSet<DefaultPortfolio | NumberedPortfolio> = await me.portfolios.getCustodiedPortfolios()
+    setStatus(`Fetching ${custodied.data.length} names of custodied portfolios`)
+    const withNames: PortfolioPresentation[] = custodied.data.length === 0
+    ? [ "No custodied portfolios" ]
+    : await Promise.all(custodied.data.map((portfolio: DefaultPortfolio | NumberedPortfolio) => {
+      if (portfolio instanceof NumberedPortfolio) return portfolio.getName().then((name: string) =>({
+        "owner": portfolio.owner.did,
+        "id": portfolio.id.toString(10),
+        "name": name,
+      }))
+      else Promise.resolve({
+        owner: portfolio.owner.did,
+        id: "NA",
+        name: "default",
+      })
+    }))
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodiedPortfolios": withNames,
+    }))
+  }
+
+  function getPortfolioPresentation(portfolio: PortfolioPresentation): string {
+    console.log(portfolio)
+    if (typeof portfolio === "string") return portfolio
+    return `${portfolio.owner} - ${portfolio.id}- ${portfolio.name}`
+  }
+
+  async function submitLoadCustodiedPortfolios(e): Promise<void> {
+    e.preventDefault()
+    await loadCustodiedPortfolios()
   }
 
   return (
@@ -433,11 +476,29 @@ export default function Home() {
 
           </fieldset>
 
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
+
+          <fieldset className={styles.card}>
+            <legend>Your custodied portfolios</legend>
+
+            <div className="submit">
+              <button className="submit custodied" onClick={submitLoadCustodiedPortfolios}>Load them</button>
+            </div>
+
+            <ul>
+              {
+                myInfo["custodiedPortfolios"].map((portfolio: PortfolioPresentation) => <li>
+                  { getPortfolioPresentation(portfolio) }
+                </li>)
+              }
+            </ul>
+            
+          </fieldset>
+
         </form>
 
-        <div id="status" className={styles.status}>
-          Latest status will show here
-        </div>
       </main>
 
       <footer className={styles.footer}>
