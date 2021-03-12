@@ -1,6 +1,5 @@
 import Head from "next/head"
 import React, { useState } from "react"
-import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 import styles from "../styles/Home.module.css"
 import { Polymesh, } from '@polymathnetwork/polymesh-sdk'
 import {
