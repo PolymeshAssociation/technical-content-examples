@@ -1,3 +1,15 @@
+import { FullSettlementJson } from "./settlementInfo";
+
+export interface SimpleVenueJson {
+    ownerDid: string
+    venueId: string
+}
+
+export interface SettlementListJson {
+    settlements: FullSettlementJson[]
+    venue: SimpleVenueJson
+}
+
 export interface AddressObject {
     address: string
     name?: string
@@ -9,7 +21,7 @@ export interface Accounts {
 }
 
 export enum NetworkName {
-    alcyone = 'alcyone',
+    alcyone = "alcyone",
 }
 
 export type NetworkMeta = {

@@ -1,8 +1,7 @@
 import Head from "next/head"
-import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
-import { Polymesh, } from '@polymathnetwork/polymesh-sdk'
+import { BigNumber, Polymesh, } from '@polymathnetwork/polymesh-sdk'
 import { TransactionQueue } from '@polymathnetwork/polymesh-sdk/internal'
 import {
   Identity,
@@ -10,17 +9,19 @@ import {
   Venue,
 } from '@polymathnetwork/polymesh-sdk/types'
 import { getPolyWalletApi } from "../src/ui-helpers"
+import { FullSettlementJson } from "../src/settlementInfo"
+import { SettlementListJson } from "../src/ui-types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "traderId": "",
-    "info": {
-      "settlements": [],
-      "venue": {
-        "ownerDid": "",
-        "venueId": "",
+    traderId: "" as string,
+    info: {
+      settlements: [],
+      venue: {
+        ownerDid: "",
+        venueId: "",
       },
-    },
+    } as SettlementListJson,
   })
 
   function setStatus(content: string) {
@@ -31,7 +32,7 @@ export default function Home() {
   function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      "traderId": e.target.value,
+      traderId: e.target.value,
     }))
   }
 
@@ -39,10 +40,10 @@ export default function Home() {
     const response = await fetch(`/api/settlements/?traderId=${traderId}`, { "method": "GET" })
     if (response.status == 200) {
       setStatus("Settlements fetched")
-      const body = await response.json()
+      const body: SettlementListJson = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "info": body,
+        info: body,
       }))
     } else {
       setStatus("Something went wrong")
@@ -52,16 +53,16 @@ export default function Home() {
 
   async function submitGetPendingSettlements(e): Promise<void> {
     e.preventDefault() // prevent page from submitting form
-    await getPendingSettlements(myInfo["traderId"])
+    await getPendingSettlements(myInfo.traderId)
   }
 
   async function affirm(instructionId: string): Promise<Instruction> {
     const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Getting exchange account")
-    const trader: Identity = await api.getIdentity({ "did": myInfo["info"]["venue"]["ownerDid"]})
+    const trader: Identity = await api.getIdentity({ did: myInfo.info.venue.ownerDid })
     setStatus("Getting the exchange venue")
     const tradingVenue: Venue = (await trader.getVenues())
-    .find((venue: Venue) => venue.id.toString(10) == myInfo["info"]["venue"]["venueId"])
+      .find((venue: Venue) => venue.id.toString(10) == myInfo.info.venue.venueId)
     setStatus("Finding the pending instruction")
     const myInstruction: Instruction = (await tradingVenue.getPendingInstructions())
       .find((instruction: Instruction) => instruction.id.toString(10) == instructionId)
@@ -78,13 +79,13 @@ export default function Home() {
   }
 
   async function sendBuyerPays(settlementId: string): Promise<Response> {
-    const mySettlement = myInfo.info.settlements.find((settlement) => settlement["id"] === settlementId)
-    const instructionId: string = mySettlement["instructionId"]
+    const mySettlement = myInfo.info.settlements.find((settlement) => settlement.id === settlementId)
+    const instructionId: string = mySettlement.instructionId
     const updatedInstruction: Instruction = await affirm(instructionId)
-    const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { "method": "PATCH" })
+    const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
-      await getPendingSettlements(myInfo["traderId"])
+      await getPendingSettlements(myInfo.traderId)
     } else {
       setStatus("Something went wrong")
     }
@@ -97,13 +98,13 @@ export default function Home() {
   }
 
   async function sendSellerTransfers(settlementId: string): Promise<Response> {
-    const mySettlement = myInfo.info.settlements.find((settlement) => settlement["id"] === settlementId)
-    const instructionId: string = mySettlement["instructionId"]
-    const updatedInstruction: Instruction = await affirm(instructionId)
-    const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { "method": "PATCH" })
+    const mySettlement = myInfo.info.settlements.find((settlement) => settlement.id === settlementId)
+    const instructionId: string = mySettlement.instructionId
+    await affirm(instructionId)
+    const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
-      await getPendingSettlements(myInfo["traderId"])
+      await getPendingSettlements(myInfo.traderId)
     } else {
       setStatus("Something went wrong")
     }
@@ -136,11 +137,11 @@ export default function Home() {
 
             <div>
               <label htmlFor="custodian-traderId" className={styles.hasTitle} title="Given to the trader when they registered with NextDaq. As of now, just pick one.">Their id</label>
-              <input name="traderId" id="custodian-traderId" type="number" placeholder="1" value={myInfo["traderId"]} onChange={onTraderIdChanged}></input>
+              <input name="traderId" id="custodian-traderId" type="number" placeholder="1" value={myInfo.traderId} onChange={onTraderIdChanged}></input>
             </div>
 
             <div className="submit">
-              <button className="submit traderId" onClick={submitGetPendingSettlements} disabled={myInfo["traderId"] === ""}>Fetch their pending settlements</button>
+              <button className="submit traderId" onClick={submitGetPendingSettlements} disabled={myInfo.traderId === ""}>Fetch their pending settlements</button>
             </div>
 
           </fieldset>
@@ -154,31 +155,31 @@ export default function Home() {
                 <p>Affirm what you recognise</p>
 
                 {
-                  myInfo["info"]["settlements"]
-                    .map((settlement) => <div className={`${styles.card} ${styles.unbreakable}`}>
-                      <div data-trader-id={settlement["buyer"]["id"]}>
-                        Buyer <b title="buyer id">{settlement["buyer"]["id"]}</b>
+                  myInfo.info.settlements
+                    .map((settlement: FullSettlementJson) => <div className={`${styles.card} ${styles.unbreakable}`}>
+                      <div data-trader-id={settlement.buyer.id}>
+                        Buyer <b title="buyer id">{settlement.buyer.id}</b>
                         <span> to pay </span>
-                        <span title="amount"> {settlement["price"] * settlement["quantity"]} </span>
+                        <span title="amount"> {new BigNumber(settlement.price).times(new BigNumber(settlement.quantity)).toString(10)} </span>
                         <span title="currency"> USD </span>
                         <span> to seller </span>
-                        <span title="seller id"> {settlement["seller"]["id"]} </span>
+                        <span title="seller id"> {settlement.seller.id} </span>
                         <span> with the reference </span>
-                        <span title="transfer reference">{settlement["id"]} </span>
-                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo["traderId"] !== settlement["buyer"]["id"] || settlement["isPaid"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isPaid"] ? " Paid" : "Affirm payment"}
+                        <span title="transfer reference">{settlement.id} </span>
+                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo.traderId !== settlement.buyer.id || settlement.isPaid} data-settlement-id={settlement.id}>
+                          {settlement.isPaid ? " Paid" : " Affirm payment"}
                         </button>
                       </div>
 
-                      <div data-trader-id={settlement["seller"]["id"]}>
-                        Seller <b title="seller id"> {settlement["seller"]["id"]}</b>
+                      <div data-trader-id={settlement.seller.id}>
+                        Seller <b title="seller id"> {settlement.seller.id}</b>
                         <span> to transfer </span>
-                        <span title="quantity"> {settlement["quantity"]} </span>
-                        <span title="token"> {settlement["token"]} </span>
+                        <span title="quantity"> {settlement.quantity} </span>
+                        <span title="token"> {settlement.token} </span>
                         <span> to buyer </span>
-                        <span title="buyer id"> {settlement["buyer"]["id"]} </span>
-                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo["traderId"] !== settlement["seller"]["id"] || settlement["isTransferred"]} data-settlement-id={settlement["id"]}>
-                          {settlement["isTransferred"] ? " Transferred" : "Affirm transfer"}
+                        <span title="buyer id"> {settlement.buyer.id} </span>
+                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo.traderId !== settlement.seller.id || settlement.isTransferred} data-settlement-id={settlement.id}>
+                          {settlement.isTransferred ? " Transferred" : " Affirm transfer"}
                         </button>
                       </div>
                     </div>)

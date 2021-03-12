@@ -3,7 +3,7 @@ import { Polymesh } from '@polymathnetwork/polymesh-sdk'
 import { IExchangeDb } from "./exchangeDb"
 import { ExchangeDbFs } from "./exchangeDbFs"
 
-export default async function(): Promise<IExchangeDb> {
+export default async function (): Promise<IExchangeDb> {
     const {
         serverRuntimeConfig: {
             exchangeDbPath,
@@ -13,19 +13,21 @@ export default async function(): Promise<IExchangeDb> {
             nodeUrl,
         }, },
     } = getConfig() || {
-        "serverRuntimeConfig": { 
+        "serverRuntimeConfig": {
             "exchangeDbPath": process.env.EXCHANGE_DB_PATH,
             polymesh: {
                 "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
             },
         },
-        "publicRuntimeConfig": { polymesh: {
-            "nodeUrl": process.env.POLY_NODE_URL,
-        }, },
+        "publicRuntimeConfig": {
+            polymesh: {
+                "nodeUrl": process.env.POLY_NODE_URL,
+            },
+        },
     }
     return new ExchangeDbFs(
         exchangeDbPath,
-        async() => Polymesh.connect({
+        async () => Polymesh.connect({
             nodeUrl,
             accountMnemonic,
         })

@@ -1,9 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { IAssignedOrderInfo } from "../../src/orderInfo"
+import { AssignedOrderJson, IAssignedOrderInfo } from "../../src/orderInfo"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 
-async function getOrders(): Promise<IAssignedOrderInfo[]> {
-    return await (await exchangeDbFactory()).getOrders()
+async function getOrders(): Promise<AssignedOrderJson[]> {
+    return (await (await exchangeDbFactory()).getOrders())
+        .map((order: IAssignedOrderInfo) => order.toJSON())
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object>): Promise<any> {
@@ -15,8 +16,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object>
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         console.log(e)
-        res.status(500).json({"status": "internal error"})
+        res.status(500).json({ status: "internal error" })
     }
 }

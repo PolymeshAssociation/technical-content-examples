@@ -9,7 +9,7 @@ import { PolymeshCreator } from "../../src/types.js"
 use(require("chai-as-promised"))
 
 describe("SettlementEnginePoly Integration Tests", () => {
-    const { 
+    const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
@@ -22,8 +22,8 @@ describe("SettlementEnginePoly Integration Tests", () => {
         } }
     } = nextConfig
 
-    it("getVenue works for the configured account", async() => {
-        const apiCreator: PolymeshCreator = async() => Polymesh.connect({
+    it("getVenue works for the configured account", async () => {
+        const apiCreator: PolymeshCreator = async () => Polymesh.connect({
             nodeUrl,
             accountMnemonic,
             middleware: {

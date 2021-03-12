@@ -1,4 +1,4 @@
-import { BigNumber } from "bignumber.js"
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import {
     PortfolioLike,
 } from "@polymathnetwork/polymesh-sdk/types"
@@ -6,41 +6,68 @@ import {
     IOrderInfo,
     InvalidPolymeshDidError,
     WrongNumericValueError,
+    WrongZeroOrderError,
 } from "./orderInfo"
+
+export interface SettlementPartyJson {
+    id: string
+    polymeshDid: string
+    portfolioId: string | null
+}
 
 export interface ISettlementParty {
     id: string
     polymeshDid: string
     portfolioId: BigNumber | null
-    toJSON(): JSON
+    toJSON(): SettlementPartyJson
     toPortfolioLike(): PortfolioLike
+}
+
+export interface SettlementJson {
+    buyer: SettlementPartyJson
+    seller: SettlementPartyJson
+    quantity: string
+    token: string
+    price: string
+    isPaid: boolean
+    isTransferred: boolean
 }
 
 export interface ISettlementInfo {
     buyer: ISettlementParty
     seller: ISettlementParty
-    quantity: number
+    quantity: BigNumber
     token: string
-    price: number
+    price: BigNumber
     isPaid: boolean
     isTransferred: boolean
-    toJSON(): JSON
+    toJSON(): SettlementJson
+}
+
+export interface PublishedSettlementJson extends SettlementJson {
+    instructionId: string
 }
 
 export interface IPublishedSettlementInfo extends ISettlementInfo {
     instructionId: BigNumber
+    toJSON(): PublishedSettlementJson
+}
+
+export interface FullSettlementJson extends PublishedSettlementJson {
+    id: string
 }
 
 export interface IFullSettlementInfo extends IPublishedSettlementInfo {
     id: string
+    toJSON(): FullSettlementJson
 }
 
-function requireDesiredType(info: JSON, field: string, receivedType: string) {
-    if (typeof info[field] === "undefined") {
+function requireDesiredType(info: any, field: string, receivedType: string) {
+    if (typeof info === "undefined") {
         throw new IncompleteSettlementInfoError(field)
     }
-    if (typeof info[field] !== receivedType) {
-        throw new WrongTypeSettlementError(field, typeof info[field])
+    if (typeof receivedType === "string" && typeof info !== receivedType) {
+        throw new WrongTypeSettlementError(field, typeof info)
     }
 }
 
@@ -51,35 +78,35 @@ export class SettlementParty implements ISettlementParty {
     polymeshDid: string
     portfolioId: BigNumber | null
 
-    constructor(info: JSON) {
-        requireDesiredType(info, "id", "string")
-        this.id = info["id"]
-        requireDesiredType(info, "polymeshDid", "string")
-        if (!(info["polymeshDid"] as string).match(polymeshDidRegex)) {
-            throw new InvalidPolymeshDidError(info["polymeshDid"])
+    constructor(info: SettlementPartyJson) {
+        requireDesiredType(info.id, "id", "string")
+        this.id = info.id
+        requireDesiredType(info.polymeshDid, "polymeshDid", "string")
+        if (!(info.polymeshDid as string).match(polymeshDidRegex)) {
+            throw new InvalidPolymeshDidError(info.polymeshDid)
         }
-        this.polymeshDid = info["polymeshDid"]
-        if (typeof info["portfolioId"] === "undefined" || info["portfolioId"] === null) {
+        this.polymeshDid = info.polymeshDid
+        if (typeof info.portfolioId === "undefined" || info.portfolioId === null) {
             this.portfolioId = null
         } else {
-            requireDesiredType(info, "portfolioId", "string")
-            this.portfolioId = new BigNumber(info["portfolioId"])
+            requireDesiredType(info.portfolioId, "portfolioId", "string")
+            this.portfolioId = new BigNumber(info.portfolioId)
         }
     }
 
-    toJSON(): JSON {
-        const toReturn: JSON = <JSON><unknown>{
-            "id": this.id,
-            "polymeshDid": this.polymeshDid,
+    toJSON(): SettlementPartyJson {
+        const toReturn: SettlementPartyJson = {
+            id: this.id,
+            polymeshDid: this.polymeshDid,
+            portfolioId: this.portfolioId === null ? null : this.portfolioId.toString(10),
         }
-        if (this.portfolioId) toReturn["portfolioId"] = this.portfolioId.toString(10)
         return toReturn
     }
 
     toPortfolioLike(): PortfolioLike {
         return this.portfolioId ? {
-            "identity": this.polymeshDid,
-            "id": this.portfolioId,
+            identity: this.polymeshDid,
+            id: this.portfolioId,
         } : this.polymeshDid
     }
 }
@@ -87,44 +114,54 @@ export class SettlementParty implements ISettlementParty {
 export class SettlementInfo implements ISettlementInfo {
     buyer: SettlementParty
     seller: SettlementParty
-    quantity: number
+    quantity: BigNumber
     token: string
-    price: number
+    price: BigNumber
     isPaid: boolean
     isTransferred: boolean
 
-    constructor(info: JSON) {
-        requireDesiredType(info, "buyer", "object")
-        this.buyer = new SettlementParty(info["buyer"])
-        requireDesiredType(info, "seller", "object")
-        this.seller = new SettlementParty(info["seller"])
+    constructor(info: SettlementJson) {
+        requireDesiredType(info.buyer, "buyer", "object")
+        this.buyer = new SettlementParty(info.buyer)
+        requireDesiredType(info.seller, "seller", "object")
+        this.seller = new SettlementParty(info.seller)
         if (this.buyer.id === this.seller.id) {
             throw new DuplicatePartiesSettlementError(this.buyer.id)
         }
         if (this.buyer.polymeshDid === this.seller.polymeshDid) {
             throw new DuplicatePolymeshDidSettlementError(this.buyer.polymeshDid)
         }
-        requireDesiredType(info, "quantity", "number")
-        this.quantity = info["quantity"]
-        requireDesiredType(info, "token", "string")
-        this.token = info["token"]
-        requireDesiredType(info, "price", "number")
-        this.price = info["price"]
-        requireDesiredType(info, "isPaid", "boolean")
-        this.isPaid = info["isPaid"]
-        requireDesiredType(info, "isTransferred", "boolean")
-        this.isTransferred = info["isTransferred"]
+        requireDesiredType(info.quantity, "quantity", "string")
+        this.quantity = new BigNumber(info.quantity)
+        if (this.quantity.toString(10) === "0") {
+            throw new WrongZeroOrderError("quantity")
+        } else if (this.quantity.toString(10) === "NaN") {
+            throw new WrongNumericValueError("quantity", info.quantity)
+        }
+        requireDesiredType(info.token, "token", "string")
+        this.token = info.token
+        requireDesiredType(info.price, "price", "string")
+        this.price = new BigNumber(info.price)
+        if (this.price.toString(10) === "0") {
+            throw new WrongZeroOrderError("price")
+        } else if (this.price.toString(10) === "NaN") {
+            throw new WrongNumericValueError("price", info.price)
+        }
+        requireDesiredType(info.isPaid, "isPaid", "boolean")
+        this.isPaid = info.isPaid
+        requireDesiredType(info.isTransferred, "isTransferred", "boolean")
+        this.isTransferred = info.isTransferred
     }
 
-    toJSON(): JSON {
-        return <JSON><unknown>{
-            "buyer": this.buyer.toJSON(),
-            "seller": this.seller.toJSON(),
-            "quantity": this.quantity,
-            "token": this.token,
-            "price": this.price,
-            "isPaid": this.isPaid,
-            "isTransferred": this.isTransferred,
+    toJSON(): SettlementJson {
+        return {
+            buyer: this.buyer.toJSON(),
+            seller: this.seller.toJSON(),
+            quantity: this.quantity.toString(10),
+            token: this.token,
+            price: this.price.toString(10),
+            isPaid: this.isPaid,
+            isTransferred: this.isTransferred,
         }
     }
 
@@ -133,35 +170,37 @@ export class SettlementInfo implements ISettlementInfo {
 export class PublishedSettlementInfo extends SettlementInfo implements IPublishedSettlementInfo {
     instructionId: BigNumber
 
-    constructor(info: JSON) {
+    constructor(info: PublishedSettlementJson) {
         super(info)
-        requireDesiredType(info, "instructionId", "string")
-        this.instructionId = new BigNumber(info["instructionId"])
+        requireDesiredType(info.instructionId, "instructionId", "string")
+        this.instructionId = new BigNumber(info.instructionId)
         if (this.instructionId.toString(10) === "NaN") {
-            throw new WrongNumericValueError("instructionId", info["instructionId"])
+            throw new WrongNumericValueError("instructionId", info.instructionId)
         }
     }
 
-    toJSON(): JSON {
-        const json = super.toJSON()
-        json["instructionId"] = this.instructionId.toString(10)
-        return json
+    toJSON(): PublishedSettlementJson {
+        return {
+            ...super.toJSON(),
+            instructionId: this.instructionId.toString(10),
+        }
     }
 
 }
 export class FullSettlementInfo extends PublishedSettlementInfo implements IFullSettlementInfo {
     id: string
 
-    constructor(info: JSON) {
+    constructor(info: FullSettlementJson) {
         super(info)
-        requireDesiredType(info, "id", "string")
-        this.id = info["id"]
+        requireDesiredType(info.id, "id", "string")
+        this.id = info.id
     }
 
-    toJSON(): JSON {
-        const json = super.toJSON()
-        json["id"] = this.id
-        return json
+    toJSON(): FullSettlementJson {
+        return {
+            ...super.toJSON(),
+            id: this.id,
+        }
     }
 
 }
@@ -176,61 +215,61 @@ export function createByMatchingOrders(buyerId: string, buyOrder: IOrderInfo, se
     if (buyOrder.token !== sellOrder.token) {
         throw new IncompatibleOrderTypeError(buyOrder.token, sellOrder.token)
     }
-    const quantity: number = Math.min(buyOrder.quantity, sellOrder.quantity)
-    const price: number = (buyOrder.price + sellOrder.price) / 2
-    const settlement: JSON = {
-        "buyer": {
-            "id": buyerId,
-            "polymeshDid": buyOrder.polymeshDid,
-            "portfolioId": buyOrder.portfolioId?.toString(10),
+    const quantity: BigNumber = BigNumber.min(buyOrder.quantity, sellOrder.quantity)
+    const price: BigNumber =  (buyOrder.price.plus(sellOrder.price)).dividedBy(new BigNumber("2"))
+    const settlement: SettlementJson = {
+        buyer: {
+            id: buyerId,
+            polymeshDid: buyOrder.polymeshDid,
+            portfolioId: buyOrder.portfolioId?.toString(10),
         },
-        "seller": {
-            "id": sellerId,
-            "polymeshDid": sellOrder.polymeshDid,
-            "portfolioId": sellOrder.portfolioId?.toString(10),
+        seller: {
+            id: sellerId,
+            polymeshDid: sellOrder.polymeshDid,
+            portfolioId: sellOrder.portfolioId?.toString(10),
         },
-        "quantity": quantity,
-        "token": buyOrder.token,
-        "price": price,
-        "isPaid": false,
-        "isTransferred": false,
-    } as unknown as JSON
+        quantity: quantity.toString(10),
+        token: buyOrder.token,
+        price: price.toString(10),
+        isPaid: false,
+        isTransferred: false,
+    }
     return new SettlementInfo(settlement)
 }
 
 export class SettlementInfoError extends Error {
-    constructor (message?: string) {
+    constructor(message?: string) {
         super(message)
         Error.apply(this, arguments)
     }
 }
 
 export class IncompleteSettlementInfoError extends SettlementInfoError {
-    constructor (public field: string, message?: string) {
+    constructor(public field: string, message?: string) {
         super(message)
     }
 }
 
 export class WrongTypeSettlementError extends SettlementInfoError {
-    constructor (public field: string, public receivedType: string, message?: string) {
+    constructor(public field: string, public receivedType: string, message?: string) {
         super(message)
     }
 }
 
 export class DuplicatePartiesSettlementError extends SettlementInfoError {
-    constructor (public partyId: string, message?: string) {
+    constructor(public partyId: string, message?: string) {
         super(message)
     }
 }
 
 export class DuplicatePolymeshDidSettlementError extends SettlementInfoError {
-    constructor (public polymeshDid: string, message?: string) {
+    constructor(public polymeshDid: string, message?: string) {
         super(message)
     }
 }
 
 export class NoActionToDoSettlementError extends SettlementInfoError {
-    constructor (public id: string, message?: string) {
+    constructor(public id: string, message?: string) {
         super(message)
     }
 }

@@ -1,24 +1,20 @@
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import Head from "next/head"
 import React, { useState } from "react"
+import { AssignedOrderJson } from "../src/orderInfo"
+import { FullSettlementInfo } from "../src/settlementInfo"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "info": {
-      "orders": [] as Order[],
+    info: {
+      orders: [] as AssignedOrderJson[],
     },
-    "picked": {
-      "sell": "" as string,
-      "buy": "" as string,
+    picked: {
+      sell: "" as string,
+      buy: "" as string,
     },
   })
-
-  interface Order {
-    id: string
-    token: string
-    price: number
-    quantity: string
-  }
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -26,14 +22,14 @@ export default function Home() {
   }
 
   async function getOrdersInfo(): Promise<Response> {
-    const response = await fetch(`/api/trades`, { "method": "GET" })
+    const response = await fetch(`/api/trades`, { method: "GET" })
     if (response.status == 200) {
       setStatus("Info fetched")
-      const body: Order[] = await response.json()
+      const body: AssignedOrderJson[] = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "info": {
-          "orders": body,
+        info: {
+          orders: body,
         },
       }))
     } else {
@@ -47,13 +43,13 @@ export default function Home() {
   }
 
   function onTradeSelected(isBuy: boolean) {
-    return function(e: React.MouseEvent<HTMLElement, MouseEvent>): void {
+    return function (e: React.MouseEvent<HTMLElement, MouseEvent>): void {
       const tradeId: string = e.currentTarget.getAttribute("data-order-id")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        "picked": {
-          ...prevInfo["picked"],
-          [ isBuy ? "buy" : "sell" ]: tradeId,
+        picked: {
+          ...prevInfo.picked,
+          [isBuy ? "buy" : "sell"]: tradeId,
         },
       }))
     }
@@ -61,13 +57,13 @@ export default function Home() {
 
   async function createMatch(): Promise<Response> {
     setStatus("Sending settlement")
-    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo["picked"]["buy"]}&sellerId=${myInfo["picked"]["sell"]}`, {
-      "method": "POST"
+    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo.picked.buy}&sellerId=${myInfo.picked.sell}`, {
+      method: "POST"
     })
     if (settlementResponse.status == 200) {
-      const settlement = await settlementResponse.json()
-      console.log(`Settlement posted at instruction ${settlement["instructionId"]}`)
-      setStatus(`Settlement posted at instruction ${settlement["instructionId"]}`)
+      const settlement: FullSettlementInfo = await settlementResponse.json()
+      console.log(`Settlement posted at instruction ${settlement.instructionId}`)
+      setStatus(`Settlement posted at instruction ${settlement.instructionId}`)
     } else {
       console.log(settlementResponse.json())
       setStatus("Something went wrong")
@@ -102,7 +98,7 @@ export default function Home() {
         <form lang="en">
 
           <div className="submit">
-            <button className="submit match" onClick={submitMatch} disabled={myInfo["picked"]["buy"] === "" || myInfo["picked"]["sell"] === ""}>Submit the match</button>
+            <button className="submit match" onClick={submitMatch} disabled={myInfo.picked.buy === "" || myInfo.picked.sell === ""}>Submit the match</button>
           </div>
 
           <div className={styles.row}>
@@ -113,10 +109,10 @@ export default function Home() {
                 <h3>Pick 1 sell order</h3>
 
                 {
-                  myInfo["info"]["orders"]
-                    .filter((order) => !order["isBuy"])
-                    .sort((left, right) => left.price - right.price)
-                    .map((order) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["sell"] === order.id ? styles.selected : ""}`} key={`order-sell-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(false)}>
+                  myInfo.info.orders
+                    .filter((order: AssignedOrderJson) => !order.isBuy)
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => new BigNumber(left.price).minus(new BigNumber(right.price)).toNumber())
+                    .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.sell === order.id ? styles.selected : ""}`} key={`order-sell-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(false)}>
                       <span title="Trader id">{order.id} - </span>
                       <span title="Quantity">{order.quantity} </span>
                       of <span title="Ticker">{order.token}</span>,
@@ -130,13 +126,13 @@ export default function Home() {
             <div className={styles.column}>
               <div className='buy-column'>
 
-              <h3>Pick 1 buy order</h3>
+                <h3>Pick 1 buy order</h3>
 
                 {
-                  myInfo["info"]["orders"]
-                    .filter((order) => order["isBuy"])
-                    .sort((left, right) => right.price - left.price)
-                    .map((order) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo["picked"]["buy"] === order.id ? styles.selected : ""}`} key={`order-buy-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(true)}>
+                  myInfo.info.orders
+                    .filter((order: AssignedOrderJson) => order.isBuy)
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => new BigNumber(right.price).minus(new BigNumber(left.price)).toNumber())
+                    .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.buy === order.id ? styles.selected : ""}`} key={`order-buy-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(true)}>
                       <b title="Price in USD / token"> @ {order.price}</b>,
                       <span title="Quantity"> {order.quantity}</span> of
                       <span title="Ticker"> {order.token}</span>

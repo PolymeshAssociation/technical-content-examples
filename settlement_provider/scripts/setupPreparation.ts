@@ -5,8 +5,7 @@
 export {}
 import * as prompts from "prompts"
 import * as colors from "colors"
-import { BigNumber } from "bignumber.js"
-import { Polymesh } from "@polymathnetwork/polymesh-sdk"
+import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import {
     AccountBalance,
@@ -74,7 +73,7 @@ getApi()
 
         // Preset venue
         const myVenues: Venue[] = await me.getVenues()
-        const engine: ISettlementEngine = new SettlementEnginePoly(api, venueId, usdToken)
+        const engine: ISettlementEngine = new SettlementEnginePoly(() => Promise.resolve(api), venueId, usdToken)
         let presetVenue: Venue = await engine.getVenue()
             .catch((e) => null)
         if (presetVenue !== null) {

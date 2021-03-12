@@ -1,5 +1,4 @@
-import BigNumber from "bignumber.js"
-import { Polymesh } from "@polymathnetwork/polymesh-sdk"
+import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import {
     CurrentIdentity,
     Instruction,
@@ -59,7 +58,7 @@ export class SettlementEnginePoly implements ISettlementEngine {
         const venue: Venue = (await this.getVenue()).venue
         const settlementQueue: TransactionQueue<Instruction> = await venue.addInstruction({ "legs": legs })
         const instruction: Instruction = await settlementQueue.run()
-        return new PublishedSettlementInfo(<JSON><unknown>{
+        return new PublishedSettlementInfo({
             ...settlement.toJSON(),
             "instructionId": instruction.id.toString(10)
         })
@@ -68,13 +67,13 @@ export class SettlementEnginePoly implements ISettlementEngine {
 }
 
 export class SettlementEnginePolyError {
-    constructor () {
+    constructor() {
         Error.apply(this, arguments)
     }
 }
 
 export class NonExistentAccountError extends SettlementEnginePolyError {
-    constructor (public address: string) {
+    constructor(public address: string) {
         super()
     }
 }

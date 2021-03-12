@@ -3,7 +3,7 @@ import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { ISettlementEngine } from "./settlementEngine"
 import { SettlementEnginePoly } from "./settlementEnginePoly"
 
-export default async function(): Promise<ISettlementEngine> {
+export default async function (): Promise<ISettlementEngine> {
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
@@ -16,19 +16,23 @@ export default async function(): Promise<ISettlementEngine> {
             usdToken,
         }, },
     } = getConfig() || {
-        "serverRuntimeConfig": { polymesh: {
-            "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
-            "middlewareLink": process.env.MIDDLEWARE_LINK,
-            "middlewareKey": process.env.MIDDLEWARE_KEY,
-        }, },
-        "publicRuntimeConfig": { polymesh: {
-            "nodeUrl": process.env.POLY_NODE_URL,
-            "venueId": process.env.POLY_VENUE_ID,
-            "usdToken": process.env.POLY_USD_TOKEN,
-        }, },
+        "serverRuntimeConfig": {
+            polymesh: {
+                "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
+                "middlewareLink": process.env.MIDDLEWARE_LINK,
+                "middlewareKey": process.env.MIDDLEWARE_KEY,
+            },
+        },
+        "publicRuntimeConfig": {
+            polymesh: {
+                "nodeUrl": process.env.POLY_NODE_URL,
+                "venueId": process.env.POLY_VENUE_ID,
+                "usdToken": process.env.POLY_USD_TOKEN,
+            },
+        },
     }
     return new SettlementEnginePoly(
-        async() => Polymesh.connect({
+        async () => Polymesh.connect({
             nodeUrl,
             accountMnemonic,
             middleware: {

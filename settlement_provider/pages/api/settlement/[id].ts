@@ -8,12 +8,13 @@ import {
     DuplicatePolymeshDidSettlementError,
     PublishedSettlementInfo,
     IPublishedSettlementInfo,
+    PublishedSettlementJson,
 } from "../../../src/settlementInfo"
 import { ISettlementDb, UnknownSettlementError } from "../../../src/settlementDb"
 import settlementDbFactory from "../../../src/settlementDbFactory"
 
-async function getSettlementInfoById(req: NextApiRequest): Promise<ISettlementInfo> {
-    return await (await settlementDbFactory()).getSettlementInfoById(<string>req.query.id)
+async function getSettlementInfoById(req: NextApiRequest): Promise<PublishedSettlementJson> {
+    return (await (await settlementDbFactory()).getSettlementInfoById(<string>req.query.id)).toJSON()
 }
 
 async function setSettlementInfo(req: NextApiRequest): Promise<void> {
@@ -26,9 +27,9 @@ async function setSettlementInfo(req: NextApiRequest): Promise<void> {
 }
 
 async function updateSettlementInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id
+    const id: string = <string>req.query.id
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    const settlement = await settlementDb.getSettlementInfoById(id)
+    const settlement: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById(id)
     const isPaid: boolean = typeof req.query.isPaid !== "undefined"
     const isTransferred: boolean = typeof req.query.isTransferred !== "undefined"
     if (!isPaid && !isTransferred) {
@@ -51,31 +52,31 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 break
             case "PUT":
                 await setSettlementInfo(req)
-                res.status(200).json({ "status": "ok" })
+                res.status(200).json({ status: "ok" })
                 break
             case "PATCH":
                 await updateSettlementInfo(req)
-                res.status(200).json({ "status": "ok" })
+                res.status(200).json({ status: "ok" })
                 break
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         if (e instanceof UnknownSettlementError) {
-            res.status(404).json({"status": "not found"})
+            res.status(404).json({ status: "not found" })
         } else if (e instanceof IncompleteSettlementInfoError) {
-            res.status(400).json({"status": `missing field ${e.field}`})
+            res.status(400).json({ status: `missing field ${e.field}` })
         } else if (e instanceof WrongTypeSettlementError) {
-            res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+            res.status(400).json({ status: `wrong type ${e.receivedType} on field ${e.field}` })
         } else if (e instanceof DuplicatePartiesSettlementError) {
-            res.status(400).json({"status": `same buyer and seller: ${e.partyId}`})
+            res.status(400).json({ status: `same buyer and seller: ${e.partyId}` })
         } else if (e instanceof DuplicatePolymeshDidSettlementError) {
-            res.status(400).json({"status": `same buyer and seller: ${e.polymeshDid}`})
+            res.status(400).json({ status: `same buyer and seller: ${e.polymeshDid}` })
         } else if (e instanceof NoActionToDoSettlementError) {
-            res.status(400).json({"status": `no action found for ${e.id}`})
+            res.status(400).json({ status: `no action found for ${e.id}` })
         } else {
             console.log(e)
-            res.status(500).json({"status": "internal error"})
+            res.status(500).json({ status: "internal error" })
         }
     }
 }

@@ -5,8 +5,8 @@ import { expect, use } from "chai"
 import { createMocks } from "node-mocks-http"
 import * as nextConfig from "../../next.config.js"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { IAssignedOrderInfo, IOrderInfo, OrderInfo } from "../../src/orderInfo"
-import { IFullSettlementInfo, PublishedSettlementInfo, } from "../../src/settlementInfo"
+import { IAssignedOrderInfo, IOrderInfo, OrderInfo, OrderJson } from "../../src/orderInfo"
+import { IFullSettlementInfo, PublishedSettlementInfo, PublishedSettlementJson, } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
@@ -33,17 +33,17 @@ describe("/api/settlements Integration Tests", () => {
     let toRestore: RestoreFn
     let venueOwner: string
 
-    beforeEach("mock env", async function() {
+    beforeEach("mock env", async function () {
         this.timeout(20000)
         exchangeDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         settlementDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
-            "EXCHANGE_DB_PATH": exchangeDbPath,
-            "SETTLEMENT_DB_PATH": settlementDbPath,
-            "POLY_ACCOUNT_MNEMONIC": accountMnemonic,
-            "POLY_NODE_URL": nodeUrl,
-            "POLY_VENUE_ID": venueId,
-            "POLY_USD_TOKEN": usdToken,
+            EXCHANGE_DB_PATH: exchangeDbPath,
+            SETTLEMENT_DB_PATH: settlementDbPath,
+            POLY_ACCOUNT_MNEMONIC: accountMnemonic,
+            POLY_NODE_URL: nodeUrl,
+            POLY_VENUE_ID: venueId,
+            POLY_USD_TOKEN: usdToken,
         })
         exchangeDb = await exchangeDbFactory()
         settlementDb = await settlementDbFactory()
@@ -54,7 +54,7 @@ describe("/api/settlements Integration Tests", () => {
         venueOwner = (await api.getCurrentIdentity()).did
     })
 
-    afterEach("restore env", async() => {
+    afterEach("restore env", async () => {
         toRestore()
         if (await exists(exchangeDbPath)) {
             await fsPromises.unlink(exchangeDbPath)
@@ -68,156 +68,161 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                settlements: [],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
-            const bareInfo: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": "1",
+            const bareInfo: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "instructionId": "445",
-                "isPaid": true,
-                "isTransferred": false,
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [{
+                settlements: [{
                     ...bareInfo,
-                    "id": "3",
+                    id: "3",
                 }],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
-            const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": "1",
+            const bareInfo1: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "instructionId": "445",
-                "isPaid": true,
-                "isTransferred": false,
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
             }
-            const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "3",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
-                    "portfolioId": "2",
+            const bareInfo2: PublishedSettlementJson = {
+                buyer: {
+                    id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 543,
-                "token": "ACME",
-                "price": 30,
-                "instructionId": "446",
-                "isPaid": false,
-                "isTransferred": false,
+                quantity: "543",
+                token: "ACME",
+                price: "30",
+                instructionId: "446",
+                isPaid: false,
+                isTransferred: false,
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [
-                    {...bareInfo2, "id": "2"},
-                    {...bareInfo1, "id": "3"},
+                settlements: [
+                    { ...bareInfo2, id: "2" },
+                    { ...bareInfo1, id: "3" },
                 ],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
 
         it("returns the filtered info on previously set double info", async () => {
-            const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": "1",
+            const bareInfo1: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "instructionId": "445",
-                "isPaid": true,
-                "isTransferred": false,
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
             }
-            const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "3",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
-                    "portfolioId": "2",
+            const bareInfo2: PublishedSettlementJson = {
+                buyer: {
+                    id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 543,
-                "token": "ACME",
-                "price": 30,
-                "instructionId": "446",
-                "isPaid": false,
-                "isTransferred": false,
+                quantity: "543",
+                token: "ACME",
+                price: "30",
+                instructionId: "446",
+                isPaid: false,
+                isTransferred: false,
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET",
-                "query": {
-                    "traderId": "1",
+                method: "GET",
+                query: {
+                    traderId: "1",
                 },
             })
 
@@ -225,12 +230,12 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [
-                    {...bareInfo1, "id": "3"},
+                settlements: [
+                    { ...bareInfo1, id: "3" },
                 ],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
@@ -241,111 +246,114 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns empty on get without anything", async () => {
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                settlements: [],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
-            const bareInfo: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": "1",
+            const bareInfo: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "instructionId": "445",
-                "isPaid": true,
-                "isTransferred": false,
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [{
+                settlements: [{
                     ...bareInfo,
-                    "id": "3",
+                    id: "3",
                 }],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
-            const bareInfo1: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                    "portfolioId": "1",
+            const bareInfo1: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 12345,
-                "token": "ACME",
-                "price": 33,
-                "instructionId": "445",
-                "isPaid": true,
-                "isTransferred": false,
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
             }
-            const bareInfo2: JSON = <JSON><unknown>{
-                "buyer": {
-                    "id": "3",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
-                    "portfolioId": "2",
+            const bareInfo2: PublishedSettlementJson = {
+                buyer: {
+                    id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
-                "quantity": 543,
-                "token": "ACME",
-                "price": 30,
-                "instructionId": "446",
-                "isPaid": false,
-                "isTransferred": false,
+                quantity: "543",
+                token: "ACME",
+                price: "30",
+                instructionId: "446",
+                isPaid: false,
+                isTransferred: false,
             }
             await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
             await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
-                "method": "GET",
+                method: "GET",
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "settlements": [
-                    {...bareInfo2, "id": "2"},
-                    {...bareInfo1, "id": "3"},
+                settlements: [
+                    { ...bareInfo2, id: "2" },
+                    { ...bareInfo1, id: "3" },
                 ],
-                "venue": {
-                    "ownerDid": venueOwner,
-                    "venueId": venueId,
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
                 },
             })
         }).timeout(20000)
@@ -356,132 +364,135 @@ describe("/api/settlements Integration Tests", () => {
 
         it("returns 404 on missing buy order", async () => {
             await exchangeDb.setOrderInfo("2", new OrderInfo({
-                "isBuy": false,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
-            } as unknown as JSON))
+                isBuy: false,
+                quantity: "10",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
+            }))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(404)
-            expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 1"})
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order not found 1" })
         }).timeout(30000)
 
         it("returns 404 on missing sell order", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
-                "isBuy": true,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
-            } as unknown as JSON))
+                isBuy: true,
+                quantity: "10",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
+            }))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(404)
-            expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order not found 2"})
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order not found 2" })
         }).timeout(30000)
 
         it("returns 400 if isBuy are not correct", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
-                "isBuy": true,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
-            } as unknown as JSON))
+                isBuy: true,
+                quantity: "10",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
+            }))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
-                "isBuy": true,
-                "quantity": 15,
-                "token": "ACME",
-                "price": 40,
-                "polymeshDid": onTrustDid,
-            } as unknown as JSON))
+                isBuy: true,
+                quantity: "15",
+                token: "ACME",
+                price: "40",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
+            }))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({"status": "Order is of wrong type, expectedIsBuy: false"})
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order is of wrong type, expectedIsBuy: false" })
         }).timeout(30000)
 
         it("returns 400 when tokens not matching", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
-                "isBuy": true,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
-            } as unknown as JSON))
+                isBuy: true,
+                quantity: "10",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
+            }))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
-                "isBuy": false,
-                "quantity": 15,
-                "token": "ECMN",
-                "price": 40,
-                "polymeshDid": onTrustDid,
-            } as unknown as JSON))
+                isBuy: false,
+                quantity: "15",
+                token: "ECMN",
+                price: "40",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
+            }))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
             await handleSettlements(req, res)
 
             expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({"status": "Orders are not for same token, ACME / ECMN"})
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "Orders are not for same token, ACME / ECMN" })
         }).timeout(30000)
 
         it("returns 200 when got a match, and got correct data, seller has more", async () => {
-            await exchangeDb.setOrderInfo("1", new OrderInfo(<JSON><unknown>{
-                "isBuy": true,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
+            await exchangeDb.setOrderInfo("1", new OrderInfo({
+                isBuy: true,
+                quantity: "10",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
-            const bareSellOrder: JSON = <JSON><unknown>{
-                "isBuy": false,
-                "quantity": 15,
-                "token": "ACME",
-                "price": 35,
-                "polymeshDid": onTrustDid,
+            const bareSellOrder: OrderJson = {
+                isBuy: false,
+                quantity: "15",
+                token: "ACME",
+                price: "35",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareSellOrder))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
@@ -491,27 +502,28 @@ describe("/api/settlements Integration Tests", () => {
             const settlements: IFullSettlementInfo[] = await settlementDb.getSettlements()
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "id": settlements[0].id,
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": safeHandsDid,
-                    "portfolioId": "1",
+                id: settlements[0].id,
+                buyer: {
+                    id: "1",
+                    polymeshDid: safeHandsDid,
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": onTrustDid,
+                seller: {
+                    id: "2",
+                    polymeshDid: onTrustDid,
+                    portfolioId: null,
                 },
-                "quantity": 10,
-                "token": "ACME",
-                "price": 34,
-                "instructionId": settlements[0].instructionId.toString(10),
-                "isPaid": false,
-                "isTransferred": false,
+                quantity: "10",
+                token: "ACME",
+                price: "34",
+                instructionId: settlements[0].instructionId.toString(10),
+                isPaid: false,
+                isTransferred: false,
             })
             const remainingOrder: IOrderInfo = await exchangeDb.getOrderInfoById("2")
             expect(remainingOrder.toJSON()).to.deep.equal({
                 ...bareSellOrder,
-                "quantity": 5,
+                quantity: "5",
             })
             expect(exchangeDb.getOrderInfoById("1")).to.eventually.throw(UnknownTraderError)
                 .that.satisfies((error: UnknownTraderError) => error.id === "1")
@@ -519,33 +531,34 @@ describe("/api/settlements Integration Tests", () => {
             expect(remainingOrders.length).to.equal(1)
             expect(remainingOrders[0].toJSON()).to.deep.equal({
                 ...bareSellOrder,
-                "id": "2",
-                "quantity": 5,
+                id: "2",
+                quantity: "5",
             })
         }).timeout(120000)
 
         it("returns 200 when got a match, and got correct data, buyer has more", async () => {
-            const bareBuyOrder: JSON = <JSON><unknown>{
-                "isBuy": true,
-                "quantity": 15,
-                "token": "ACME",
-                "price": 33,
-                "polymeshDid": safeHandsDid,
-                "portfolioId": "1",
+            const bareBuyOrder: OrderJson = {
+                isBuy: true,
+                quantity: "15",
+                token: "ACME",
+                price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }
             await exchangeDb.setOrderInfo("1", new OrderInfo(bareBuyOrder))
-            await exchangeDb.setOrderInfo("2", new OrderInfo(<JSON><unknown>{
-                "isBuy": false,
-                "quantity": 10,
-                "token": "ACME",
-                "price": 35,
-                "polymeshDid": onTrustDid,
+            await exchangeDb.setOrderInfo("2", new OrderInfo({
+                isBuy: false,
+                quantity: "10",
+                token: "ACME",
+                price: "35",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }))
             const { req, res } = createMocks({
-                "method": "POST",
-                "query": {
-                    "buyerId": "1",
-                    "sellerId": "2",
+                method: "POST",
+                query: {
+                    buyerId: "1",
+                    sellerId: "2",
                 },
             })
 
@@ -555,27 +568,28 @@ describe("/api/settlements Integration Tests", () => {
             const settlements: IFullSettlementInfo[] = await settlementDb.getSettlements()
             expect(settlements.length).to.equal(1)
             expect(JSON.parse(res._getData())).to.deep.equal({
-                "id": settlements[0].id,
-                "buyer": {
-                    "id": "1",
-                    "polymeshDid": safeHandsDid,
-                    "portfolioId": "1",
+                id: settlements[0].id,
+                buyer: {
+                    id: "1",
+                    polymeshDid: safeHandsDid,
+                    portfolioId: "1",
                 },
-                "seller": {
-                    "id": "2",
-                    "polymeshDid": onTrustDid,
+                seller: {
+                    id: "2",
+                    polymeshDid: onTrustDid,
+                    portfolioId: null,
                 },
-                "quantity": 10,
-                "token": "ACME",
-                "price": 34,
-                "instructionId": settlements[0].instructionId.toString(10),
-                "isPaid": false,
-                "isTransferred": false,
+                quantity: "10",
+                token: "ACME",
+                price: "34",
+                instructionId: settlements[0].instructionId.toString(10),
+                isPaid: false,
+                isTransferred: false,
             })
             const remainingOrder: IOrderInfo = await exchangeDb.getOrderInfoById("1")
             expect(remainingOrder.toJSON()).to.deep.equal({
                 ...bareBuyOrder,
-                "quantity": 5,
+                quantity: "5",
             })
             expect(exchangeDb.getOrderInfoById("2")).to.eventually.throw(UnknownTraderError)
                 .that.satisfies((error: UnknownTraderError) => error.id === "2")
@@ -583,8 +597,8 @@ describe("/api/settlements Integration Tests", () => {
             expect(remainingOrders.length).to.equal(1)
             expect(remainingOrders[0].toJSON()).to.deep.equal({
                 ...bareBuyOrder,
-                "id": "1",
-                "quantity": 5,
+                id: "1",
+                quantity: "5",
             })
         }).timeout(120000)
 

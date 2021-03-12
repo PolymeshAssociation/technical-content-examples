@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next"
-import { IOrderInfo, OrderInfo } from "../../src/orderInfo"
+import { IOrderInfo, OrderInfo, OrderJson } from "../../src/orderInfo"
 import {
     DuplicatePartiesSettlementError,
     DuplicatePolymeshDidSettlementError,
@@ -12,6 +12,7 @@ import {
     ISettlementInfo,
     WrongOrderTypeError,
     IPublishedSettlementInfo,
+    FullSettlementJson,
 } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ISettlementDb } from "../../src/settlementDb"
@@ -19,50 +20,43 @@ import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import settlementEngineFactory from "../../src/settlementEngineFactory"
 import { ISettlementEngine, VenueInfo } from "../../src/settlementEngine"
+import { SettlementListJson, SimpleVenueJson } from "../../src/ui-types"
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 
-interface SimpleVenueInfo {
-    ownerDid: string
-    venueId: string
-}
-
-interface SettlementListInfo {
-    settlements: IFullSettlementInfo[]
-    venue: SimpleVenueInfo
-}
-
-async function getSettlements(req: NextApiRequest): Promise<SettlementListInfo> {
+async function getSettlements(req: NextApiRequest): Promise<SettlementListJson> {
     const settlementEngine: ISettlementEngine = await settlementEngineFactory()
     const venueInfo: VenueInfo = await settlementEngine.getVenue()
-    const simpleVenueInfo: SimpleVenueInfo = {
-        "ownerDid": venueInfo.owner.did,
-        "venueId": venueInfo.venue.id.toString(10),
+    const simpleVenueInfo: SimpleVenueJson = {
+        ownerDid: venueInfo.owner.did,
+        venueId: venueInfo.venue.id.toString(10),
     }
-    const all: IFullSettlementInfo[] =  await (await settlementDbFactory()).getSettlements()
+    const all: IFullSettlementInfo[] = await (await settlementDbFactory()).getSettlements()
     const traderId: string = <string>req.query.traderId
     if (typeof traderId === "undefined") {
         return {
-            "settlements": all,
-            "venue": simpleVenueInfo,
+            settlements: all.map((info: IFullSettlementInfo) => info.toJSON()),
+            venue: simpleVenueInfo,
         }
     }
     return {
-        "settlements": all
-            .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId),
-        "venue": simpleVenueInfo,
+        settlements: all
+            .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId)
+            .map((info: IFullSettlementInfo) => info.toJSON()),
+        venue: simpleVenueInfo,
     }
 }
 
-async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrderInfo, quantity: number) {
-    if (order.quantity === quantity) {
+async function reduceOrder(exchangeDb: IExchangeDb, orderId: string, order: IOrderInfo, quantity: BigNumber) {
+    if (order.quantity.isEqualTo(quantity)) {
         await exchangeDb.deleteOrderInfoById(orderId)
     } else {
-        const orderJson: JSON = order.toJSON()
-        orderJson["quantity"] -= quantity
+        const orderJson: OrderJson = order.toJSON()
+        orderJson.quantity = order.quantity.minus(quantity).toString(10)
         await exchangeDb.setOrderInfo(orderId, new OrderInfo(orderJson))
     }
 }
 
-async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
+async function matchOrders(req: NextApiRequest): Promise<FullSettlementJson> {
     const buyerId: string = <string>req.query.buyerId
     const sellerId: string = <string>req.query.sellerId
     const exchangeDb: IExchangeDb = await exchangeDbFactory()
@@ -79,9 +73,9 @@ async function matchOrders(req: NextApiRequest): Promise<IFullSettlementInfo> {
     await reduceOrder(exchangeDb, buyerId, buyOrder, settlement.quantity)
     await reduceOrder(exchangeDb, sellerId, sellOrder, settlement.quantity)
     return new FullSettlementInfo({
-        "id": settlementId,
+        id: settlementId,
         ...settlement.toJSON(),
-    } as unknown as JSON)
+    }).toJSON()
 }
 
 export default async function (req: NextApiRequest, res: NextApiResponse<object>): Promise<any> {
@@ -96,24 +90,24 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object>
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         if (e instanceof UnknownTraderError) {
-            res.status(404).json({"status": `Order not found ${e.id}`})
+            res.status(404).json({ status: `Order not found ${e.id}` })
         } else if (e instanceof WrongOrderTypeError) {
-            res.status(400).json({"status": `Order is of wrong type, expectedIsBuy: ${e.expectedIsBuy}`})
+            res.status(400).json({ status: `Order is of wrong type, expectedIsBuy: ${e.expectedIsBuy}` })
         } else if (e instanceof IncompatibleOrderTypeError) {
-            res.status(400).json({"status": `Orders are not for same token, ${e.buyToken} / ${e.sellToken}`})
+            res.status(400).json({ status: `Orders are not for same token, ${e.buyToken} / ${e.sellToken}` })
         } else if (e instanceof IncompleteSettlementInfoError) {
-            res.status(400).json({"status": `missing field ${e.field}`})
+            res.status(400).json({ status: `missing field ${e.field}` })
         } else if (e instanceof WrongTypeSettlementError) {
-            res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+            res.status(400).json({ status: `wrong type ${e.receivedType} on field ${e.field}` })
         } else if (e instanceof DuplicatePartiesSettlementError) {
-            res.status(400).json({"status": `same buyer and seller: ${e.partyId}`})
+            res.status(400).json({ status: `same buyer and seller: ${e.partyId}` })
         } else if (e instanceof DuplicatePolymeshDidSettlementError) {
-            res.status(400).json({"status": `same buyer and seller: ${e.polymeshDid}`})
+            res.status(400).json({ status: `same buyer and seller: ${e.polymeshDid}` })
         } else {
             console.log(e)
-            res.status(500).json({"status": "internal error"})
+            res.status(500).json({ status: "internal error" })
         }
     }
 }

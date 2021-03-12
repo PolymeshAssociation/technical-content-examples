@@ -8,14 +8,14 @@ export interface IExchangeDb {
 }
 
 export class ExchangeDbError extends Error {
-    constructor (message?: string) {
+    constructor(message?: string) {
         super(message)
         Error.apply(this, arguments);
     }
 }
 
 export class UnknownTraderError extends ExchangeDbError {
-    constructor (public id: string, message?: string) {
+    constructor(public id: string, message?: string) {
         super(message)
     }
 }

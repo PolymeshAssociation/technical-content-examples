@@ -8,12 +8,13 @@ import {
     InvalidPolymeshDidError,
     NonExistentCustomerPolymeshIdError,
     InvalidPortfolioError,
+    OrderJson,
 } from "../../../src/orderInfo"
 import { UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
 
-async function getOrderInfoById(req: NextApiRequest): Promise<IOrderInfo> {
-    return await (await exchangeDbFactory()).getOrderInfoById(<string>req.query.id)
+async function getOrderInfoById(req: NextApiRequest): Promise<OrderJson> {
+    return (await (await exchangeDbFactory()).getOrderInfoById(<string>req.query.id)).toJSON()
 }
 
 async function setOrderInfo(req: NextApiRequest): Promise<void> {
@@ -39,12 +40,12 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 break
             case "PUT":
                 await setOrderInfo(req)
-                res.status(200).json({ "status": "ok" })
+                res.status(200).json({ status: "ok" })
                 break
             case "DELETE":
                 try {
                     await deleteOrderInfo(req)
-                } catch(e) {
+                } catch (e) {
                     if (!(e instanceof UnknownTraderError)) {
                         throw e
                     }
@@ -55,24 +56,24 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         if (e instanceof UnknownTraderError) {
-            res.status(404).json({"status": "not found"})
+            res.status(404).json({ status: "not found" })
         } else if (e instanceof IncompleteOrderInfoError) {
-            res.status(400).json({"status": `missing field ${e.field}`})
+            res.status(400).json({ status: `missing field ${e.field}` })
         } else if (e instanceof WrongTypeOrderError) {
-            res.status(400).json({"status": `wrong type ${e.receivedType} on field ${e.field}`})
+            res.status(400).json({ status: `wrong type ${e.receivedType} on field ${e.field}` })
         } else if (e instanceof WrongZeroOrderError) {
-            res.status(400).json({"status": `cannot have 0 ${e.field}`})
+            res.status(400).json({ status: `cannot have 0 ${e.field}` })
         } else if (e instanceof InvalidPolymeshDidError) {
-            res.status(400).json({"status": `wrong polymeshId ${e.polymeshDid}`})
+            res.status(400).json({ status: `wrong polymeshId ${e.polymeshDid}` })
         } else if (e instanceof NonExistentCustomerPolymeshIdError) {
-            res.status(400).json({"status": `non-existent polymeshId ${e.polymeshDid}`})
+            res.status(400).json({ status: `non-existent polymeshId ${e.polymeshDid}` })
         } else if (e instanceof InvalidPortfolioError) {
-            res.status(400).json({"status": `non-existent portfolio ${e.polymeshDid}-${e.portfolioId}`})
+            res.status(400).json({ status: `non-existent portfolio ${e.polymeshDid}-${e.portfolioId}` })
         } else {
             console.log(e)
-            res.status(500).json({"status": "internal error"})
+            res.status(500).json({ status: "internal error" })
         }
     }
 }

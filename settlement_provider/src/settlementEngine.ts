@@ -12,13 +12,13 @@ export interface ISettlementEngine {
 }
 
 export class SettlementEngineError {
-    constructor () {
+    constructor() {
         Error.apply(this, arguments)
     }
 }
 
 export class NonExistentVenueError extends SettlementEngineError {
-    constructor (public id: string) {
+    constructor(public id: string) {
         super()
     }
 }
