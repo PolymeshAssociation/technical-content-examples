@@ -7,7 +7,6 @@ import {
   Authorization,
   AuthorizationRequest,
   AuthorizationType,
-  Identity,
   Portfolio,
   ResultSet,
 } from '@polymathnetwork/polymesh-sdk/types'
@@ -15,6 +14,7 @@ import { NetworkMeta, PolyWallet } from "../src/ui-types"
 import {
   CurrentIdentity,
   DefaultPortfolio,
+  Identity,
   NumberedPortfolio,
   TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal"
@@ -36,7 +36,8 @@ export default function Home() {
     "custodianDid": "" as string,
     "custodianValid": false as boolean,
     "custodiedPortfolios": [] as PortfolioPresentation[],
-    "custodyRequests": [] as AuthorizationRequestPresentation[],
+    "custodyRequests": [] as AuthorizationRequestInPresentation[],
+    "custodyRequestsOut": [] as AuthorizationRequestOutPresentation[],
   })
 
   interface ShortPortfolioPresentation {
@@ -48,12 +49,17 @@ export default function Home() {
     owner: string
   })
 
-type AuthorizationRequestPresentation = string | {
+  interface AuthorizationRequestPresentation {
+    target: string
     owner: string
     portfolioId: string | null
     name: string
     request: AuthorizationRequest
   }
+
+  type AuthorizationRequestInPresentation = string | Omit<AuthorizationRequestPresentation, "target">
+
+  type AuthorizationRequestOutPresentation = string | Omit<AuthorizationRequestPresentation, "owner">
 
   function setStatus(content: string) {
     const element = document.getElementById("status") as HTMLElement
@@ -430,7 +436,7 @@ type AuthorizationRequestPresentation = string | {
       "type": AuthorizationType.PortfolioCustody,
       "includeExpired": false
     })
-    const presentations: AuthorizationRequestPresentation[] = requests.length === 0
+    const presentations: AuthorizationRequestInPresentation[] = requests.length === 0
     ? [ "No custody requests" ]
     : await Promise.all(requests.map((request: AuthorizationRequest) => {
       const data: Authorization = request.data
@@ -454,17 +460,17 @@ type AuthorizationRequestPresentation = string | {
     }))
   }
 
-  function getAuthorisationPresentation(request: AuthorizationRequestPresentation): string {
+  function getAuthorisationPresentation(request: AuthorizationRequestInPresentation): string {
     if (typeof request === "string") return request
     return `${request.owner} - ${request.portfolioId} - ${request.name}`
   }
 
-  async function submitLoadCustodyRequests(e): Promise<void> {
+  async function submitLoadCustodyRequestsIn(e): Promise<void> {
     e.preventDefault()
     await loadCustodyRequests()
   }
 
-  function getCustodyRequestButtons(request: AuthorizationRequestPresentation) {
+  function getCustodyRequestInButtons(request: AuthorizationRequestInPresentation) {
     if (typeof request === "string") return ""
     else return <div>
         <button className="submit custodyRequest accept" onClick={submitCustodyRequestBuilder(request.request, true)}>Accept</button>
@@ -473,22 +479,77 @@ type AuthorizationRequestPresentation = string | {
       </div>
   }
 
-  async function handleCustodyRequest(request: AuthorizationRequest, acceptIt: boolean): Promise<void> {
+  async function handleCustodyRequestIn(request: AuthorizationRequest, acceptIt: boolean): Promise<void> {
     let handleQueue: TransactionQueue<void> = null
     if (acceptIt) handleQueue = await request.accept()
     else handleQueue = await request.remove()
     await handleQueue.run()
     await Promise.all([
       loadCustodiedPortfolios(),
-      loadCustodyRequests()
+      loadCustodyRequests(),
+      loadCustodyRequestsOut(),
     ])
   }
 
   function submitCustodyRequestBuilder(request: AuthorizationRequest, acceptIt: boolean): (e: any) => Promise<void> {
     return async function(e): Promise<void> {
       e.preventDefault()
-      await handleCustodyRequest(request, acceptIt)
+      await handleCustodyRequestIn(request, acceptIt)
     }
+  }
+
+  async function loadCustodyRequestsOut(): Promise<void> {
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodyRequestsOut": [ "Loading custody requests..." ],
+    }))
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Fetching your identity")
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching your outgoing custody requests")
+    const requests: ResultSet<AuthorizationRequest> = await me.authorizations.getSent({
+      "size": 10
+    })
+    const presentations: AuthorizationRequestOutPresentation[] = requests.data.length === 0
+    ? [ "No custody requests" ]
+    : await Promise.all(requests.data.map((request: AuthorizationRequest) => {
+      const data: Authorization = request.data
+      if (data.type !== AuthorizationType.PortfolioCustody) throw new Error(`Expected "PortfolioCustody", not ${data.type}`)
+      const target: string = request.target instanceof Identity ? request.target.did : request.target.address
+      if (data.value instanceof NumberedPortfolio) return data.value.getName().then((name: string) =>({
+          target: target,
+          portfolioId: (data.value as NumberedPortfolio).id.toString(10),
+          name: name,
+          request: request,
+        }))
+      else return Promise.resolve({
+          target: target,
+          portfolioId: null,
+          name: "default",
+          request: request,
+      })
+    }))
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodyRequestsOut": presentations,
+    }))
+  }
+
+  function getAuthorisationOutPresentation(request: AuthorizationRequestOutPresentation): string {
+    if (typeof request === "string") return request
+    return `${request.target} - ${request.portfolioId} - ${request.name}`
+  }
+
+  async function submitLoadCustodyRequestsOut(e): Promise<void> {
+    e.preventDefault()
+    await loadCustodyRequestsOut()
+  }
+
+  function getCustodyRequestOutButtons(request: AuthorizationRequestOutPresentation) {
+    if (typeof request === "string") return ""
+    else return <div>
+        <button className="submit custodyRequestOut reject" onClick={submitCustodyRequestBuilder(request.request, false)}>Revoke</button>
+      </div>
   }
 
   return (
@@ -606,17 +667,35 @@ type AuthorizationRequestPresentation = string | {
           </fieldset>
 
           <fieldset className={styles.card}>
-            <legend>Your incoming custody authorisations</legend>
+            <legend>Your incoming custody authorisation requests</legend>
 
             <div className="submit">
-              <button className="submit custodyRequests" onClick={submitLoadCustodyRequests}>Load them</button>
+              <button className="submit custodyRequests" onClick={submitLoadCustodyRequestsIn}>Load them</button>
             </div>
 
             <ul>
               {
-                myInfo["custodyRequests"].map((request: AuthorizationRequestPresentation) => <li>
+                myInfo["custodyRequests"].map((request: AuthorizationRequestInPresentation) => <li>
                   <span>{ getAuthorisationPresentation(request) }</span>
-                  { getCustodyRequestButtons(request) }
+                  { getCustodyRequestInButtons(request) }
+                </li>)
+              }
+            </ul>
+            
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Your outgoing custody authorisation requests</legend>
+
+            <div className="submit">
+              <button className="submit custodyRequestsOut" onClick={submitLoadCustodyRequestsOut}>Load them</button>
+            </div>
+
+            <ul>
+              {
+                myInfo["custodyRequestsOut"].map((request: AuthorizationRequestOutPresentation) => <li>
+                  <span>{ getAuthorisationOutPresentation(request) }</span>
+                  { getCustodyRequestOutButtons(request) }
                 </li>)
               }
             </ul>
