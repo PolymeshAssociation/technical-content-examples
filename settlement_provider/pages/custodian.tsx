@@ -98,7 +98,7 @@ export default function Home() {
   }
 
   async function sendSellerTransfers(settlementId: string): Promise<Response> {
-    const mySettlement = myInfo.info.settlements.find((settlement) => settlement.id === settlementId)
+    const mySettlement: FullSettlementJson = myInfo.info.settlements.find((settlement) => settlement.id === settlementId)
     const instructionId: string = mySettlement.instructionId
     await affirm(instructionId)
     const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { method: "PATCH" })
