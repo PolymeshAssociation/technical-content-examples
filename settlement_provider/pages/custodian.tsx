@@ -1,14 +1,14 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import styles from "../styles/Home.module.css"
 import { FullSettlementJson } from "../src/settlementInfo"
 import { SettlementListJson } from "../src/ui-types"
-import styles from "../styles/Home.module.css"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "traderId": "" as string,
-    "info": {
-      "settlements": [],
+    traderId: "" as string,
+    info: {
+      settlements: [],
     } as SettlementListJson,
   })
 
@@ -25,7 +25,7 @@ export default function Home() {
   }
 
   async function getPendingSettlements(traderId: string): Promise<Response> {
-    const response = await fetch(`/api/settlements/?traderId=${traderId}`, { "method": "GET" })
+    const response = await fetch(`/api/settlements/?traderId=${traderId}`, { method: "GET" })
     if (response.status == 200) {
       setStatus("Settlements fetched")
       const body: SettlementListJson = await response.json()

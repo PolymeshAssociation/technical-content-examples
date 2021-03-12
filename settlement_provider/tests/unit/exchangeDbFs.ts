@@ -37,20 +37,20 @@ describe("ExchangeDbFs Unit Tests", () => {
 
     it("can save order info in an empty db", async () => {
         const bareInfo: OrderJson = {
-            "isBuy": true,
-            "quantity": "12345",
-            "token": "ACME",
-            "price": "33",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
     })
 
     it("can get saved order info", async () => {
         const bareInfo: OrderJson = {
-            "isBuy": true,
-            "quantity": "12345",
-            "token": "ACME",
-            "price": "33",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo))
 
@@ -60,16 +60,16 @@ describe("ExchangeDbFs Unit Tests", () => {
 
     it("can save and get 2 saved order infos", async () => {
         const bareInfo1: OrderJson = {
-            "isBuy": true,
-            "quantity": "12345",
-            "token": "ACME",
-            "price": "33",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
         const bareInfo2: OrderJson = {
-            "isBuy": false,
-            "quantity": "667",
-            "token": "ACME",
-            "price": "30",
+            isBuy: false,
+            quantity: "667",
+            token: "ACME",
+            price: "30",
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
@@ -83,38 +83,38 @@ describe("ExchangeDbFs Unit Tests", () => {
 
     it("can save and get the 2 saved order infos together", async () => {
         const bareInfo1: OrderJson = {
-            "isBuy": true,
-            "quantity": "12345",
-            "token": "ACME",
-            "price": "33",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
         const bareInfo2: OrderJson = {
-            "isBuy": false,
-            "quantity": "667",
-            "token": "ACME",
-            "price": "30",
+            isBuy: false,
+            quantity: "667",
+            token: "ACME",
+            price: "30",
         }
 
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
 
         const retrieved: IAssignedOrderInfo[] = await exchangeDb.getOrders()
-        expect(retrieved[0].toJSON()).to.deep.equal({ ...bareInfo1, "id": "1" })
-        expect(retrieved[1].toJSON()).to.deep.equal({ ...bareInfo2, "id": "2" })
+        expect(retrieved[0].toJSON()).to.deep.equal({ ...bareInfo1, id: "1" })
+        expect(retrieved[1].toJSON()).to.deep.equal({ ...bareInfo2, id: "2" })
     })
 
     it("can delete 1 of 2 saved order infos", async () => {
         const bareInfo1: OrderJson = {
-            "isBuy": true,
-            "quantity": "12345",
-            "token": "ACME",
-            "price": "33",
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
         }
         const bareInfo2: OrderJson = {
-            "isBuy": false,
-            "quantity": "667",
-            "token": "ACME",
-            "price": "30",
+            isBuy: false,
+            quantity: "667",
+            token: "ACME",
+            price: "30",
         }
         await exchangeDb.setOrderInfo("1", new OrderInfo(bareInfo1))
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))

@@ -5,10 +5,10 @@ import styles from "../styles/Home.module.css"
 
 export default function Home() {
   const emptyOrder: OrderJson = {
-    isBuy: true,
-    quantity: "",
-    token: "",
-    price: "",
+    isBuy: true as boolean,
+    quantity: "" as string,
+    token: "" as string,
+    price: "" as string,
   }
   const [myInfo, setMyInfo] = useState({
     id: "" as string,
@@ -100,7 +100,7 @@ export default function Home() {
     }))
   }
 
-  function changeMyOrder(field: string, value: any): void {
+  async function changeMyOrder(field: string, value: any): Promise<void> {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       order: {
@@ -111,8 +111,8 @@ export default function Home() {
     }))
   }
 
-  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    changeMyOrder(e.target.name, e.target.value)
+  async function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    await changeMyOrder(e.target.name, e.target.value)
   }
 
   function onMyOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {

@@ -55,10 +55,10 @@ export class OrderInfo implements IOrderInfo {
 
     toJSON(): OrderJson {
         return {
-            "isBuy": this.isBuy,
-            "quantity": this.quantity.toString(10),
-            "token": this.token,
-            "price": this.price.toString(10),
+            isBuy: this.isBuy,
+            quantity: this.quantity.toString(10),
+            token: this.token,
+            price: this.price.toString(10),
         }
     }
 

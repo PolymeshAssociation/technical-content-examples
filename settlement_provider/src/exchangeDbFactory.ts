@@ -8,8 +8,8 @@ export default async function (): Promise<IExchangeDb> {
             exchangeDbPath,
         },
     } = getConfig() || {
-        "serverRuntimeConfig": {
-            "exchangeDbPath": process.env.EXCHANGE_DB_PATH,
+        serverRuntimeConfig: {
+            exchangeDbPath: process.env.EXCHANGE_DB_PATH,
         },
     }
     return Promise.resolve(new ExchangeDbFs(exchangeDbPath))
