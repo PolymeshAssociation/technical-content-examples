@@ -59,7 +59,7 @@ const getApi = async function(): Promise<Polymesh> {
 
 const getVenueInfo = async function(venue: Venue): Promise<string> {
     const details: VenueDetails = await venue.details()
-    return `id: ${venue.id.toString(10)}, type: ${details["type"]}, description: ${details["description"]}`
+    return `id: ${venue.id.toString(10)}, type: ${details.type}, description: ${details.description}`
 }
 
 logVisible(`Network: ${nodeUrl}, preset venue id: ${venueId}, USD token: ${usdToken}`)
@@ -86,26 +86,26 @@ getApi()
                 venueInfos.forEach(logVisible)
             }
             const { createOrNot } = await prompts({
-                "type": "text",
-                "name": "createOrNot",
-                "message": "Create 1 Exchange venue now? y/n"
+                type: "text",
+                name: "createOrNot",
+                message: "Create 1 Exchange venue now? y/n"
             })
             if (createOrNot !== "y") throw new Error(`Not creating a venue`)
             const { details } = await prompts({
-                "type": "text",
-                "name": "details",
-                "message": "What details to add?"
+                type: "text",
+                name: "details",
+                message: "What details to add?"
             })
             const myVenueQueue: TransactionQueue<Venue> = await me.createVenue({
-                "details": details,
-                "type": VenueType.Exchange
+                details: details,
+                type: VenueType.Exchange
             })
             presetVenue = await myVenueQueue.run()
             logVisible(`Venue created. Save its id, ${presetVenue.id.toString(10)}, in the config`)
         }
 
         // USD Token
-        let usdSecurity: SecurityToken = await api.getSecurityToken({ "ticker": usdToken })
+        let usdSecurity: SecurityToken = await api.getSecurityToken({ ticker: usdToken })
             .catch((e) => null)
         if (usdSecurity !== null) {
             const { owner } = await usdSecurity.details()
@@ -113,7 +113,7 @@ getApi()
             else logVisible(`${usdToken} exists, it is owned by other did: ${owner.did}`)
         } else {
             logVisible(`${usdToken} does not exist`)
-            let usdReservation: TickerReservation = await api.getTickerReservation({ "ticker": usdToken })
+            let usdReservation: TickerReservation = await api.getTickerReservation({ ticker: usdToken })
                 .catch((e) => null)
             if (usdReservation !== null) {
                 const { owner } = await usdReservation.details()
@@ -121,34 +121,34 @@ getApi()
                 else throw new Error(`${usdToken} is reserved by other did: ${owner.did}`)
             } else {
                 const { reserveOrNot } = await prompts({
-                    "type": "text",
-                    "name": "reserveOrNot",
-                    "message": `Reserve the security token ${usdToken}? y/n`
+                    type: "text",
+                    name: "reserveOrNot",
+                    message: `Reserve the security token ${usdToken}? y/n`
                 })
                 if (reserveOrNot !== "y") throw new Error(`Not reserving ${usdToken}`)
-                const reserveQueue: TransactionQueue<TickerReservation> = await api.reserveTicker({ "ticker": usdToken })
+                const reserveQueue: TransactionQueue<TickerReservation> = await api.reserveTicker({ ticker: usdToken })
                 usdReservation = await reserveQueue.run()
                 logVisible(`${usdToken} is now reserved by you`)
             }
             const { createOrNot, totalSupply } = await prompts([
                 {
-                    "type": "text",
-                    "name": "createOrNot",
-                    "message": `Create the security token ${usdToken}? y/n`
+                    type: "text",
+                    name: "createOrNot",
+                    message: `Create the security token ${usdToken}? y/n`
                 },
                 {
-                    "type": (prev) => prev === "y" ? "number" : null,
-                    "name": "totalSupply",
-                    "message": `With what total supply?`
+                    type: (prev) => prev === "y" ? "number" : null,
+                    name: "totalSupply",
+                    message: `With what total supply?`
                 }
             ])
             if (createOrNot !== "y") throw new Error(`Not creating ${usdToken}`)
             logVisible(`supply ${totalSupply}`)
             const createQueue: TransactionQueue<SecurityToken> = await usdReservation.createToken({
-                "name": usdToken,
-                "totalSupply": new BigNumber(totalSupply),
-                "isDivisible": false,
-                "tokenType": KnownTokenType.Commodity,
+                name: usdToken,
+                totalSupply: new BigNumber(totalSupply),
+                isDivisible: false,
+                tokenType: KnownTokenType.Commodity,
             })
             usdSecurity = await createQueue.run()
             logVisible(`${usdToken} is now created by you`)
@@ -156,7 +156,7 @@ getApi()
 
         // Your balance
         const myDefaultPortolio: DefaultPortfolio = await me.portfolios.getPortfolio()
-        const myUsdBalance: PortfolioBalance = (await myDefaultPortolio.getTokenBalances({ "tokens": [ usdToken] }))[0]
+        const myUsdBalance: PortfolioBalance = (await myDefaultPortolio.getTokenBalances({ tokens: [ usdToken] }))[0]
         logVisible(`You have ${myUsdBalance.total.toString(10)} ${usdToken}, of which ${myUsdBalance.locked.toString(10)} are locked`)
 
         // USD for participants
@@ -166,26 +166,26 @@ getApi()
         while(looping) {
             const { fundOthers, otherDid } = await prompts([
                 {
-                    "type": "text",
-                    "name": "fundOthers",
-                    "message": `Send ${usdToken} to others? y/n`
+                    type: "text",
+                    name: "fundOthers",
+                    message: `Send ${usdToken} to others? y/n`
                 },
                 {
-                    "type": (prev) => prev === "y" ? "text" : null,
-                    "name": "otherDid",
-                    "message": "Which account Did?"
+                    type: (prev) => prev === "y" ? "text" : null,
+                    name: "otherDid",
+                    message: "Which account Did?"
                 }
             ])
             if (fundOthers !== "y") {
                 looping = false
                 continue
             }
-            const recipient: Identity = api.getIdentity({ "did": otherDid })
+            const recipient: Identity = api.getIdentity({ did: otherDid })
             const [ { amountToSend }, portfolioInfos ] = await Promise.all([
                 prompts({
-                    "type": "number",
-                    "name": "amountToSend",
-                    "message": "By what amount?"
+                    type: "number",
+                    name: "amountToSend",
+                    message: "By what amount?"
                 }),
                 (await Promise.all((await recipient.portfolios.getPortfolios()).map(async(portfolio: Portfolio) => {
                         if ((<NumberedPortfolio>portfolio).id) return (<NumberedPortfolio>portfolio).getName()
@@ -197,21 +197,21 @@ getApi()
             logVisible("Recipient portfolios:")
             portfolioInfos.forEach(logVisible)
             const { otherPortfolioId } = await prompts({
-                "type": "number",
-                "name": "otherPortfolioId",
-                "message": `In which portfolio (default: default portfolio)`
+                type: "number",
+                name: "otherPortfolioId",
+                message: `In which portfolio (default: default portfolio)`
             })
             const instructionQueue: TransactionQueue<Instruction> = await presetVenue.addInstruction({
-                "legs": [{
-                    "from": me.did,
-                    "to": typeof otherPortfolioId === "undefined"
+                legs: [{
+                    from: me.did,
+                    to: typeof otherPortfolioId === "undefined"
                         ? recipient
                         : {
-                            "identity": recipient,
-                            "id": otherPortfolioId
+                            identity: recipient,
+                            id: otherPortfolioId
                         },
-                    "amount": new BigNumber(amountToSend),
-                    "token": usdToken
+                    amount: new BigNumber(amountToSend),
+                    token: usdToken
                 }]
             })
             allFundings.push(instructionQueue.run())

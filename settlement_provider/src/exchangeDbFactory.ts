@@ -13,15 +13,15 @@ export default async function (): Promise<IExchangeDb> {
             nodeUrl,
         }, },
     } = getConfig() || {
-        "serverRuntimeConfig": {
-            "exchangeDbPath": process.env.EXCHANGE_DB_PATH,
+        serverRuntimeConfig: {
+            exchangeDbPath: process.env.EXCHANGE_DB_PATH,
             polymesh: {
-                "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
+                accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
             },
         },
-        "publicRuntimeConfig": {
+        publicRuntimeConfig: {
             polymesh: {
-                "nodeUrl": process.env.POLY_NODE_URL,
+                nodeUrl: process.env.POLY_NODE_URL,
             },
         },
     }

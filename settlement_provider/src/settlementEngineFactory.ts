@@ -16,18 +16,18 @@ export default async function (): Promise<ISettlementEngine> {
             usdToken,
         }, },
     } = getConfig() || {
-        "serverRuntimeConfig": {
+        serverRuntimeConfig: {
             polymesh: {
-                "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
-                "middlewareLink": process.env.MIDDLEWARE_LINK,
-                "middlewareKey": process.env.MIDDLEWARE_KEY,
+                accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
+                middlewareLink: process.env.MIDDLEWARE_LINK,
+                middlewareKey: process.env.MIDDLEWARE_KEY,
             },
         },
-        "publicRuntimeConfig": {
+        publicRuntimeConfig: {
             polymesh: {
-                "nodeUrl": process.env.POLY_NODE_URL,
-                "venueId": process.env.POLY_VENUE_ID,
-                "usdToken": process.env.POLY_USD_TOKEN,
+                nodeUrl: process.env.POLY_NODE_URL,
+                venueId: process.env.POLY_VENUE_ID,
+                usdToken: process.env.POLY_USD_TOKEN,
             },
         },
     }

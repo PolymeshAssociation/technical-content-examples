@@ -33,8 +33,8 @@ export class SettlementEnginePoly implements ISettlementEngine {
         const venue: Venue = venues.find((found: Venue) => found.id.toString(10) === this.venueId)
         if (typeof venue === "undefined") throw new NonExistentVenueError(this.venueId)
         return {
-            "owner": nextDaq,
-            "venue": venue
+            owner: nextDaq,
+            venue: venue
         }
     }
 
@@ -43,24 +43,24 @@ export class SettlementEnginePoly implements ISettlementEngine {
         const buyer: PortfolioLike = settlement.buyer.toPortfolioLike()
         const legs = [
             {
-                "token": settlement.token,
-                "amount": new BigNumber(settlement.quantity.toString(10)),
-                "from": seller,
-                "to": buyer,
+                token: settlement.token,
+                amount: new BigNumber(settlement.quantity.toString(10)),
+                from: seller,
+                to: buyer,
             },
             {
-                "token": this.usdToken,
-                "amount": new BigNumber(settlement.quantity.toString(10)).multipliedBy(new BigNumber(settlement.price.toString(10))),
-                "from": buyer,
-                "to": seller,
+                token: this.usdToken,
+                amount: new BigNumber(settlement.quantity.toString(10)).multipliedBy(new BigNumber(settlement.price.toString(10))),
+                from: buyer,
+                to: seller,
             },
         ]
         const venue: Venue = (await this.getVenue()).venue
-        const settlementQueue: TransactionQueue<Instruction> = await venue.addInstruction({ "legs": legs })
+        const settlementQueue: TransactionQueue<Instruction> = await venue.addInstruction({ legs: legs })
         const instruction: Instruction = await settlementQueue.run()
         return new PublishedSettlementInfo({
             ...settlement.toJSON(),
-            "instructionId": instruction.id.toString(10)
+            instructionId: instruction.id.toString(10)
         })
     }
 
