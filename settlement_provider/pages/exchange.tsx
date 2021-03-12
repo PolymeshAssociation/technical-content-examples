@@ -2,7 +2,7 @@ import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import Head from "next/head"
 import React, { useState } from "react"
 import { AssignedOrderJson } from "../src/orderInfo"
-import { FullSettlementInfo } from "../src/settlementInfo"
+import { FullSettlementJson } from "../src/settlementInfo"
 import styles from "../styles/Home.module.css"
 
 export default function Home() {
@@ -61,7 +61,7 @@ export default function Home() {
       method: "POST"
     })
     if (settlementResponse.status == 200) {
-      const settlement: FullSettlementInfo = await settlementResponse.json()
+      const settlement: FullSettlementJson = await settlementResponse.json()
       console.log(`Settlement posted at instruction ${settlement.instructionId}`)
       setStatus(`Settlement posted at instruction ${settlement.instructionId}`)
     } else {

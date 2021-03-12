@@ -61,7 +61,7 @@ describe("ExchangeDbFs Unit Tests", () => {
                     const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = [
                         new DefaultPortfolio({ did }, <Context><unknown>{})]
                     mockedIdentity.portfolios.forEach((portfolioId: string) => portfolios.push(new NumberedPortfolio(
-                        { did, "id": new BigNumber(portfolioId) },
+                        { did, id: new BigNumber(portfolioId) },
                         <Context><unknown>{})))
                     return portfolios
                 }
@@ -251,8 +251,8 @@ describe("ExchangeDbFs Unit Tests", () => {
         await exchangeDb.setOrderInfo("2", new OrderInfo(bareInfo2))
 
         const retrieved: IAssignedOrderInfo[] = await exchangeDb.getOrders()
-        expect(retrieved[0].toJSON()).to.deep.equal({ ...bareInfo1, "id": "1" })
-        expect(retrieved[1].toJSON()).to.deep.equal({ ...bareInfo2, "id": "2" })
+        expect(retrieved[0].toJSON()).to.deep.equal({ ...bareInfo1, id: "1" })
+        expect(retrieved[1].toJSON()).to.deep.equal({ ...bareInfo2, id: "2" })
     })
 
     it("can delete 1 of 2 saved order infos", async () => {

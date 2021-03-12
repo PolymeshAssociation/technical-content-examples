@@ -51,7 +51,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                     }
                     // Idempotent, delete missing is ok.
                 }
-                res.status(200).json({ "status": "ok" })
+                res.status(200).json({ status: "ok" })
                 break
             default:
                 res.status(405).end()

@@ -33,6 +33,14 @@ export interface SettlementJson {
     isTransferred: boolean
 }
 
+export interface PublishedSettlementJson extends SettlementJson {
+    instructionId: string
+}
+
+export interface FullSettlementJson extends PublishedSettlementJson {
+    id: string
+}
+
 export interface ISettlementInfo {
     buyer: ISettlementParty
     seller: ISettlementParty
@@ -44,17 +52,9 @@ export interface ISettlementInfo {
     toJSON(): SettlementJson
 }
 
-export interface PublishedSettlementJson extends SettlementJson {
-    instructionId: string
-}
-
 export interface IPublishedSettlementInfo extends ISettlementInfo {
     instructionId: BigNumber
     toJSON(): PublishedSettlementJson
-}
-
-export interface FullSettlementJson extends PublishedSettlementJson {
-    id: string
 }
 
 export interface IFullSettlementInfo extends IPublishedSettlementInfo {
@@ -66,7 +66,7 @@ function requireDesiredType(info: any, field: string, receivedType: string) {
     if (typeof info === "undefined") {
         throw new IncompleteSettlementInfoError(field)
     }
-    if (typeof receivedType === "string" && typeof info !== receivedType) {
+    if (typeof info !== receivedType) {
         throw new WrongTypeSettlementError(field, typeof info)
     }
 }
@@ -95,12 +95,11 @@ export class SettlementParty implements ISettlementParty {
     }
 
     toJSON(): SettlementPartyJson {
-        const toReturn: SettlementPartyJson = {
+        return {
             id: this.id,
             polymeshDid: this.polymeshDid,
             portfolioId: this.portfolioId === null ? null : this.portfolioId.toString(10),
         }
-        return toReturn
     }
 
     toPortfolioLike(): PortfolioLike {
@@ -198,8 +197,8 @@ export class FullSettlementInfo extends PublishedSettlementInfo implements IFull
 
     toJSON(): FullSettlementJson {
         return {
-            ...super.toJSON(),
             id: this.id,
+            ...super.toJSON(),
         }
     }
 

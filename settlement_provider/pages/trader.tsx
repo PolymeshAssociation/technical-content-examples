@@ -1,5 +1,6 @@
 import Head from "next/head"
 import React, { useState } from "react"
+import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 import styles from "../styles/Home.module.css"
 import { Polymesh, } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -126,7 +127,7 @@ export default function Home() {
   }
 
   async function getMyOrder(): Promise<Response> {
-    const response = await fetch(`/api/trader/${myInfo.id}`, { "method": "GET" })
+    const response = await fetch(`/api/trader/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Order not found, enter your order info")
       setMyInfo((prevInfo) => ({
@@ -162,7 +163,7 @@ export default function Home() {
   }
 
   async function deleteMyOrder(): Promise<Response> {
-    const response = await fetch(`/api/trader/${myInfo.id}`, { "method": "DELETE" })
+    const response = await fetch(`/api/trader/${myInfo.id}`, { method: "DELETE" })
     if (response.status == 200) {
       setStatus("Order deleted")
       setMyInfo((prevInfo) => ({
@@ -517,13 +518,13 @@ export default function Home() {
 
             <div>
               <label htmlFor="trader-id" className={styles.hasTitle} title="Given to you when you registered. As of now, just pick one.">Your id</label>
-              <input name="id" id="trader-id" type="number" placeholder="1" value={myInfo["id"]} onChange={onMyIdChanged}></input>
+              <input name="id" id="trader-id" type="number" placeholder="1" value={myInfo.id} onChange={onMyIdChanged}></input>
             </div>
 
             <div className="submit">
-              <button className="submit customerId" onClick={submitGetMyOrder} disabled={myInfo["id"] === ""}>Fetch your order</button>
+              <button className="submit customerId" onClick={submitGetMyOrder} disabled={myInfo.id === ""}>Fetch your order</button>
               &nbsp;&nbsp;
-              <button className="submit danger customerId" onClick={submitDeleteMyOrder} disabled={myInfo["id"] === ""}>Delete your order</button>
+              <button className="submit danger customerId" onClick={submitDeleteMyOrder} disabled={myInfo.id === ""}>Delete your order</button>
             </div>
 
           </fieldset>
@@ -533,25 +534,25 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-is-buy">Buy</label>
-              <input name="isBuy" id="order-is-buy" type="radio" value="true" checked={myInfo["order"]["isBuy"]} onChange={onBuyChanged} />
+              <input name="isBuy" id="order-is-buy" type="radio" value="true" checked={myInfo.order.isBuy} onChange={onBuyChanged} />
               <br />
               <label htmlFor="order-is-sell">Sell</label>
-              <input name="isSell" id="order-is-sell" type="radio" value="false" checked={!myInfo["order"]["isBuy"]} onChange={onBuyChanged} />
+              <input name="isSell" id="order-is-sell" type="radio" value="false" checked={!myInfo.order.isBuy} onChange={onBuyChanged} />
             </div>
 
             <div>
               <label htmlFor="order-quantity">The quantity</label>
-              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo["order"]["quantity"]} onChange={onMyOrderNumberChanged}></input>
+              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo.order.quantity} onChange={onMyOrderNumberChanged}></input>
             </div>
 
             <div>
               <label htmlFor="order-token">Of the token</label>
-              <input name="token" id="order-token" type="text" placeholder="ACME" value={myInfo["order"]["token"]} onChange={onMyOrderChanged}></input>
+              <input name="token" id="order-token" type="text" placeholder="ACME" value={myInfo.order.token} onChange={onMyOrderChanged}></input>
             </div>
 
             <div>
               <label htmlFor="order-price">At the USD price of</label>
-              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo["order"]["price"]} onChange={onMyOrderNumberChanged}></input>
+              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo.order.price} onChange={onMyOrderNumberChanged}></input>
             </div>
 
             <div>
@@ -573,7 +574,7 @@ export default function Home() {
             </div>
 
             <div className="submit">
-              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyOrder}>Submit your order</button>
+              <button className="submit myInfo" disabled={!(myInfo.modified)} onClick={submitMyOrder}>Submit your order</button>
             </div>
 
             <div>

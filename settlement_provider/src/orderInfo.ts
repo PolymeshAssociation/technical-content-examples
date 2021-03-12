@@ -106,8 +106,8 @@ export class AssignedOrderInfo extends OrderInfo implements IAssignedOrderInfo {
 
     toJSON(): AssignedOrderJson {
         return {
-            ...super.toJSON(),
             id: this.id,
+            ...super.toJSON(),
         }
     }
 
