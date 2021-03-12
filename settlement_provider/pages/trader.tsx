@@ -5,6 +5,12 @@ import styles from "../styles/Home.module.css"
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
 import { Identity, NumberedPortfolio, Portfolio, } from '@polymathnetwork/polymesh-sdk/types'
 import { NetworkMeta, PolyWallet } from "../src/ui-types"
+import {
+  CurrentIdentity,
+  DefaultPortfolio,
+  NumberedPortfolio,
+  TransactionQueue,
+} from "@polymathnetwork/polymesh-sdk/internal"
 
 export default function Home() {
   const emptyOrder = {
@@ -20,11 +26,18 @@ export default function Home() {
     "order": Object.assign({}, emptyOrder),
     "modified": false as boolean,
     "portfolios": [] as ShortPortfolioPresentation[],
+    "custodianDid": "" as string,
+    "custodianValid": false as boolean,
+    "custodiedPortfolios": [] as PortfolioPresentation[],
+  })
 
   interface ShortPortfolioPresentation {
-    id: string
+    id: string | null
     name: string
   }
+
+  type PortfolioPresentation = string | (ShortPortfolioPresentation & {
+    owner: string
   })
 
   function setStatus(content: string) {
@@ -104,6 +117,7 @@ export default function Home() {
     }))
     setStatus("Account fetched")
     await setPortfolioChoices(did)
+    await setCustodianFor(did, myInfo["order"]["portfolioId"])
     return did
   }
 
@@ -122,13 +136,22 @@ export default function Home() {
           "name": name,
         }))
     }))
-    folioNames.unshift({ "id": "", "name": "default" })
+    folioNames.unshift({ "id": null, "name": "default" })
     setStatus("Populating portfolios")
-    console.log(JSON.stringify(myInfo.order))
-    setMyInfo((prevInfo) => ({
-      ...prevInfo,
-      "portfolios": folioNames,
-    }))
+    setMyInfo((prevInfo) => {
+      const found: ShortPortfolioPresentation = folioNames
+        .find((folio: ShortPortfolioPresentation) => folio.id === myInfo["order"]["portfolioId"])
+      const newPortfolioId: string | null = typeof found === "undefined" ? null : found.id
+      setCustodianFor(did, newPortfolioId)
+      return {
+        ...prevInfo,
+        "order": {
+          ...prevInfo["order"],
+          "portfolioId": newPortfolioId,
+        },
+        "portfolios": folioNames,
+      }
+    })
     setStatus("Portfolios populated")
   }
 
@@ -150,7 +173,7 @@ export default function Home() {
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body = await response.json()
-      const portfolios: ShortPortfolioPresentation[] = [{ "id": "", "name": "default" }]
+      const portfolios: ShortPortfolioPresentation[] = [{ "id": null, "name": "default" }]
       if (typeof body["portfolioId"] === "string") portfolios.push({
         "id": body["portfolioId"],
         "name": "Loading",
@@ -160,7 +183,8 @@ export default function Home() {
         "order": body,
         "portfolios": portfolios,
       }))
-      setPortfolioChoices(body["polymeshDid"])
+      await setPortfolioChoices(body["polymeshDid"])
+      await setCustodianFor(body["polymeshDid"], body["portfolioId"])
     } else {
       setStatus("Something went wrong")
     }
@@ -224,7 +248,8 @@ export default function Home() {
     }))
   }
 
-  function changeMyOrder(field: string, value: any): void {
+  async function changeMyOrder(field: string, value: any): Promise<void> {
+    if (field === "portfolioId" && value === "") value = null
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       "order": {
@@ -234,11 +259,12 @@ export default function Home() {
       "modified": true,
       "portfolios": field === "polymeshDid" ? [{ "id": "", "name": "Loading" }] : prevInfo["portfolios"],
     }))
-    if (field === "polymeshDid") setPortfolioChoices(value)
+    if (field === "polymeshDid") await setPortfolioChoices(value)
+    else if (field === "portfolioId") await setCustodianFor(myInfo["order"]["polymeshDid"], value)
   }
 
-  function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): void {
-    changeMyOrder(e.target.name, e.target.value)
+  async function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>): Promise<void> {
+    await changeMyOrder(e.target.name, e.target.value)
   }
 
   function onMyOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -254,6 +280,65 @@ export default function Home() {
       },
       "modified": true,
     }))
+  }
+
+  async function findPortfolio(who: Identity, portfolioId: string | null): Promise<DefaultPortfolio | NumberedPortfolio> {
+    const theirPortfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
+    return theirPortfolios.find((portfolio: DefaultPortfolio | NumberedPortfolio) => {
+      if (portfolio instanceof DefaultPortfolio && portfolioId === null) return true
+      if (portfolio instanceof NumberedPortfolio && portfolio.id.toString(10) === portfolioId) return true
+      return false
+    })
+  }
+
+  async function setCustodianFor(polymeshDid: string, portfolioId: string | null) {
+    const api: Polymesh = await getPolyWalletApi()
+    const who: Identity = api.getIdentity({ "did": polymeshDid })
+    setStatus(`Finding selected portfolio ${portfolioId}`)
+    const found: Portfolio = await findPortfolio(who, portfolioId)
+    if (typeof found === "undefined") {
+      setStatus(`Could not find portfolio ${polymeshDid} - ${portfolioId}`)
+      return
+    }
+    setStatus("Fetching custodian")
+    const custodian: Identity = await found.getCustodian()
+    const toUse: string = custodian.did === polymeshDid ? "" : custodian.did
+    if (toUse === "") setStatus("No custodian found")
+    else setStatus("Custodian found")
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodianDid": toUse,
+      "custodianValid": false,
+    }))
+  }
+
+  async function onCustodianChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const newCustodian: string = e.target.value
+    const myDid: string = (await (await getPolyWalletApi()).getCurrentIdentity()).did
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      "custodianDid": newCustodian,
+      "custodianValid": prevInfo["order"]["polymeshDid"] === myDid && newCustodian !== myDid 
+    }))
+  }
+
+  async function inviteCustodian(): Promise<void> {
+    setStatus(`Inviting custodian ${myInfo["custodianDid"]}...`)
+    const api: Polymesh = await getPolyWalletApi()
+    setStatus("Getting your identity")
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching your portfolios")
+    const found: Portfolio = await findPortfolio(me, myInfo["order"]["portfolioId"])
+    if (typeof found === "undefined") {
+      setStatus(`Could not find your portfolio ${myInfo["order"]["portfolioId"]}`)
+    }
+    const custodianQueue: TransactionQueue<void> = await found.setCustodian({ "targetIdentity": myInfo["custodianDid"] })
+    await custodianQueue.run()
+  }
+
+  async function submitInviteCustodian(e): Promise<void> {
+    e.preventDefault()
+    inviteCustodian()
   }
 
   return (
@@ -318,14 +403,14 @@ export default function Home() {
               <label htmlFor="order-polymeshDid">Trader's Polymesh did</label>
               <input name="polymeshDid" id="order-polymeshDid" type="text" placeholder="0x12345" value={myInfo["order"]["polymeshDid"]} onChange={onMyOrderChanged}></input>
               &nbsp;
-              <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""}>Pick it from PolyWallet</button>
+              <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""} title="No copy and paste, just click">Pick it from PolyWallet</button>
             </div>
 
             <div>
               <label htmlFor="order-portfolioId">Trading portfolio</label>
               <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged} defaultValue={myInfo["order"]["portfolioId"]}>
                 {
-                  myInfo["portfolios"].map((portfolio: ShortPortfolioPresentation, index: number) => <option value={portfolio.id} key={index}>
+                  myInfo["portfolios"].map((portfolio: ShortPortfolioPresentation, index: number) => <option value={portfolio.id || ""} key={index}>
                       {portfolio.id} - {portfolio.name}
                     </option>)
                 }
@@ -334,6 +419,16 @@ export default function Home() {
 
             <div className="submit">
               <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyOrder}>Submit your order</button>
+            </div>
+
+            <div>
+              <label htmlFor="order-custodianDid">Custodian's Polymesh did</label>
+              <input name="custodianDid" id="order-custodianDid" type="text" placeholder="0x12345" value={myInfo["custodianDid"]} onChange={onCustodianChanged}></input>
+              &nbsp;
+              <button className="submit custodianDid" disabled={!(myInfo["custodianValid"])} onClick={submitInviteCustodian}>Invite custodian</button>
+            </div>
+
+            <div className="submit">
             </div>
 
           </fieldset>
