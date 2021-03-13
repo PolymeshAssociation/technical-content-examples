@@ -9,10 +9,13 @@ import {
     WrongZeroOrderError,
 } from "./orderInfo"
 
-export interface SettlementPartyJson {
-    id: string
+export interface PolymeshPartyJson {
     polymeshDid: string
     portfolioId: string | null
+}
+
+export interface SettlementPartyJson extends PolymeshPartyJson {
+    id: string
 }
 
 export interface ISettlementParty {

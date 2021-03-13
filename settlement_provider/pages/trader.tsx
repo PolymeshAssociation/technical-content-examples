@@ -36,7 +36,7 @@ export default function Home() {
     custodianDid: "" as string,
     custodianValid: false as boolean,
     custodiedPortfolios: [] as PortfolioPresentation[],
-    custodyRequests: [] as AuthorizationRequestInPresentation[],
+    custodyRequestsIn: [] as AuthorizationRequestInPresentation[],
     custodyRequestsOut: [] as AuthorizationRequestOutPresentation[],
   })
 
@@ -370,7 +370,7 @@ export default function Home() {
   async function loadCustodyRequests(): Promise<void> {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      custodyRequests: ["Loading custody requests..."],
+      custodyRequestsIn: ["Loading custody requests..."],
     }))
     const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your identity")
@@ -400,7 +400,7 @@ export default function Home() {
       }))
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      custodyRequests: presentations,
+      custodyRequestsIn: presentations,
     }))
   }
 
@@ -619,7 +619,7 @@ export default function Home() {
 
             <ul>
               {
-                myInfo["custodyRequests"].map((request: AuthorizationRequestInPresentation) => <li>
+                myInfo["custodyRequestsIn"].map((request: AuthorizationRequestInPresentation) => <li>
                   <span>{getAuthorisationPresentation(request)}</span>
                   {getCustodyRequestInButtons(request)}
                 </li>)
