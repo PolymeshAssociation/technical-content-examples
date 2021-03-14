@@ -41,15 +41,19 @@ export class OrderInfo implements IOrderInfo {
         this.isBuy = info.isBuy
         requireDesiredType(info.quantity, "quantity", "string")
         this.quantity = parseInt(info.quantity)
-        if (this.quantity === 0) {
+        if (this.quantity.toString(10) === "0") {
             throw new WrongZeroOrderError("quantity")
+        } else if (isNaN(this.quantity)) {
+            throw new WrongNumericValueError("quantity", info.quantity)
         }
         requireDesiredType(info.token, "token", "string")
         this.token = info.token
         requireDesiredType(info.price, "price", "string")
         this.price = parseInt(info.price)
-        if (this.price === 0) {
+        if (this.price.toString(10) === "0") {
             throw new WrongZeroOrderError("price")
+        } else if (isNaN(this.price)) {
+            throw new WrongNumericValueError("price", info.price)
         }
     }
 
@@ -97,6 +101,12 @@ export class IncompleteOrderInfoError extends OrderInfoError {
 
 export class WrongTypeOrderError extends OrderInfoError {
     constructor(public field: string, public receivedType: string, message?: string) {
+        super(message)
+    }
+}
+
+export class WrongNumericValueError extends OrderInfoError {
+    constructor(public field: string, public received: string, message?: string) {
         super(message)
     }
 }

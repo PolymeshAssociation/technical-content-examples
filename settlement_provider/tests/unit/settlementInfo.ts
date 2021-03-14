@@ -14,9 +14,11 @@ import {
     SettlementPartyJson,
     SettlementJson,
     FullSettlementJson,
+    IFullSettlementInfo,
 } from "../../src/settlementInfo"
 import {
-    OrderInfo, OrderJson,
+    OrderInfo,
+    OrderJson,
 } from "../../src/orderInfo"
 
 describe("SettlementParty Unit Tests", () => {
@@ -25,7 +27,7 @@ describe("SettlementParty Unit Tests", () => {
         const bareInfo: SettlementPartyJson = {
             id: "1",
         }
-        const info = new SettlementParty(bareInfo)
+        const info: SettlementParty = new SettlementParty(bareInfo)
 
         expect(info.id).to.equal("1")
     })
@@ -50,8 +52,7 @@ describe("SettlementParty Unit Tests", () => {
         const bareInfo: SettlementPartyJson = {
             id: "1",
         }
-        const info = new SettlementParty(bareInfo)
-        const back = info.toJSON()
+        const back: SettlementPartyJson = new SettlementParty(bareInfo).toJSON()
 
         expect(back.id).to.equal("1")
     })
@@ -74,13 +75,13 @@ describe("SettlementInfo Unit Tests", () => {
             isPaid: false,
             isTransferred: false,
         }
-        const info = new SettlementInfo(bareInfo)
+        const info: ISettlementInfo = new SettlementInfo(bareInfo)
 
         expect(info.buyer.id).to.equal("1")
         expect(info.seller.id).to.equal("2")
-        expect(info.quantity).to.equal(12345)
+        expect(info.quantity.toString(10)).to.equal("12345")
         expect(info.token).to.equal("ACME")
-        expect(info.price).to.equal(33)
+        expect(info.price.toString(10)).to.equal("33")
         expect(info.isPaid).to.be.false
         expect(info.isTransferred).to.be.false
     })
@@ -153,7 +154,7 @@ describe("SettlementInfo Unit Tests", () => {
             isPaid: false,
             isTransferred: false,
         }
-        const back = new SettlementInfo(bareInfo).toJSON()
+        const back: SettlementJson = new SettlementInfo(bareInfo).toJSON()
 
         expect(back).to.deep.equal(bareInfo)
     })
@@ -177,14 +178,14 @@ describe("FullSettlementInfo Unit Tests", () => {
             isPaid: true,
             isTransferred: false,
         }
-        const info = new FullSettlementInfo(bareInfo)
+        const info: IFullSettlementInfo = new FullSettlementInfo(bareInfo)
 
         expect(info.id).to.equal("3")
         expect(info.buyer.id).to.equal("1")
         expect(info.seller.id).to.equal("2")
-        expect(info.quantity).to.equal(12345)
+        expect(info.quantity.toString(10)).to.equal("12345")
         expect(info.token).to.equal("ACME")
-        expect(info.price).to.equal(33)
+        expect(info.price.toString(10)).to.equal("33")
         expect(info.isPaid).to.be.true
         expect(info.isTransferred).to.be.false
     })
@@ -242,7 +243,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             isPaid: true,
             isTransferred: false,
         }
-        const back = new FullSettlementInfo(bareInfo).toJSON()
+        const back: FullSettlementJson = new FullSettlementInfo(bareInfo).toJSON()
 
         expect(back).to.deep.equal(bareInfo)
     })

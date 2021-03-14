@@ -1,7 +1,7 @@
 import Head from "next/head"
 import React, { useState } from "react"
-import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 import styles from "../styles/Home.module.css"
+import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 
 export default function Home() {
   const emptyOrder: OrderJson = {
@@ -194,11 +194,12 @@ export default function Home() {
 
           </fieldset>
 
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
+
         </form>
 
-        <div id="status" className={styles.status}>
-          Latest status will show here
-        </div>
       </main>
 
       <footer className={styles.footer}>

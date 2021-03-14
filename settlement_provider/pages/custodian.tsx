@@ -1,8 +1,8 @@
 import Head from "next/head"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
-import { FullSettlementJson } from "../src/settlementInfo"
-import { SettlementListJson } from "../src/ui-types"
+import { FullSettlementJson, } from "../src/settlementInfo"
+import { SettlementListJson, } from "../src/ui-types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -76,6 +76,82 @@ export default function Home() {
     await sendSellerTransfers(e.target.getAttribute("data-settlement-id"))
   }
 
+  async function sendSettlementAction(settlement: FullSettlementJson, settlementSide: string): Promise<Response> {
+    const response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
+    if (response.status == 200) {
+      setStatus("Settlement updated")
+      await getPendingSettlements(myInfo.traderId)
+   } else {
+     setStatus("Something went wrong")
+   }
+    return response
+  }
+
+  function submitSettlementActionCreator(settlement: FullSettlementJson, settlementSide: string): (e) => Promise<void> {
+    return async function (e): Promise<void> {
+      e.preventDefault()
+      await sendSettlementAction(settlement, settlementSide)
+    }
+  }
+
+  async function sendSettlementReject(settlement: FullSettlementJson): Promise<Response> {
+    const response = await fetch(`/api/settlement/${settlement.id}`, { method: "DELETE" })
+    if (response.status == 200) {
+      setStatus("Settlement deleted")
+      await getPendingSettlements(myInfo.traderId)
+    } else {
+      setStatus("Something went wrong")
+    }
+    return response
+  }
+
+  function submitSettlementRejectCreator(settlement: FullSettlementJson): (e) => Promise<void> {
+    return async function (e): Promise<void> {
+      e.preventDefault()
+      await sendSettlementReject(settlement)
+    }
+  }
+
+  function getInstructionHtml(settlement: FullSettlementJson) {
+    const buyerTitle: string = settlement.buyer.id
+    const sellerTitle: string = settlement.seller.id
+    const isBuyerRelevant: boolean = myInfo.traderId === settlement.buyer.id && !settlement.isPaid
+    const isSellerRelevant: boolean = myInfo.traderId === settlement.seller.id && !settlement.isTransferred
+    return <fieldset className={`${styles.card} ${styles.unbreakable}`}>
+      <legend title="Instruction id">{settlement.id}</legend>
+
+      <div data-trader-id={settlement.buyer.id}>
+        <b title={buyerTitle}>Buyer {settlement.buyer.id}</b>
+        <span> to pay </span>
+        <span title="amount"> {parseInt(settlement.price) * parseInt(settlement.quantity)} </span>
+        <span title="currency"> USD </span>
+        <span> to </span>
+        <span title={sellerTitle}> seller {settlement.seller.id} </span>
+        <button className="submit paid" onClick={submitSettlementActionCreator(settlement, "isPaid")} disabled={!isBuyerRelevant || settlement.isPaid}>
+          {settlement.isPaid ? " Paid" : " Mark as paid"}
+        </button>
+      </div>
+
+      <div data-trader-id={settlement.seller.id}>
+        <b title={sellerTitle}>Seller {settlement.seller.id}</b>
+        <span> to transfer </span>
+        <span title="quantity"> {settlement.quantity} </span>
+        <span title="token"> {settlement.token} </span>
+        <span> to </span>
+        <span title={buyerTitle}> buyer {settlement.buyer.id} </span>
+        <button className="submit transferred" onClick={submitSettlementActionCreator(settlement, "isTransferred")} disabled={!isSellerRelevant || settlement.isTransferred}>
+          {settlement.isTransferred ? " Transferred" : " Mark as transferred"}
+        </button>
+      </div>
+
+      <div>
+        <button className="submit reject" onClick={submitSettlementRejectCreator(settlement)}>
+          Reject transfer
+        </button>
+      </div>
+    </fieldset>
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -106,55 +182,25 @@ export default function Home() {
 
           </fieldset>
 
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
+
           <fieldset className={`${styles.card} ${styles.row}`}>
-            <legend>Settlements</legend>
+            <legend>Settlements from db</legend>
 
-            <div className={styles.column}>
-              <div className='sell-column'>
+            <h3>Accept what you recognise</h3>
 
-                <h3>Update as you go</h3>
-
-                {
-                  myInfo.info.settlements
-                    .map((settlement: FullSettlementJson) => <div className={`${styles.card} ${styles.unbreakable}`}>
-                      <div data-trader-id={settlement.buyer.id}>
-                        Buyer <b title="buyer id">{settlement.buyer.id}</b>
-                        <span> to pay </span>
-                        <span title="amount"> {parseInt(settlement.price) * parseInt(settlement.quantity)} </span>
-                        <span title="currency"> USD </span>
-                        <span> to seller </span>
-                        <span title="seller id"> {settlement.seller.id} </span>
-                        <span> with the reference </span>
-                        <span title="transfer reference">{settlement.id} </span>
-                        <button className="submit paid" onClick={submitBuyerPays} disabled={myInfo.traderId !== settlement.buyer.id || settlement.isPaid} data-settlement-id={settlement.id}>
-                          {settlement.isPaid ? " Paid" : "Mark as paid"}
-                        </button>
-                      </div>
-
-                      <div data-trader-id={settlement.seller.id}>
-                        Seller <b title="seller id"> {settlement.seller.id}</b>
-                        <span> to transfer </span>
-                        <span title="quantity"> {settlement.quantity} </span>
-                        <span title="token"> {settlement.token} </span>
-                        <span> to buyer </span>
-                        <span title="buyer id"> {settlement.buyer.id} </span>
-                        <button className="submit transferred" onClick={submitSellerTransfers} disabled={myInfo.traderId !== settlement.seller.id || settlement.isTransferred} data-settlement-id={settlement.id}>
-                          {settlement.isTransferred ? " Transferred" : "Mark as transferred"}
-                        </button>
-                      </div>
-                    </div>)
-                }
-
-              </div>
-            </div>
+            {
+              (() => {
+                if (myInfo.info.settlements.length === 0) return "No instructions"
+                else return myInfo.info.settlements.map((settlement: FullSettlementJson) => getInstructionHtml(settlement))
+              })()
+            }
 
           </fieldset>
 
         </form>
-
-        <div id="status" className={styles.status}>
-          Latest status will show here
-        </div>
 
       </main>
 

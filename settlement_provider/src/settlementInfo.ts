@@ -1,5 +1,5 @@
 import {
-    IOrderInfo,
+    IOrderInfo, WrongNumericValueError, WrongZeroOrderError,
 } from "./orderInfo"
 
 export interface SettlementPartyJson {
@@ -84,10 +84,20 @@ export class SettlementInfo implements ISettlementInfo {
         }
         requireDesiredType(info.quantity, "quantity", "string")
         this.quantity = parseInt(info.quantity)
+        if (this.quantity.toString(10) === "0") {
+            throw new WrongZeroOrderError("quantity")
+        } else if (isNaN(this.quantity)) {
+            throw new WrongNumericValueError("quantity", info.quantity)
+        }
         requireDesiredType(info.token, "token", "string")
         this.token = info.token
         requireDesiredType(info.price, "price", "string")
         this.price = parseInt(info.price)
+        if (this.price.toString(10) === "0") {
+            throw new WrongZeroOrderError("price")
+        } else if (isNaN(this.price)) {
+            throw new WrongNumericValueError("price", info.price)
+        }
         requireDesiredType(info.isPaid, "isPaid", "boolean")
         this.isPaid = info.isPaid
         requireDesiredType(info.isTransferred, "isTransferred", "boolean")

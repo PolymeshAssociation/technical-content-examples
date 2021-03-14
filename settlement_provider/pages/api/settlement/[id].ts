@@ -15,13 +15,10 @@ async function getSettlementInfoById(req: NextApiRequest): Promise<SettlementJso
     return (await (await settlementDbFactory()).getSettlementInfoById(<string>req.query.id)).toJSON()
 }
 
-async function setSettlementInfo(req: NextApiRequest): Promise<void> {
+async function deleteSettlementInfo(req: NextApiRequest): Promise<void> {
     const id = <string>req.query.id
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    const settlement: ISettlementInfo = new SettlementInfo(typeof req.body === "string"
-        ? JSON.parse(req.body)
-        : req.body)
-    await settlementDb.setSettlementInfo(id, settlement)
+    await settlementDb.deleteSettlementInfo(id)
 }
 
 async function updateSettlementInfo(req: NextApiRequest): Promise<void> {
@@ -48,8 +45,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             case "GET":
                 res.status(200).json(await getSettlementInfoById(req))
                 break
-            case "PUT":
-                await setSettlementInfo(req)
+            case "DELETE":
+                await deleteSettlementInfo(req)
                 res.status(200).json({ status: "ok" })
                 break
             case "PATCH":

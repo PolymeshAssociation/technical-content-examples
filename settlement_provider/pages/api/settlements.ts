@@ -19,17 +19,17 @@ import settlementDbFactory from "../../src/settlementDbFactory"
 import { SettlementListJson } from "../../src/ui-types"
 
 async function getSettlements(req: NextApiRequest): Promise<SettlementListJson> {
-    const all: IFullSettlementInfo[] = await (await settlementDbFactory()).getSettlements()
+    const all: FullSettlementJson[] = (await (await settlementDbFactory()).getSettlements())
+        .map((info: IFullSettlementInfo) => info.toJSON())
     const traderId: string = <string>req.query.traderId
     if (typeof traderId === "undefined") {
         return {
-            settlements: all.map((info: IFullSettlementInfo) => info.toJSON()),
+            settlements: all,
         }
     }
     return {
         settlements: all
-            .filter((info: IFullSettlementInfo) => info.buyer.id === traderId || info.seller.id === traderId)
-            .map((info: IFullSettlementInfo) => info.toJSON()),
+            .filter((info: FullSettlementJson) => info.buyer.id === traderId || info.seller.id === traderId),
     }
 }
 
