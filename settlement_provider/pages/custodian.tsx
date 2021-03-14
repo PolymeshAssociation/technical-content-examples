@@ -200,7 +200,7 @@ export default function Home() {
     }
     setStatus("Setting up affirmation queue")
     const affirmQueue: TransactionQueue<Instruction> = await (affirm ? myInstruction.affirm() : myInstruction.reject())
-    setStatus("Affirming transaction")
+    setStatus(`${affirm ? "Affirming": "Rejecting"} transaction`)
     const updatedInstruction: Instruction = await affirmQueue.run()
     setStatus("Transaction affirmed")
     return updatedInstruction

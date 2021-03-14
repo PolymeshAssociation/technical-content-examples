@@ -3,7 +3,7 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
-import { IPublishedSettlementInfo, PublishedSettlementInfo, PublishedSettlementJson, } from "../../src/settlementInfo"
+import { IFullSettlementInfo, IPublishedSettlementInfo, PublishedSettlementInfo, PublishedSettlementJson, SettlementInfo, } from "../../src/settlementInfo"
 import { ISettlementDb } from "../../src/settlementDb"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import handleSettlementId from "../../pages/api/settlement/[id]"
@@ -81,9 +81,9 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
     })
 
-    describe("PUT", () => {
+    describe("DELETE", () => {
 
-        it("returns 200 on set info and has saved", async () => {
+        it("returns 200 on delete the only info and has saved", async () => {
             const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
@@ -102,140 +102,116 @@ describe("/api/settlement/[id] Integration Tests", () => {
                 isPaid: true,
                 isTransferred: false,
             }
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
-                method: "PUT",
+                method: "DELETE",
                 query: {
                     id: "4",
                 },
-                body: bareInfo,
             })
 
             await handleSettlementId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("4")
-            expect(retrieved.toJSON()).to.deep.equal(bareInfo)
+            const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
+            expect(retrieved).to.deep.equal([])
         })
 
-        it("returns 400 on set info missing seller", async () => {
-            const { req, res } = createMocks({
-                method: "PUT",
-                query: {
-                    id: "4",
+        it("returns 200 on delete non-existent info and has unchanged", async () => {
+            const bareInfo: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
-                body: {
-                    buyer: {
-                        id: "1",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        portfolioId: "1",
-                    },
-                    quantity: "12345",
-                    token: "ACME",
-                    price: "33",
-                    instructionId: "445",
-                    isPaid: true,
-                    isTransferred: false,
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
+                },
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
+            }
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo))
+            const { req, res } = createMocks({
+                method: "DELETE",
+                query: {
+                    id: "3",
                 },
             })
 
             await handleSettlementId(req, res)
 
-            expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "missing field seller" })
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
+            const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
+            expect(retrieved.length).to.equal(1)
+            expect(retrieved[0].toJSON()).to.deep.equal({
+                id: "4",
+                ...bareInfo,
+            })
         })
 
-        it("returns 400 on set info wrong type seller", async () => {
+        it("returns 200 on delete one info out of two", async () => {
+            const bareInfo4: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
+                },
+                seller: {
+                    id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
+                },
+                quantity: "12345",
+                token: "ACME",
+                price: "33",
+                instructionId: "445",
+                isPaid: true,
+                isTransferred: false,
+            }
+            const bareInfo3: PublishedSettlementJson = {
+                buyer: {
+                    id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
+                },
+                seller: {
+                    id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc3",
+                    portfolioId: null,
+                },
+                quantity: "12346",
+                token: "ACME",
+                price: "34",
+                instructionId: "446",
+                isPaid: false,
+                isTransferred: false,
+            }
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo4))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo3))
             const { req, res } = createMocks({
-                method: "PUT",
+                method: "DELETE",
                 query: {
                     id: "4",
-                },
-                body: {
-                    buyer: {
-                        id: "1",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        portfolioId: "1",
-                    },
-                    seller: "2",
-                    quantity: "12345",
-                    token: "ACME",
-                    price: "33",
-                    instructionId: "445",
-                    isPaid: true,
-                    isTransferred: false,
                 },
             })
 
             await handleSettlementId(req, res)
 
-            expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "wrong type string on field seller" })
-        })
-
-        it("returns 400 on set info same buyer and seller id", async () => {
-            const { req, res } = createMocks({
-                method: "PUT",
-                query: {
-                    id: "4",
-                },
-                body: {
-                    buyer: {
-                        id: "1",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        portfolioId: "1",
-                    },
-                    seller: {
-                        id: "1",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                        portfolioId: null,
-                    },
-                    quantity: "12345",
-                    token: "ACME",
-                    price: "33",
-                    instructionId: "445",
-                    isPaid: true,
-                    isTransferred: false,
-                },
-            })
-
-            await handleSettlementId(req, res)
-
-            expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "same buyer and seller: 1" })
-        })
-
-        it("returns 400 on set info same buyer and seller polymeshDid", async () => {
-            const { req, res } = createMocks({
-                method: "PUT",
-                query: {
-                    id: "4",
-                },
-                body: {
-                    buyer: {
-                        id: "1",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        portfolioId: "1",
-                    },
-                    seller: {
-                        id: "2",
-                        polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                        portfolioId: null,
-                    },
-                    quantity: "12345",
-                    token: "ACME",
-                    price: "33",
-                    instructionId: "445",
-                    isPaid: true,
-                    isTransferred: false,
-                }
-            })
-
-            await handleSettlementId(req, res)
-
-            expect(res._getStatusCode()).to.equal(400)
-            expect(JSON.parse(res._getData())).to.deep.equal({
-                status: "same buyer and seller: 0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd"
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
+            const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
+            expect(retrieved.length).to.equal(1)
+            expect(retrieved[0].toJSON()).to.deep.equal({
+                id: "3",
+                ...bareInfo3,
             })
         })
 
