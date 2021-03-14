@@ -31,7 +31,7 @@ export class SettlementDbFs implements ISettlementDb {
     }
 
     async getSettlements(): Promise<IFullSettlementInfo[]> {
-        const db: SettlementDbJson = (await getDb(this.dbPath))
+        const db: SettlementDbJson = await getDb(this.dbPath)
         return Object.entries(db)
             .map(([id, settlement]: [string, SettlementJson]) => new FullSettlementInfo({ ...settlement, id }))
             .reduce(

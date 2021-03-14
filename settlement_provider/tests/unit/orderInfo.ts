@@ -66,16 +66,16 @@ describe("OrderInfo Unit Tests", () => {
             .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
     })
 
-    it("cannot construct from bad price number", () => {
+    it("cannot construct from bad quantity number", () => {
         const bareInfo: OrderJson = {
             isBuy: true,
-            quantity: "12345",
+            quantity: "ab",
             token: "ACME",
-            price: "ab",
+            price: "3",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
-            .that.satisfies((error: WrongNumericValueError) => error.field === "price" && error.received === "ab")
+            .that.satisfies((error: WrongNumericValueError) => error.field === "quantity" && error.received === "ab")
     })
 
     it("cannot construct from zero price", () => {

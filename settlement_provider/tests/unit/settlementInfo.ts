@@ -54,9 +54,9 @@ describe("SettlementParty Unit Tests", () => {
         const bareInfo: SettlementPartyJson = {
             id: "1",
         }
-        const back: SettlementPartyJson = new SettlementParty(bareInfo).toJSON()
+        const info: SettlementPartyJson = new SettlementParty(bareInfo).toJSON()
 
-        expect(back.id).to.equal("1")
+        expect(info.id).to.equal("1")
     })
 
 })
@@ -160,7 +160,7 @@ describe("SettlementInfo Unit Tests", () => {
             .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
     })
 
-    it("cannot construct from 0 quantity", () => {
+    it("cannot construct from non number quantity", () => {
         const bareInfo: SettlementJson = {
             buyer: {
                 id: "1",
@@ -168,14 +168,14 @@ describe("SettlementInfo Unit Tests", () => {
             seller: {
                 id: "2",
             },
-            quantity: "0",
+            quantity: "ab",
             token: "ACME",
             price: "33",
             isPaid: false,
             isTransferred: false,
         }
-        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
-            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "quantity" && error.received === "ab")
     })
 
     it("cannot construct from 0 price", () => {
