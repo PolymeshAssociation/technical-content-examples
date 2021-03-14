@@ -25,8 +25,8 @@ import {
 import {
     OrderInfo,
     InvalidPolymeshDidError,
-    WrongNumericValueError,
     OrderJson,
+    WrongNumericValueError,
     WrongZeroOrderError,
 } from "../../src/orderInfo"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
