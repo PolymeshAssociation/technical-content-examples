@@ -189,6 +189,7 @@ export class PublishedSettlementInfo extends SettlementInfo implements IPublishe
     }
 
 }
+
 export class FullSettlementInfo extends PublishedSettlementInfo implements IFullSettlementInfo {
     id: string
 

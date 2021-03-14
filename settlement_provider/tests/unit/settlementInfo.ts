@@ -20,6 +20,7 @@ import {
     SettlementJson,
     PublishedSettlementJson,
     FullSettlementJson,
+    IFullSettlementInfo,
 } from "../../src/settlementInfo"
 import {
     OrderInfo,
@@ -38,7 +39,7 @@ describe("SettlementParty Unit Tests", () => {
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
             portfolioId: "1",
         }
-        const info = new SettlementParty(bareInfo)
+        const info: SettlementParty = new SettlementParty(bareInfo)
 
         expect(info.id).to.equal("1")
         expect(info.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
@@ -150,7 +151,7 @@ describe("SettlementInfo Unit Tests", () => {
             isPaid: false,
             isTransferred: false,
         }
-        const info = new SettlementInfo(bareInfo)
+        const info: ISettlementInfo = new SettlementInfo(bareInfo)
 
         expect(info.buyer.id).to.equal("1")
         expect(info.buyer.polymeshDid).to.equal("0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
@@ -567,7 +568,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             isPaid: true,
             isTransferred: false,
         }
-        const info: FullSettlementInfo = new FullSettlementInfo(bareInfo)
+        const info: IFullSettlementInfo = new FullSettlementInfo(bareInfo)
 
         expect(info.id).to.equal("3")
         expect(info.buyer.id).to.equal("1")
@@ -652,8 +653,7 @@ describe("FullSettlementInfo Unit Tests", () => {
             isPaid: true,
             isTransferred: false,
         }
-        const info: FullSettlementInfo = new FullSettlementInfo(bareInfo)
-        const back: FullSettlementJson = info.toJSON()
+        const back: FullSettlementJson = new FullSettlementInfo(bareInfo).toJSON()
 
         expect(back).to.deep.equal(bareInfo)
     })

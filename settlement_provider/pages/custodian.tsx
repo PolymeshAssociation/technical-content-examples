@@ -3,7 +3,12 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import { BigNumber, Polymesh, } from '@polymathnetwork/polymesh-sdk'
-import { DefaultPortfolio, Instruction, NumberedPortfolio, TransactionQueue } from '@polymathnetwork/polymesh-sdk/internal'
+import {
+  DefaultPortfolio,
+  Instruction,
+  NumberedPortfolio,
+  TransactionQueue,
+} from '@polymathnetwork/polymesh-sdk/internal'
 import {
   AffirmationStatus,
   CurrentIdentity,
@@ -15,8 +20,7 @@ import {
 } from '@polymathnetwork/polymesh-sdk/types'
 import { getPolyWalletApi } from "../src/ui-helpers"
 import { FullSettlementJson, PolymeshPartyJson, PublishedSettlementJson } from "../src/settlementInfo"
-import { SettlementListJson, SimpleVenueJson } from "../src/ui-types"
-import { Portfolio } from "@polymathnetwork/polymesh-sdk/middleware/types"
+import { SettlementListJson, SimpleVenueJson, } from "../src/ui-types"
 
 export default function Home() {
   const {

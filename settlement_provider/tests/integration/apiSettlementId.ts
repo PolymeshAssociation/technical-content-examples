@@ -3,7 +3,13 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
-import { IFullSettlementInfo, IPublishedSettlementInfo, PublishedSettlementInfo, PublishedSettlementJson, SettlementInfo, } from "../../src/settlementInfo"
+import {
+    IFullSettlementInfo,
+    IPublishedSettlementInfo,
+    PublishedSettlementInfo,
+    PublishedSettlementJson,
+    SettlementInfo,
+} from "../../src/settlementInfo"
 import { ISettlementDb } from "../../src/settlementDb"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import handleSettlementId from "../../pages/api/settlement/[id]"

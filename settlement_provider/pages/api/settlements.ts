@@ -20,7 +20,7 @@ import exchangeDbFactory from "../../src/exchangeDbFactory"
 import settlementDbFactory from "../../src/settlementDbFactory"
 import settlementEngineFactory from "../../src/settlementEngineFactory"
 import { ISettlementEngine, VenueInfo } from "../../src/settlementEngine"
-import { SettlementListJson, SimpleVenueJson } from "../../src/ui-types"
+import { SettlementListJson, SimpleVenueJson, } from "../../src/ui-types"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 
 async function getSettlements(req: NextApiRequest): Promise<SettlementListJson> {

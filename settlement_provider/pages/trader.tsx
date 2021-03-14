@@ -646,6 +646,10 @@ export default function Home() {
 
           </fieldset>
 
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
+
         </form>
 
       </main>
