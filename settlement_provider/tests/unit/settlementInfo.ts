@@ -254,7 +254,7 @@ describe("SettlementInfo Unit Tests", () => {
             .that.satisfies((error: DuplicatePolymeshDidSettlementError) => error.polymeshDid === "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd")
     })
 
-    it("cannot construct from 0 quantity", () => {
+    it("cannot construct from non number quantity", () => {
         const bareInfo: SettlementJson = {
             buyer: {
                 id: "1",
@@ -266,14 +266,14 @@ describe("SettlementInfo Unit Tests", () => {
                 polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
                 portfolioId: null,
             },
-            quantity: "0",
+            quantity: "ab",
             token: "ACME",
             price: "33",
             isPaid: false,
             isTransferred: false,
         }
-        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
-            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "quantity" && error.received === "ab")
     })
 
     it("cannot construct from non number quantity", () => {
