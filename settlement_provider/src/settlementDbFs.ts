@@ -52,4 +52,10 @@ export class SettlementDbFs implements ISettlementDb {
         return saveDb(this.dbPath, db)
     }
 
+    async deleteSettlementInfo(id: string): Promise<void> {
+        const db: SettlementDbJson = await getDb(this.dbPath)
+        delete db[id]
+        return saveDb(this.dbPath, db)
+    }
+
 }

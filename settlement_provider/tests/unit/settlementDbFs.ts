@@ -176,4 +176,78 @@ describe("SettlementDbFs Unit Tests", () => {
         expect(retrieved[1].toJSON()).to.deep.equal({ ...bareInfo2, id: "2" })
     })
 
+    it("can delete the last settlement info", async () => {
+        const bareInfo: PublishedSettlementJson = {
+            buyer: {
+                id: "1",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                portfolioId: "1",
+            },
+            seller: {
+                id: "2",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                portfolioId: null,
+            },
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
+            instructionId: "445",
+            isPaid: true,
+            isTransferred: false,
+        }
+
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo))
+        await settlementDb.deleteSettlementInfo("1")
+
+        const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
+        expect(retrieved).to.deep.equal([])
+    })
+
+    it("can delete one settlement info out of 2", async () => {
+        const bareInfo1: PublishedSettlementJson = {
+            buyer: {
+                id: "1",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                portfolioId: "1",
+            },
+            seller: {
+                id: "2",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                portfolioId: null,
+            },
+            quantity: "12345",
+            token: "ACME",
+            price: "33",
+            instructionId: "445",
+            isPaid: true,
+            isTransferred: false,
+        }
+        const bareInfo2: PublishedSettlementJson = {
+            buyer: {
+                id: "3",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                portfolioId: "2",
+            },
+            seller: {
+                id: "2",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                portfolioId: null,
+            },
+            quantity: "667",
+            token: "ACME",
+            price: "30",
+            instructionId: "446",
+            isPaid: false,
+            isTransferred: false,
+        }
+
+        await settlementDb.setSettlementInfo("1", new PublishedSettlementInfo(bareInfo1))
+        await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
+        await settlementDb.deleteSettlementInfo("1")
+
+        const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
+        expect(retrieved.length).to.equal(1)
+        expect(retrieved[0].toJSON()).to.deep.equal({ ...bareInfo2, id: "2" })
+    })
+
 })
