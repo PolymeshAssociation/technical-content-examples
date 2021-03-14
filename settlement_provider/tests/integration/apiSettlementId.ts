@@ -260,7 +260,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
             const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
-                isPaid: true
+                isPaid: true,
             })
         })
 
@@ -299,7 +299,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
             const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
-                isTransferred: true
+                isTransferred: true,
             })
         })
 
@@ -340,7 +340,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
                 isPaid: true,
-                isTransferred: true
+                isTransferred: true,
             })
         })
 
