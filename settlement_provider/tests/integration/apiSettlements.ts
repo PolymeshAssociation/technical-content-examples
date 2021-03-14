@@ -161,7 +161,7 @@ describe("/api/settlements Integration Tests", () => {
             const { req, res } = createMocks({
                 method: "GET",
                 query: {
-                    "traderId": "1",
+                    traderId: "1",
                 },
             })
 

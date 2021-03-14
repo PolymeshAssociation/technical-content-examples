@@ -1,5 +1,7 @@
 import {
-    IOrderInfo, WrongNumericValueError, WrongZeroOrderError,
+    IOrderInfo,
+    WrongNumericValueError,
+    WrongZeroOrderError,
 } from "./orderInfo"
 
 export interface SettlementPartyJson {

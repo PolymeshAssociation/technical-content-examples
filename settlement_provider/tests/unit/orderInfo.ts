@@ -7,6 +7,7 @@ import {
     IncompleteOrderInfoError,
     OrderInfo,
     OrderJson,
+    WrongNumericValueError,
     WrongTypeOrderError,
     WrongZeroOrderError
 } from "../../src/orderInfo"
@@ -24,9 +25,9 @@ describe("OrderInfo Unit Tests", () => {
         const info = new OrderInfo(bareInfo)
 
         expect(info.isBuy).to.be.true
-        expect(info.quantity).to.equal(12345)
+        expect(info.quantity.toString(10)).to.equal("12345")
         expect(info.token).to.equal("ACME")
-        expect(info.price).to.equal(33)
+        expect(info.price.toString(10)).to.equal("33")
     })
 
     it("cannot construct from incomplete JSON", () => {
@@ -53,7 +54,7 @@ describe("OrderInfo Unit Tests", () => {
                 && error.receivedType === "string")
     })
 
-    it("cannot construct from empty quantity", () => {
+    it("cannot construct from zero quantity", () => {
         const bareInfo: OrderJson = {
             isBuy: true,
             quantity: "0",
@@ -65,7 +66,19 @@ describe("OrderInfo Unit Tests", () => {
             .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
     })
 
-    it("cannot construct from empty price", () => {
+    it("cannot construct from bad price number", () => {
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "ab",
+        }
+
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "price" && error.received === "ab")
+    })
+
+    it("cannot construct from zero price", () => {
         const bareInfo: OrderJson = {
             isBuy: true,
             quantity: "12345",
@@ -75,6 +88,18 @@ describe("OrderInfo Unit Tests", () => {
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongZeroOrderError)
             .that.satisfies((error: WrongZeroOrderError) => error.field === "price")
+    })
+
+    it("cannot construct from bad price number", () => {
+        const bareInfo: OrderJson = {
+            isBuy: true,
+            quantity: "12345",
+            token: "ACME",
+            price: "ab",
+        }
+
+        expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "price" && error.received === "ab")
     })
 
     it("can convert to JSON", () => {
@@ -107,9 +132,9 @@ describe("AssignedOrderInfo Unit Tests", () => {
 
         expect(info.id).to.equal("2")
         expect(info.isBuy).to.be.true
-        expect(info.quantity).to.equal(12345)
+        expect(info.quantity.toString(10)).to.equal("12345")
         expect(info.token).to.equal("ACME")
-        expect(info.price).to.equal(33)
+        expect(info.price.toString(10)).to.equal("33")
     })
 
     it("cannot construct from incomplete JSON", () => {

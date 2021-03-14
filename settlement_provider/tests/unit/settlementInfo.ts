@@ -19,6 +19,8 @@ import {
 import {
     OrderInfo,
     OrderJson,
+    WrongNumericValueError,
+    WrongZeroOrderError,
 } from "../../src/orderInfo"
 
 describe("SettlementParty Unit Tests", () => {
@@ -113,7 +115,7 @@ describe("SettlementInfo Unit Tests", () => {
             },
             quantity: 12345,
             token: "ACME",
-            price: 33,
+            price: "33",
             isPaid: false,
             isTransferred: false,
         }
@@ -140,6 +142,77 @@ describe("SettlementInfo Unit Tests", () => {
             .that.satisfies((error: DuplicatePartiesSettlementError) => error.partyId === "1")
     })
 
+    it("cannot construct from 0 quantity", () => {
+        const bareInfo: SettlementJson = {
+            buyer: {
+                id: "1",
+            },
+            seller: {
+                id: "2",
+            },
+            quantity: "0",
+            token: "ACME",
+            price: "33",
+            isPaid: false,
+            isTransferred: false,
+        }
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
+    })
+
+    it("cannot construct from 0 quantity", () => {
+        const bareInfo: SettlementJson = {
+            buyer: {
+                id: "1",
+            },
+            seller: {
+                id: "2",
+            },
+            quantity: "0",
+            token: "ACME",
+            price: "33",
+            isPaid: false,
+            isTransferred: false,
+        }
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
+    })
+
+    it("cannot construct from 0 price", () => {
+        const bareInfo: SettlementJson = {
+            buyer: {
+                id: "1",
+            },
+            seller: {
+                id: "2",
+            },
+            quantity: "12345",
+            token: "ACME",
+            price: "0",
+            isPaid: false,
+            isTransferred: false,
+        }
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "price")
+    })
+
+    it("cannot construct from non number price", () => {
+        const bareInfo: SettlementJson = {
+            buyer: {
+                id: "1",
+            },
+            seller: {
+                id: "2",
+            },
+            quantity: "12345",
+            token: "ACME",
+            price: "ab",
+            isPaid: false,
+            isTransferred: false,
+        }
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongNumericValueError)
+            .that.satisfies((error: WrongNumericValueError) => error.field === "price" && error.received === "ab")
+    })
     it("can convert to JSON", () => {
         const bareInfo: SettlementJson = {
             buyer: {

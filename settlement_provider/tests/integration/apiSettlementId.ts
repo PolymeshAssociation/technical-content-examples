@@ -110,7 +110,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
             const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
-             expect(retrieved).to.deep.equal([])
+            expect(retrieved).to.deep.equal([])
         })
 
         it("returns 200 on delete non-existent info and has unchanged", async () => {
@@ -122,12 +122,12 @@ describe("/api/settlement/[id] Integration Tests", () => {
                     id: "2",
                 },
                 quantity: "12345",
-                 token: "ACME",
-                 price: "33",
-                 isPaid: true,
-                 isTransferred: false,
-             }
-             await settlementDb.setSettlementInfo("4", new SettlementInfo(bareInfo))
+                token: "ACME",
+                price: "33",
+                isPaid: true,
+                isTransferred: false,
+            }
+            await settlementDb.setSettlementInfo("4", new SettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "DELETE",
                 query: {
@@ -186,7 +186,6 @@ describe("/api/settlement/[id] Integration Tests", () => {
             await handleSettlementId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
             const retrieved: IFullSettlementInfo[] = await settlementDb.getSettlements()
             expect(retrieved.length).to.equal(1)
@@ -228,7 +227,10 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
             const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
-            expect(retrieved.toJSON()).to.deep.equal({ ...bareInfo, isPaid: true })
+            expect(retrieved.toJSON()).to.deep.equal({
+                ...bareInfo,
+                isPaid: true,
+            })
         })
 
         it("returns 200 on update isTransferred and has saved", async () => {
@@ -259,7 +261,10 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
             const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
-            expect(retrieved.toJSON()).to.deep.equal({ ...bareInfo, isTransferred: true })
+            expect(retrieved.toJSON()).to.deep.equal({
+                ...bareInfo,
+                isTransferred: true,
+            })
         })
 
         it("returns 200 on update isPaid and isTransferred and has saved", async () => {
@@ -291,7 +296,11 @@ describe("/api/settlement/[id] Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
             const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
-            expect(retrieved.toJSON()).to.deep.equal({ ...bareInfo, isPaid: true, isTransferred: true })
+            expect(retrieved.toJSON()).to.deep.equal({
+                ...bareInfo,
+                isPaid: true,
+                isTransferred: true,
+            })
         })
 
         it("returns 400 on update nothing to do", async () => {

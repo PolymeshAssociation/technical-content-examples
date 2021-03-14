@@ -44,46 +44,14 @@ export default function Home() {
     await getPendingSettlements(myInfo.traderId)
   }
 
-  async function sendBuyerPays(settlementId: string): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlementId}?isPaid`, { method: "PATCH" })
-    if (response.status == 200) {
-      setStatus("Settlement updated")
-      await getPendingSettlements(myInfo.traderId)
-    } else {
-      setStatus("Something went wrong")
-    }
-    return response
-  }
-
-  async function submitBuyerPays(e): Promise<void> {
-    e.preventDefault()
-    await sendBuyerPays(e.target.getAttribute("data-settlement-id"))
-  }
-
-  async function sendSellerTransfers(settlementId: string): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlementId}?isTransferred`, { method: "PATCH" })
-    if (response.status == 200) {
-      setStatus("Settlement updated")
-      await getPendingSettlements(myInfo.traderId)
-    } else {
-      setStatus("Something went wrong")
-    }
-    return response
-  }
-
-  async function submitSellerTransfers(e): Promise<void> {
-    e.preventDefault()
-    await sendSellerTransfers(e.target.getAttribute("data-settlement-id"))
-  }
-
   async function sendSettlementAction(settlement: FullSettlementJson, settlementSide: string): Promise<Response> {
     const response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
       await getPendingSettlements(myInfo.traderId)
-   } else {
-     setStatus("Something went wrong")
-   }
+    } else {
+      setStatus("Something went wrong")
+    }
     return response
   }
 
@@ -186,10 +154,10 @@ export default function Home() {
             Latest status will show here
           </div>
 
-          <fieldset className={`${styles.card} ${styles.row}`}>
+          <fieldset className={styles.card}>
             <legend>Settlements from db</legend>
 
-            <h3>Accept what you recognise</h3>
+            <p>Accept what you recognise</p>
 
             {
               (() => {

@@ -31,12 +31,12 @@ export class ExchangeDbFs implements IExchangeDb {
     }
 
     async getOrders(): Promise<IAssignedOrderInfo[]> {
-        const db: ExchangeDbJson = (await getDb(this.dbPath))
+        const db: ExchangeDbJson = await getDb(this.dbPath)
         return Object.entries(db)
-            .map(([id, trade]) => new AssignedOrderInfo({ ...trade, id }))
+            .map(([id, trade]: [string, OrderJson]) => new AssignedOrderInfo({ ...trade, id }))
             .reduce(
-                (list, tradeInfo) => [...list, tradeInfo],
-                [])
+                (list: IAssignedOrderInfo[], tradeInfo: IAssignedOrderInfo) => [...list, tradeInfo],
+                [] as IAssignedOrderInfo[])
     }
 
     async getOrderInfoById(id: string): Promise<IOrderInfo> {
