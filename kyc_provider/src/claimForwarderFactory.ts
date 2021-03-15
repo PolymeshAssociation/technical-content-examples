@@ -7,29 +7,29 @@ export default async function(): Promise<IClaimForwarder> {
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
-            middlewareLink,
-            middlewareKey
-        } },
+        }, },
         publicRuntimeConfig: { polymesh: {
-            nodeUrl
-        } }
+            nodeUrl,
+            middlewareLink,
+            middlewareKey,
+        }, },
     } = getConfig() || {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
-            middlewareLink: process.env.MIDDLEWARE_LINK,
-            middlewareKey: process.env.MIDDLEWARE_KEY
-        } },
+        }, },
         publicRuntimeConfig: { polymesh: {
-            nodeUrl: process.env.POLY_NODE_URL
-        } }
+            nodeUrl: process.env.POLY_NODE_URL,
+            middlewareLink: process.env.MIDDLEWARE_LINK,
+            middlewareKey: process.env.MIDDLEWARE_KEY,
+        }, },
     }
     const api = await Polymesh.connect({
         nodeUrl,
         accountMnemonic,
         middleware: {
             link: middlewareLink,
-            key: middlewareKey
-        }
+            key: middlewareKey,
+        },
     })
     return new ClaimForwarderPoly(api)
 }

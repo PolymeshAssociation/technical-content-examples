@@ -11,12 +11,13 @@ import { CountryCode } from "@polymathnetwork/polymesh-sdk/types"
 
 describe("/api/kycCustomer/[id] Integration Tests", () => {
     const onTrustDid = "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e"
+    const nextDaqDid = "0xd80bfa2b0ef45a6093fb04cff8bde3545ef731d0247b363824bb8978c3bd8d76"
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
         }, },
         publicRuntimeConfig: { polymesh: {
-            nodeUrl,
+            nodeUrl, middlewareLink, middlewareKey,
         }, },
     } = nextConfig
     let dbPath: string
@@ -29,6 +30,8 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             KYC_DB_PATH: dbPath,
             POLY_NODE_URL: nodeUrl,
             POLY_ACCOUNT_MNEMONIC: accountMnemonic,
+            MIDDLEWARE_LINK: middlewareLink,
+            MIDDLEWARE_KEY: middlewareKey,
         })
         customerDb = await customerDbFactory()
     })
@@ -111,36 +114,6 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal(bareInfo)
         }).timeout(30000)
 
-        it("returns 200 on set info valid and already exists", async () => {
-            const bareInfo: CustomerJson = {
-                name: "John Doe",
-                country: CountryCode.Gb,
-                passport: "12345",
-                valid: true,
-                jurisdiction: CountryCode.Ie,
-                polymeshDid: onTrustDid,
-            }
-            const { req, res } = createMocks({
-                method: "PUT",
-                query: {
-                    id: "4",
-                },
-                body: bareInfo,
-            })
-
-            await handleKycCustomerId(req, res)
-
-            expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({
-                status: "ok",
-                result: {
-                    status: true,
-                    blockHashes: []
-                },
-            })
-            expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal(bareInfo)
-        }).timeout(30000)
-
         it("returns 200 on set info missing valid", async () => {
             const bareInfo: CustomerJson = <CustomerJson>{
                 name: "John Doe",
@@ -172,6 +145,63 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             })
         }).timeout(30000)
 
+        it("returns 200 on set info valid and already exists", async () => {
+            const bareInfo: CustomerJson = {
+                name: "John Doe",
+                country: CountryCode.Gb,
+                passport: "12345",
+                valid: true,
+                jurisdiction: CountryCode.Ie,
+                polymeshDid: onTrustDid,
+            }
+            const { req, res } = createMocks({
+                method: "PUT",
+                query: {
+                    id: "4",
+                },
+                body: bareInfo,
+            })
+
+            await handleKycCustomerId(req, res)
+
+            expect(res._getStatusCode()).to.equal(200)
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                status: "ok",
+                result: {
+                    status: true,
+                    blockHashes: []
+                },
+            })
+            expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal(bareInfo)
+        }).timeout(60000)
+
+        it("returns 400 on set info valid and already has 2", async () => {
+            const bareInfo: CustomerJson = {
+                name: "John Doe",
+                country: CountryCode.Gb,
+                passport: "12345",
+                valid: true,
+                jurisdiction: CountryCode.Ie,
+                polymeshDid: nextDaqDid,
+            }
+            const { req, res } = createMocks({
+                method: "PUT",
+                query: {
+                    id: "4",
+                },
+                body: bareInfo,
+            })
+
+            await handleKycCustomerId(req, res)
+
+            expect(res._getStatusCode()).to.equal(400)
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                status: `too many claims, 2, for this customer Polymesh Did ${nextDaqDid}`,
+            })
+            expect(customerDb.getCustomerInfoById("4")).to.eventually.be.rejected
+                .that.satisfies((e: UnknownCustomerError) => e.id === "4")
+        }).timeout(60000)
+
         it("returns 400 on set info with non-existent polymeshDid", async () => {
             const bareInfo: CustomerJson = <CustomerJson>{
                 name: "John Doe",
@@ -194,7 +224,6 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             expect(JSON.parse(res._getData())).to.deep.equal({
                 status: "non-existent Polymesh Did 0x0000000000000000000000000000000000000000000000000000000000000000"
             })
-
             await expect(customerDb.getCustomerInfoById("4")).to.be.eventually.rejected
                 .that.satisfies((error: UnknownCustomerError) => error.id === "4")
         }).timeout(30000)

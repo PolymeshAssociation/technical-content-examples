@@ -8,11 +8,11 @@ describe("/api/kycProvider Integration Tests", () => {
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
-            middlewareLink,
-            middlewareKey,
         }, },
         publicRuntimeConfig: { polymesh: {
             nodeUrl,
+            middlewareLink,
+            middlewareKey,
         }, },
     } = nextConfig
     let toRestore: RestoreFn

@@ -3,10 +3,19 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
-import { ClaimType, ClaimData, CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
+import {
+  Claim,
+  ClaimData,
+  ClaimType,
+  CurrentIdentity,
+  Identity,
+  IdentityWithClaims,
+  ResultSet,
+} from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
 import { CountryInfo, getCountryList } from "../src/types"
 import { CustomerJson } from "../src/customerInfo"
+import {  } from "@polymathnetwork/polymesh-sdk/middleware/types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -40,8 +49,9 @@ export default function Home() {
     return (await response.json())["did"]
   }
 
-  async function getPolyWalletApi(): Promise<any> {
+  async function getPolyWalletApi(): Promise<Polymesh> {
     setStatus("Getting your Polymesh Wallet")
+    if (typeof (window || {})["api"] !== "undefined") return (window || {})["api"]
     // Move to top of the file when compilation error no longer present.
     const {
       web3Accounts,
@@ -81,8 +91,8 @@ export default function Home() {
     const myKeyring = new Keyring()
     myKeyring.addFromAddress(myAccount.address)
     const mySigner = polyWallet.signer
-    setStatus("Building your API")
-    return await Polymesh.connect({
+    setStatus("Building your API");
+    (window || {})["api"] = await Polymesh.connect({
       nodeUrl,
       keyring: myKeyring,
       signer: polyWallet.signer,
@@ -91,20 +101,22 @@ export default function Home() {
         key: middlewareKey
       }
     })
+    return (window || {})["api"]
   }
 
   async function getMyInfo(): Promise<Response> {
     const response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
-    const body = await response.json()
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
     } else if (response.status == 200) {
       setStatus("Info fetched")
+      const body: CustomerJson = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         info: body
       }))
     } else {
+      const body = await response.json()
       setStatus(`Something went wrong ${body.status}`)
     }
     return response
@@ -193,20 +205,19 @@ export default function Home() {
     return setDidFromPolyWallet()
   }
 
-  async function fetchMyClaim(e): Promise<ClaimData | null> {
+  async function fetchMyClaim(e): Promise<ClaimData<Claim> | null> {
     e.preventDefault() // prevent page from submitting form
-    const [ ezKycDid, api ] = await Promise.all([
+    const [ezKycDid, api]: [string, Polymesh] = await Promise.all([
       getEzKycDid(),
       getPolyWalletApi()
     ])
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
-    const ezKycIdentity = await api.getIdentity({ did: ezKycDid })
-    const issuedClaims = await api.claims.getIdentitiesWithClaims({
-      targets: [me],
-      trustedClaimIssuers: [ezKycIdentity],
-      claimTypes: [ ClaimType.Jurisdiction ],
-      includeExpired: false,
+    const issuedClaims: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({
+      targets: [me.did],
+      trustedClaimIssuers: [ezKycDid],
+      claimTypes: [ClaimType.Jurisdiction],
+      includeExpired: true,
       start: 0,
       size: 20
     })
@@ -215,8 +226,8 @@ export default function Home() {
       setStatus("There are no claims for you")
       return null
     } else {
-      const issuedClaim = issuedClaims.data[0]
-      return issuedClaim
+      const issuedClaim: IdentityWithClaims = issuedClaims.data[0]
+      return issuedClaim.claims[0]
     }
   }
 
@@ -260,7 +271,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid}/>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div>
@@ -270,7 +281,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
-              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid}/>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div className="submit">

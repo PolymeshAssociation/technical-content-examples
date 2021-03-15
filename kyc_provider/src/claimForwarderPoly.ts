@@ -7,8 +7,8 @@ import {
     NonExistentCustomerPolymeshIdError,
 } from "./claimForwarder"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { Identity, ScopeType, ClaimType, ClaimData } from "@polymathnetwork/polymesh-sdk/types"
-import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
+import { Identity, ScopeType, ClaimType, ClaimData, ResultSet, IdentityWithClaims } from "@polymathnetwork/polymesh-sdk/types"
+import { CurrentIdentity, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 
 export interface ClaimsAddedResultPoly extends ClaimsAddedResult {
     blockHashes: string[]
@@ -32,7 +32,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
     }
 
     async getServiceProviderIdentity(): Promise<Identity> {
-        const providerId = await this.api.getCurrentIdentity()
+        const providerId: CurrentIdentity = await this.api.getCurrentIdentity()
         if (providerId === null) {
             throw new NonExistentKycIdentityError(this.api.getAccount().address)
         }
@@ -55,26 +55,24 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             throw new NonExistentCustomerPolymeshIdError(customer)
         }
 
-        const myId = await this.api.getCurrentIdentity() // TODO
-        const issuedClaims = await this.api.claims.getIdentitiesWithClaims({
+        const myId: CurrentIdentity = await this.api.getCurrentIdentity() // TODO
+        const issuedClaims: ResultSet<IdentityWithClaims> = await this.api.claims.getIdentitiesWithClaims({
             targets: [customer.polymeshDid],
             trustedClaimIssuers: [await this.api.getCurrentIdentity()],
             claimTypes: [ClaimType.Jurisdiction],
             includeExpired: false,
             start: 0,
-            size: 20
+            size: 20,
         })
         if (issuedClaims.count == 0) {
             throw new NoClaimForCustomerError(customer)
-        }
-        if (issuedClaims.count > 1) {
+        } else if (issuedClaims.count > 1) {
             throw new TooManyIdentitiesCustomerError(customer, issuedClaims.count)
         }
         const claims: ClaimData[] = issuedClaims.data[0].claims
         if (claims.length == 0) {
             throw new NoClaimForCustomerError(customer)
-        }
-        if (claims.length > 1) {
+        } else if (claims.length > 1) {
             throw new TooManyClaimsCustomerError(customer, claims.length)
         }
         return claims[0]
@@ -87,7 +85,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             // Already has a claim, no need to add.
             return {
                 status: true,
-                blockHashes: []
+                blockHashes: [],
             }
         } catch (e) {
             if (!(e instanceof NoClaimForCustomerError)) {
@@ -101,17 +99,17 @@ export class ClaimForwarderPoly implements IClaimForwarder {
                 claim: {
                     type: ClaimType.Jurisdiction,
                     code: customer.jurisdiction,
-                    scope: { // TODO Adam?
+                    scope: {
                         type: ScopeType.Identity,
-                        value: customer.polymeshDid
-                    }
+                        value: customer.polymeshDid,
+                    },
                 },
-            }]
+            }],
         })
         await queue.run()
         return {
             status: true,
-            blockHashes: queue.transactions.map(tx => tx.blockHash!)
+            blockHashes: queue.transactions.map(tx => tx.blockHash!),
         }
     }
 
@@ -122,19 +120,22 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         } catch (e) {
             if (e instanceof NoClaimForCustomerError) {
                 // Nothing to revoke, assume ok.
-                return { status: true }
+                return {
+                    status: true,
+                }
             }
             throw e
         }
         const revokeQueue = await this.api.claims.revokeClaims({
-            claims: [claim]
+            claims: [claim],
         })
         await revokeQueue.run()
         // revokeQueue.transactions.map(tx => tx.txHash) // TODO
 
-        // TODO forward the queue so it can be monitored?
 
-        return { status: true }
+        return {
+            status: true,
+        }
     }
 
 }

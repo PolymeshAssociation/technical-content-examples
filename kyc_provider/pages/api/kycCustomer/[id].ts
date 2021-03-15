@@ -4,6 +4,7 @@ import { ICustomerDb, UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 import ClaimForwarderFactory from "../../../src/claimForwarderFactory"
 import { ClaimsAddedResult, IClaimForwarder, NonExistentCustomerPolymeshIdError } from "../../../src/claimForwarder"
+import { TooManyClaimsCustomerError } from "../../../src/claimForwarderPoly"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
     return await (await customerDbFactory()).getCustomerInfoById(<string>req.query.id)
@@ -84,6 +85,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({ status: `invalid Polymesh Did ${e.polymeshDid}` })
         } else if (e instanceof NonExistentCustomerPolymeshIdError) {
             res.status(400).json({ status: `non-existent Polymesh Did ${e.customer.polymeshDid}` })
+        } else if (e instanceof TooManyClaimsCustomerError) {
+            res.status(400).json({ status: `too many claims, ${e.count}, for this customer Polymesh Did ${e.customer.polymeshDid}` })
         } else {
             res.status(500).json({ status: "internal error" })
         }
