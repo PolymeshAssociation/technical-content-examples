@@ -19,10 +19,10 @@ describe("/api/kycProvider Integration Tests", () => {
 
     beforeEach("mock env", async() => {
         toRestore = mockedEnv({
-            "POLY_NODE_URL": nodeUrl,
-            "POLY_ACCOUNT_MNEMONIC": accountMnemonic,
-            "MIDDLEWARE_LINK": middlewareLink,
-            "MIDDLEWARE_KEY": middlewareKey,
+            POLY_NODE_URL: nodeUrl,
+            POLY_ACCOUNT_MNEMONIC: accountMnemonic,
+            MIDDLEWARE_LINK: middlewareLink,
+            MIDDLEWARE_KEY: middlewareKey,
         })
     })
 
@@ -33,12 +33,12 @@ describe("/api/kycProvider Integration Tests", () => {
     describe("GET", () => {
 
         it("returns 200", async () => {
-            const { req, res } = createMocks({ "method": "GET" })
+            const { req, res } = createMocks({ method: "GET" })
 
             await handleKycProvider(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())["did"]).to.match(/^0x[0-9a-fA-F]{64}$/)
+            expect(JSON.parse(res._getData()).did).to.match(/^0x[0-9a-fA-F]{64}$/)
         }).timeout(20000)
 
     })

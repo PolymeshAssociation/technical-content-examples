@@ -11,45 +11,45 @@ export interface IClaimForwarder {
 
 export interface ClaimsAddedResult {
     status: boolean
-    toJSON(): JSON
 }
 
 export interface ClaimsRevokedResult {
     status: boolean
 }
 
-export class ClaimForwarderError {
-    constructor () {
+export class ClaimForwarderError extends Error {
+    constructor (message?: string) {
+        super(message)
         Error.apply(this, arguments)
     }
 }
 
 export class NonExistentKycIdentityError extends ClaimForwarderError {
-    constructor (public address: string) {
-        super()
+    constructor (public address: string, message?: string) {
+        super(message)
     }
 }
 
 export class NoClaimForCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo) {
-        super()
+    constructor (public customer: ICustomerInfo, message?: string) {
+        super(message)
     }
 }
 
 export class InvalidCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo) {
-        super()
+    constructor (public customer: ICustomerInfo, message?: string) {
+        super(message)
     }
 }
 
 export class IncompleteCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo) {
-        super()
+    constructor (public customer: ICustomerInfo, message?: string) {
+        super(message)
     }
 }
 
 export class NonExistentCustomerPolymeshIdError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo) {
-        super()
+    constructor (public customer: ICustomerInfo, message?: string) {
+        super(message)
     }
 }

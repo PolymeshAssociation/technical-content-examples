@@ -1,12 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import ClaimForwarderFactory from "../../src/claimForwarderFactory"
-import { NonExistentKycIdentityError} from "../../src/claimForwarder"
+import { IClaimForwarder, NonExistentKycIdentityError } from "../../src/claimForwarder"
+import { Identity } from "@polymathnetwork/polymesh-sdk/internal"
 
 async function getKycProviderInfo(req: NextApiRequest): Promise<JSON> {
-    const claimForwarder = await ClaimForwarderFactory()
-    const providerDid = await claimForwarder.getServiceProviderIdentity()
+    const claimForwarder: IClaimForwarder = await ClaimForwarderFactory()
+    const providerDid: Identity = await claimForwarder.getServiceProviderIdentity()
     return <JSON><unknown>{
-        "did": providerDid.did
+        did: providerDid.did
     }
 }
 
@@ -19,11 +20,11 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         if (e instanceof NonExistentKycIdentityError) {
-            res.status(500).json({"status": "kyc provider does not exist on this network"})
+            res.status(500).json({ status: "kyc provider does not exist on this network" })
         } else {
-            res.status(500).json({"status": "internal error"})
+            res.status(500).json({ status: "internal error" })
         }
     }
 }

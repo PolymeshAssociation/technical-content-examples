@@ -14,13 +14,13 @@ export default async function(): Promise<IClaimForwarder> {
             nodeUrl
         } }
     } = getConfig() || {
-        "serverRuntimeConfig": { polymesh: {
-            "accountMnemonic": process.env.POLY_ACCOUNT_MNEMONIC,
-            "middlewareLink": process.env.MIDDLEWARE_LINK,
-            "middlewareKey": process.env.MIDDLEWARE_KEY
+        serverRuntimeConfig: { polymesh: {
+            accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
+            middlewareLink: process.env.MIDDLEWARE_LINK,
+            middlewareKey: process.env.MIDDLEWARE_KEY
         } },
-        "publicRuntimeConfig": { polymesh: {
-            "nodeUrl": process.env.POLY_NODE_URL
+        publicRuntimeConfig: { polymesh: {
+            nodeUrl: process.env.POLY_NODE_URL
         } }
     }
     const api = await Polymesh.connect({
