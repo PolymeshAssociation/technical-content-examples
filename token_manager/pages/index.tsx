@@ -17,6 +17,7 @@ export default function Home() {
   const [myInfo, setMyInfo] = useState({
     ticker: "",
     myDid: "",
+    myTickers: [] as string[],
     reservation: {
       fetchTimer: null,
       current: null as TickerReservation,
@@ -115,6 +116,20 @@ export default function Home() {
     const timer: NodeJS.Timeout = setTimeout(todo, 1000)
     where.fetchTimer = timer
     return timer
+  }
+
+  async function loadYourTickers(): Promise<string[]> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: me })
+    const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: me });
+    const myTickers: string[] = [...myTokens, ...myReservations]
+      .map((element: SecurityToken | TickerReservation) => element.ticker)
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      myTickers,
+    }))
+    return myTickers
   }
 
   async function onTickerChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -298,6 +313,16 @@ export default function Home() {
 
           <div>
             <input name="ticker" id="ticker" type="text" placeholder="ACME" value={myInfo.ticker} onChange={onTickerChanged} />
+          </div>
+          <div>
+            <select name="myTickers" defaultValue={myInfo.token.detailsJson.assetType} onChange={onValueChangedCreator([], "ticker")}>
+              <option value="" key="">Select 1</option>
+              {
+                myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)
+              }
+            </select>
+            &nbsp;
+            <button className="submit my-tickers" onClick={loadYourTickers}>Load my tickers</button>
           </div>
           <div className="submit">
             <button className="submit reservation" onClick={reserveTicker} disabled={myInfo.reservation.current !== null}>Reserve</button>
