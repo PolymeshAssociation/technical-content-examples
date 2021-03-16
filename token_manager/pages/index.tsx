@@ -217,10 +217,11 @@ export default function Home() {
   async function createSecurityToken(): Promise<void> {
     await setToken(await (await myInfo.reservation.current?.createToken({
       name: myInfo.token.detailsJson.name,
-      totalSupply: null,
+      totalSupply: new BigNumber("0"),
       isDivisible: myInfo.token.detailsJson.divisible,
       tokenType: KnownTokenType.EquityPreferred,
     })).run())
+    await loadReservation(myInfo.ticker)
   }
 
   async function loadToken(ticker: string): Promise<void> {
@@ -370,10 +371,10 @@ export default function Home() {
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li>Owned by: {myInfo.token.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
-                <li>As asset type {myInfo.token.detailsJson.assetType}</li>
+                <li>As asset type: {myInfo.token.detailsJson.assetType}</li>
                 <li>{myInfo.token.detailsJson.divisible ? "" : "not"} divisible</li>
-                <li>With PIA {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}</li>
-                <li>And total supply of {myInfo.token.detailsJson.totalSupply}</li>
+                <li>With PIA: {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}</li>
+                <li>And total supply of: {myInfo.token.detailsJson.totalSupply}</li>
               </ul>
             })()
           }</div>
