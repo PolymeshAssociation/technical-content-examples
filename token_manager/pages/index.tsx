@@ -46,7 +46,7 @@ export default function Home() {
     fetchTimer: NodeJS.Timeout | null
   }
 
-  function setStatus(content: string) {
+  function setStatus(content: string): void {
     const element = document.getElementById("status") as HTMLElement
     element.innerHTML = content
   }
@@ -110,9 +110,11 @@ export default function Home() {
     return (window || {})["api"]
   }
 
-  function replaceFetchTimer(where: HasFetchTimer, todo: () => void): void {
+  function replaceFetchTimer(where: HasFetchTimer, todo: () => void): NodeJS.Timeout {
     if (where.fetchTimer !== null) clearTimeout(where.fetchTimer)
-    where.fetchTimer = setTimeout(todo, 1000)
+    const timer: NodeJS.Timeout = setTimeout(todo, 1000)
+    where.fetchTimer = timer
+    return timer
   }
 
   async function onTickerChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
@@ -145,25 +147,24 @@ export default function Home() {
   }
 
   function onValueChangedCreator(path: string[], field: string, valueProcessor?: (string) => any) {
-    return function(e): void {
+    return function (e): void {
       let info = myInfo
       path.forEach((pathBit: string) => {
         info = info[pathBit]
       })
-      setMyInfo((prevInfo) => returnUpdated(
-        prevInfo,
-        path,
-        field,
-        valueProcessor ? valueProcessor(e) : e.target.value))
+      const value = valueProcessor ? valueProcessor(e) : e.target.value
+      setMyInfo((prevInfo) => returnUpdated(prevInfo, path, field, value))
     }
   }
 
-  async function reserveTicker(): Promise<void> {
+  async function reserveTicker(): Promise<TickerReservation> {
     const api: Polymesh = await getPolyWalletApi()
-    await setReservation(await (await api.reserveTicker({ ticker: myInfo.ticker })).run())
+    const reservation: TickerReservation = await (await api.reserveTicker({ ticker: myInfo.ticker })).run()
+    await setReservation(reservation)
+    return reservation
   }
 
-  async function loadReservation(ticker: string): Promise<void> {
+  async function loadReservation(ticker: string): Promise<TickerReservation> {
     const api: Polymesh = await getPolyWalletApi()
     let reservation: TickerReservation = null
     try {
@@ -174,6 +175,7 @@ export default function Home() {
       }
     }
     await setReservation(reservation)
+    return reservation
   }
 
   async function setReservation(reservation: TickerReservation | null): Promise<void> {
@@ -214,27 +216,30 @@ export default function Home() {
     alert("Not implemented in the SDK yet")
   }
 
-  async function createSecurityToken(): Promise<void> {
-    await setToken(await (await myInfo.reservation.current?.createToken({
+  async function createSecurityToken(): Promise<SecurityToken> {
+    const token: SecurityToken = await (await myInfo.reservation.current?.createToken({
       name: myInfo.token.detailsJson.name,
       totalSupply: new BigNumber("0"),
       isDivisible: myInfo.token.detailsJson.divisible,
       tokenType: KnownTokenType.EquityPreferred,
-    })).run())
+    })).run()
+    await setToken(token)
     await loadReservation(myInfo.ticker)
+    return token
   }
 
-  async function loadToken(ticker: string): Promise<void> {
+  async function loadToken(ticker: string): Promise<SecurityToken> {
     const api: Polymesh = await getPolyWalletApi()
-    let reservation: SecurityToken = null
+    let token: SecurityToken = null
     try {
-      reservation = await api.getSecurityToken({ ticker })
+      token = await api.getSecurityToken({ ticker })
     } catch (e) {
       if (!(e instanceof PolymeshError)) {
         throw e
       }
     }
-    await setToken(reservation)
+    await setToken(token)
+    return token
   }
 
   async function setToken(token: SecurityToken | null): Promise<void> {
@@ -289,10 +294,10 @@ export default function Home() {
         </h1>
 
         <fieldset className={styles.card}>
-          <legend>Ticker To Manage</legend>
+          <legend>What ticker do you want to manage?</legend>
 
           <div>
-            <input name="ticker" id="ticker" type="text" placeholder="ACME" value={myInfo.ticker} onChange={onTickerChanged}></input>
+            <input name="ticker" id="ticker" type="text" placeholder="ACME" value={myInfo.ticker} onChange={onTickerChanged} />
           </div>
           <div className="submit">
             <button className="submit reservation" onClick={reserveTicker} disabled={myInfo.reservation.current !== null}>Reserve</button>
@@ -305,16 +310,16 @@ export default function Home() {
         </div>
 
         <fieldset className={styles.card}>
-          <legend>Ticker Reservation</legend>
+          <legend>Ticker Reservation: {myInfo.reservation.current?.ticker}</legend>
 
           <div>{
             (() => {
               if (myInfo.reservation.current === null) return "There is no reservation"
               else return <ul>
-                <li>Owned by {myInfo.reservation.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
-                <li>With status {myInfo.reservation.detailsJson.status}</li>
-                <li>Valid until {myInfo.reservation.detailsJson.expiryDate}</li>
-                </ul>
+                <li>Owned by: {myInfo.reservation.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
+                <li>With status: {myInfo.reservation.detailsJson.status}</li>
+                <li>Valid until: {myInfo.reservation.detailsJson.expiryDate}</li>
+              </ul>
             })()
           }</div>
 
@@ -325,24 +330,24 @@ export default function Home() {
                 <div className="submit">
                   <button className="submit transfer-reservation" onClick={transferReservationOwnership} disabled={!canCreate}>Transfer ownership</button>
                 </div>
-                <br/>
+                <br />
                 <div>
                   <label htmlFor="token-name">
                     <span className={styles.hasTitle} title="Long name of your security token">Name</span>
                   </label>
-                  <input name="token-name" type="text" placeholder="American CME" value={myInfo.token.detailsJson.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "name")}/>
+                  <input name="token-name" type="text" placeholder="American CME" value={myInfo.token.detailsJson.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "name")} />
                 </div>
                 <div>
                   <label htmlFor="token-divisible">
                     <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
                   </label>
-                  <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.detailsJson.divisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "divisible", checkboxProcessor)}/>
+                  <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.detailsJson.divisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "divisible", checkboxProcessor)} />
                 </div>
                 <div>
                   <label htmlFor="token-assetType">
                     <span className={styles.hasTitle} title="Pick one from the list or type what you want">Asset Type</span>
                   </label>
-                  <input name="token-assetType" type="text" placeholder="Equity Common" value={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "assetType")}/>
+                  <input name="token-assetType" type="text" placeholder="Equity Common" value={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "assetType")} />
                   &nbsp;
                   <select name="known-assetTypes" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "assetType")}>{
                     (() => {
@@ -364,7 +369,7 @@ export default function Home() {
         </fieldset>
 
         <fieldset className={styles.card}>
-          <legend>Security Token</legend>
+          <legend>Security Token: {myInfo.token.current?.ticker}</legend>
 
           <div>{
             (() => {
