@@ -39,6 +39,7 @@ export default function Home() {
         totalSupply: "null" as string,
         primaryIssuanceAgent: "null" as string,
       },
+      ownershipTarget: "",
     },
   })
   const countryList: CountryInfo[] = getCountryList()
@@ -169,6 +170,12 @@ export default function Home() {
       })
       const value = valueProcessor ? valueProcessor(e) : e.target.value
       setMyInfo((prevInfo) => returnUpdated(prevInfo, path, field, value))
+      if (field === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
+        await Promise.all([
+          loadReservation(value),
+          loadToken(value),
+        ])
+      })
     }
   }
 
@@ -296,6 +303,14 @@ export default function Home() {
     }
   }
 
+  async function transferTokenOwnership(): Promise<void> {
+    const token: SecurityToken = await (await myInfo.token.current.transferOwnership({
+      target: myInfo.token.ownershipTarget,
+    })).run()
+    await setToken(token)
+    await loadYourTickers()
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -406,6 +421,19 @@ export default function Home() {
                 <li>With PIA: {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}</li>
                 <li>And total supply of: {myInfo.token.detailsJson.totalSupply}</li>
               </ul>
+            })()
+          }</div>
+
+          <div>{
+            (() => {
+              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+              return <div>
+                <div className="submit">
+                  <input name="token-ownership-target" type="text" placeholder="0x1234" value={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token"], "ownershipTarget")} />
+                  &nbsp;
+                  <button className="submit transfer-token" onClick={transferTokenOwnership} disabled={!canManipulate}>Transfer ownership</button>
+                </div>
+              </div>
             })()
           }</div>
 
