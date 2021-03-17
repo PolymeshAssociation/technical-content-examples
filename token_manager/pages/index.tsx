@@ -22,6 +22,9 @@ import {
   InvestorUniquenessClaim,
   CddClaim,
   ConditionType,
+  ConditionTarget,
+  ScopeType,
+  CountryCode,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, Keyring, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import { CountryInfo, getCountryList } from "../src/types"
@@ -35,11 +38,11 @@ const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    ticker: "",
-    myDid: "",
+    ticker: "" as string,
+    myDid: "" as string,
     myTickers: [] as string[],
     reservation: {
-      fetchTimer: null,
+      fetchTimer: null as NodeJS.Timeout,
       current: null as TickerReservation,
       details: null as TickerReservationDetails,
       detailsJson: {
@@ -47,7 +50,7 @@ export default function Home() {
         expiryDate: "null" as string,
         status: "null" as string,
       },
-    },
+    } as ReservationInfoJson,
     token: {
       current: null as SecurityToken,
       details: null as SecurityTokenDetails,
@@ -59,14 +62,55 @@ export default function Home() {
         totalSupply: "null" as string,
         primaryIssuanceAgent: "null" as string,
       },
-      ownershipTarget: "",
-    },
+      ownershipTarget: "" as string,
+    } as TokenInfoJson,
     requirements: {
       current: [] as Requirement[],
       arePaused: true as boolean,
-    }
-  })
+      modified: false as boolean,
+    } as RequirementsInfoJson,
+  } as MyInfoJson)
   const countryList: CountryInfo[] = getCountryList()
+
+  type MyInfoJson = {
+    ticker: string,
+    myDid: string,
+    myTickers: string[],
+    reservation: ReservationInfoJson,
+    token: TokenInfoJson,
+    requirements: RequirementsInfoJson,
+  }
+
+  type ReservationInfoJson = {
+    fetchTimer: NodeJS.Timeout,
+    current: TickerReservation,
+    details: TickerReservationDetails,
+    detailsJson: {
+      owner: string,
+      expiryDate: string,
+      status: string,
+    }
+  }
+
+  type TokenInfoJson = {
+    current: SecurityToken,
+    details: SecurityTokenDetails,
+    detailsJson: {
+      name: string,
+      assetType: string,
+      owner: string,
+      divisible: boolean,
+      totalSupply: string,
+      primaryIssuanceAgent: string,
+    },
+    ownershipTarget: string,
+  }
+
+  type RequirementsInfoJson = {
+    current: Requirement[],
+    arePaused: boolean,
+    modified: boolean,
+  }
 
   interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
@@ -166,10 +210,17 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function returnUpdated(previous: object, path: string[], field: string, value: any) {
+  function returnUpdated(previous: object, path: (string | number)[], field: string, value: any) {
     if (path.length == 0) return {
       ...previous,
       [field]: value,
+    }
+    if (typeof path[0] === "number" && Array.isArray(previous)) {
+      return [
+        ...previous.slice(0, path[0]),
+        returnUpdated(previous[path[0]], path.slice(1), field, value),
+        ...previous.slice(path[0] + 1),
+      ]
     }
     return {
       ...previous,
@@ -181,13 +232,13 @@ export default function Home() {
     return e.target.checked
   }
 
-  function onValueChangedCreator(path: string[], field: string, valueProcessor?: (string) => any) {
-    return function (e): void {
+  function onValueChangedCreator(path: (string | number)[], field: string, valueProcessor?: (e) => Promise<any>) {
+    return async function (e): Promise<void> {
       let info = myInfo
       path.forEach((pathBit: string) => {
         info = info[pathBit]
       })
-      const value = valueProcessor ? valueProcessor(e) : e.target.value
+      const value = valueProcessor ? await valueProcessor(e) : e.target.value
       setMyInfo((prevInfo) => returnUpdated(prevInfo, path, field, value))
       if (field === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
         await Promise.all([
@@ -356,7 +407,8 @@ export default function Home() {
           ...prevInfo.requirements,
           current: [],
           arePaused: false,
-        }
+          modified: false,
+        },
       }))
     } else {
       setMyInfo((prevInfo) => ({
@@ -365,102 +417,275 @@ export default function Home() {
           ...prevInfo.requirements,
           current: requirements,
           arePaused,
+          modified: false,
+        },
+      }))
+    }
+  }
+
+  function onRequirementChangedCreator(path: (string | number)[], field: string, valueProcessor?: (e) => Promise<any>) {
+    return async function (e): Promise<void> {
+      await onValueChangedCreator(path, field, valueProcessor)(e)
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        requirements: {
+          ...prevInfo.requirements,
+          modified: true,
         }
       }))
     }
   }
 
-  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer) {
+  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, requirementIndex: number, conditionIndex: number, issuerIndex: number) {
     const trustedFor: string = trustedIssuer.trustedFor?.map((claimType: ClaimType) => claimType)?.join(", ") || "Nothing"
     return <ul>
-      <li>Did: {trustedIssuer.identity.did === myInfo.myDid ? "me" : presentLongHex(trustedIssuer.identity.did)}</li>
-      <li>Trusted for: {trustedFor}</li>
+      <li>Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
+        onChange={onRequirementChangedCreator(
+          getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
+          "identity",
+          async (e) => {
+            const api = await getPolyWalletApi()
+            return api.getIdentity({ did: e.target.value })
+          })}
+      />
+      </li>
+      <li>Trusted for: {trustedFor}
+      </li>
     </ul>
   }
 
-  function presentTrustedClaimIssuers(trustedIssuers?: TrustedClaimIssuer[]) {
-    if (trustedIssuers === null || trustedIssuers.length === 0) return <div>"No trusted issuers"</div>
+  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, requirementIndex: number, conditionIndex: number) {
+    if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0) return <div>No trusted issuers</div>
     return <ul>{
-      trustedIssuers.map(presentTrustedClaimIssuer).map((presented, index: number) => <li>
-        Issuer {index}:{presented}
-      </li>)
+      trustedIssuers
+        .map((trustedIssuer: TrustedClaimIssuer, issuerIndex: number) => presentTrustedClaimIssuer(trustedIssuer, requirementIndex, conditionIndex, issuerIndex))
+        .map((presented, index: number) => <li>
+          Issuer {index}:&nbsp;
+          <button className="submit remove-trusted-claim-issuer" onClick={() => removeTrustedClaimIssuer(requirementIndex, conditionIndex, index)}>Remove {index}</button>
+          {presented}
+        </li>)
     }</ul>
   }
 
-  function presentClaim(claim: Claim) {
-    const elements = [<li>Type: {claim.type}</li>]
+  function removeTrustedClaimIssuer(requirementIndex: number, conditionIndex: number, issuerIndex: number): void {
+    setMyInfo((prevInfo) => {
+      const condition = prevInfo.requirements.current[requirementIndex].conditions[conditionIndex]
+      const updatedIssuers = condition.trustedClaimIssuers ? [
+        ...condition.trustedClaimIssuers.slice(0, issuerIndex),
+        ...condition.trustedClaimIssuers.slice(issuerIndex + 1),
+      ] : []
+      return returnUpdated(
+        prevInfo,
+        getConditionPath(requirementIndex, conditionIndex),
+        "trustedClaimIssuers",
+        updatedIssuers)
+    })
+  }
+
+  function getTrustedIssuerPath(requirementIndex: number, conditionIndex: number, issuerIndex: number): (string | number)[] {
+    return [
+      ...getConditionPath(requirementIndex, conditionIndex),
+      "trustedClaimIssuers",
+      issuerIndex
+    ]
+  }
+
+  function presentClaim(claim: Claim, requirementIndex: number, conditionIndex: number, claimIndex: number | null) {
+    const elements = [
+      <li>Type: &nbsp;<select defaultValue={claim.type} onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "type")}>{
+        (() => {
+          const selects = []
+          for (const claimType in ClaimType) selects.push(<option value={claimType}>{claimType}</option>)
+          return selects
+        })()
+      }</select>
+      </li>
+    ]
     if (isCddClaim(claim)) {
       throw new Error(`Unexpected Cdd claim type: ${claim}`)
-    } else 
-    if (isInvestorUniquenessClaim(claim)) {
-      throw new Error(`Unexpected investor uniqueness claim type: ${claim}`)
-    } else if (isScopedClaim(claim)) {
-      elements.push(<li>Scope type: {claim.scope.type}</li>)
-      elements.push(<li>Scope value: {claim.scope.value}</li>)
-      if (claim.type === ClaimType.Jurisdiction)
-        elements.push(<li>Country code: {claim.code}</li>)
-    } else if (isUnScopedClaim(claim)) {
-      // Nothing else to add
-    } else {
-      throw new Error(`Unknown claim type: ${claim}`)
-    }
+    } else
+      if (isInvestorUniquenessClaim(claim)) {
+        throw new Error(`Unexpected investor uniqueness claim type: ${claim}`)
+      } else if (isScopedClaim(claim)) {
+        elements.push(<li>Scope type: &nbsp;
+          <select defaultValue={claim.scope.type} onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope"], "type")}>{
+            (() => {
+              const selects = []
+              for (const scopeType in ScopeType) selects.push(<option value={scopeType}>{scopeType}</option>)
+              return selects
+            })()
+          }</select>
+        </li>)
+        elements.push(<li>Scope value: <input defaultValue={claim.scope.value} placeholder="ACME"
+          onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope"], "value")}/>
+        </li>)
+        if (claim.type === ClaimType.Jurisdiction)
+          elements.push(<li>Country code: &nbsp;
+            <select defaultValue={claim.code} onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "code")}>{
+              (() => {
+                const selects = []
+                for (const country in CountryCode) selects.push(<option value={country}>{country}</option>)
+                return selects
+              })()
+            }</select>
+          </li>)
+      } else if (isUnScopedClaim(claim)) {
+        // Nothing else to add
+      } else {
+        throw new Error(`Unknown claim type: ${claim}`)
+      }
     return <ul>{elements}</ul>
   }
 
-  function presentClaims(claims?: Claim[]) {
-    if (claims === null || claims.length === 0) return <div>"No claims"</div>
+  function presentClaims(claims: Claim[] | null, requirementIndex: number, conditionIndex: number) {
+    if (typeof claims === "undefined" || claims === null || claims.length === 0) return <div>No claims</div>
     return <ul>{
-      claims.map(presentClaim).map((presented, index: number) => <li>
-        Claim {index}:{presented}
-      </li>)
+      claims
+        .map((claim: Claim, claimIndex: number) => presentClaim(claim, requirementIndex, conditionIndex, claimIndex))
+        .map((presented, index: number) => <li>
+          Claim {index}:{presented}
+        </li>)
     }</ul>
   }
 
-  function presentCondition(condition: Condition) {
+  function getClaimPath(requirementIndex: number, conditionIndex: number, claimIndex: number | null): (string | number)[] {
+    if (claimIndex === null) return [
+        ...getConditionPath(requirementIndex, conditionIndex),
+        "claim",
+      ]
+    return [
+      ...getConditionPath(requirementIndex, conditionIndex),
+      "claims",
+      claimIndex,
+    ]
+  }
+
+  function presentCondition(condition: Condition, requirementIndex: number, conditionIndex: number) {
     const elements = [
-      <li>Target: {condition.target}</li>,
-      <li>Trusted claim issuers: {presentTrustedClaimIssuers(condition.trustedClaimIssuers)}</li>,
+      <li>
+        Target: <select defaultValue={condition.target} onChange={onRequirementChangedCreator(getConditionPath(requirementIndex, conditionIndex), "target")}>{
+          (() => {
+            const selects = []
+            for (const targetType in ConditionTarget) selects.push(<option value={targetType}>{targetType}</option>)
+            return selects
+          })()
+        }</select>
+      </li>,
+      <li>Trusted claim issuers: {presentTrustedClaimIssuers(condition.trustedClaimIssuers, requirementIndex, conditionIndex)}</li>,
+      <li>
+        Type: <select defaultValue={condition.type} onChange={onRequirementChangedCreator(getConditionPath(requirementIndex, conditionIndex), "type")}>{
+          (() => {
+            const selects = []
+            for (const conditionType in ConditionType) selects.push(<option value={conditionType} key={conditionType}>{conditionType}</option>)
+            return selects
+          })()
+        }</select>
+      </li>,
     ]
     if (isSingleClaimCondition(condition)) {
-      elements.push(<li>Type: {condition.type}</li>)
-      elements.push(<li>Claim: {presentClaim(condition.claim)}</li>)
+      elements.push(<li>Claim: {presentClaim(condition.claim, requirementIndex, conditionIndex, null)}</li>)
     } else if (isMultiClaimCondition(condition)) {
-      elements.push(<li>Type: {condition.type}</li>)
-      elements.push(<li>Claims: {presentClaims(condition.claims)}</li>)
+      elements.push(<li>Claims: {presentClaims(condition.claims, requirementIndex, conditionIndex)}</li>)
     } else if (isIdentityCondition(condition)) {
-      elements.push(<li>Type: {condition.type}</li>)
-      elements.push(<li>Identity: {condition.identity.did === myInfo.myDid ? "me" : presentLongHex(condition.identity.did)}</li>)
-    } else if (isPrimaryIssuanceAgentCondition(condition)) {
-      elements.push(<li>Type: {condition.type}</li>)
+      elements.push(<li>
+        Identity: <input defaultValue={condition.identity?.did} placeholder="0x123"
+          onChange={onRequirementChangedCreator(
+            getConditionPath(requirementIndex, conditionIndex),
+            "identity",
+            async (e) => {
+              const api = await getPolyWalletApi()
+              return api.getIdentity({ did: e.target.value })
+            })}
+        />
+      </li>)
+    } else if (isPrimaryIssuanceAgentCondition(condition)) { // Nothing to do
     } else {
       throw new Error(`Unknown condition type: ${condition}`)
     }
     return <ul>{elements}</ul>
   }
 
-  function presentConditions(conditions?: Condition[]) {
-    if (conditions === null || conditions.length === 0) return <div>"No conditions"</div>
+  function presentConditions(conditions: Condition[] | null, requirementIndex: number) {
+    if (conditions === null || conditions.length === 0) return <div>No conditions</div>
     return <ul>{
-      conditions.map(presentCondition).map((presented, index: number) => <li>
-        Condition {index}: {presented}
-      </li>)
+      conditions
+        .map((condition: Condition, conditionIndex: number) => presentCondition(condition, requirementIndex, conditionIndex))
+        .map((presented, index: number) => <li>
+          Condition {index}:&nbsp;
+        <button className="submit remove-condition" onClick={() => removeCondition(requirementIndex, index)}>Remove {index}</button>
+          {presented}
+        </li>)
     }</ul>
   }
 
-  function presentRequirement(requirement: Requirement) {
+  function removeCondition(requirementIndex: number, conditionIndex: number): void {
+    setMyInfo((prevInfo) => {
+      const requirement = prevInfo.requirements.current[requirementIndex]
+      const updatedConditions = [
+        ...requirement.conditions.slice(0, conditionIndex),
+        ...requirement.conditions.slice(conditionIndex + 1)
+      ]
+      return returnUpdated(
+        prevInfo,
+        getRequirementPath(requirementIndex),
+        "conditions",
+        updatedConditions)
+    })
+  }
+
+  function getConditionPath(requirementIndex: number, conditionIndex: number): (string | number)[] {
+    return [
+      ...getRequirementPath(requirementIndex),
+      "conditions",
+      conditionIndex
+    ]
+  }
+
+  function presentRequirement(requirement: Requirement, requirementIndex: number) {
     return <ul>
       <li>Id: {requirement.id}</li>
-      <li>Conditions: {presentConditions(requirement.conditions)}</li>
+      <li>Conditions: {presentConditions(requirement.conditions, requirementIndex)}</li>
     </ul>
   }
 
   function presentRequirements(requirements?: Requirement[]) {
-    if (requirements === null || requirements.length === 0) return <div>"No requirements"</div>
+    if (requirements === null || requirements.length === 0) return <div>No requirements</div>
     return <ul>{
       requirements.map(presentRequirement).map((presented, index: number) => <li>
-        Requirement: {index}: {presented}
+        Requirement {index}:&nbsp;
+        <button className="submit remove-requirement" onClick={() => removeRequirement(index)}>Remove {index}</button>
+        {presented}
       </li>)
     }</ul>
+  }
+
+  function removeRequirement(requirementIndex: number): void {
+    setMyInfo((prevInfo) => {
+      const updatedCurrent = [
+        ...prevInfo.requirements.current.slice(0, requirementIndex),
+        ...prevInfo.requirements.current.slice(requirementIndex + 1),
+      ]
+      return {
+        ...prevInfo,
+        requirements: {
+          ...prevInfo.requirements,
+          current: updatedCurrent,
+          modified: true,
+        },
+      };
+    })
+  }
+
+  function getRequirementPath(requirementIndex: number): (string | number)[] {
+    return ["requirements", "current", requirementIndex]
+  }
+
+  async function saveRequirements(): Promise<SecurityToken> {
+    const updatedToken = await (await myInfo.token.current.compliance.requirements.set({
+      requirements: myInfo.requirements.current.map((requirement: Requirement) => requirement.conditions)
+    })).run()
+    setToken(updatedToken)
+    return updatedToken
   }
 
   async function pauseCompliance(): Promise<SecurityToken> {
@@ -611,6 +836,15 @@ export default function Home() {
 
           <div>{
             (() => {
+              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid && myInfo.requirements.modified
+              return <div className="submit">
+                <button className="submit save-requirements" onClick={saveRequirements} disabled={!canManipulate}>Save requirements</button>
+              </div>
+            })()
+          }</div>
+
+          <div>{
+            (() => {
               const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
               const canPause: boolean = canManipulate && !myInfo.requirements.arePaused
               const canResume: boolean = canManipulate && myInfo.requirements.arePaused
@@ -621,6 +855,7 @@ export default function Home() {
               </div>
             })()
           }</div>
+
         </fieldset>
 
       </main>
