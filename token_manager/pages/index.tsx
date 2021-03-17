@@ -3,15 +3,35 @@ import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
+  ClaimType,
+  Condition,
   CurrentIdentity,
+  IdentityCondition,
+  PrimaryIssuanceAgentCondition,
+  isMultiClaimCondition,
+  isSingleClaimCondition,
   KnownTokenType,
+  Requirement,
   SecurityToken,
   SecurityTokenDetails,
   TickerReservationDetails,
+  TrustedClaimIssuer,
+  Claim,
+  isScopedClaim,
+  UnscopedClaim,
+  InvestorUniquenessClaim,
+  CddClaim,
+  ConditionType,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, Keyring, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import { CountryInfo, getCountryList } from "../src/types"
 import { PolymeshError, TickerReservation } from "@polymathnetwork/polymesh-sdk/internal"
+
+const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
+const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
+const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
+const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
+const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -41,6 +61,10 @@ export default function Home() {
       },
       ownershipTarget: "",
     },
+    requirements: {
+      current: [] as Requirement[],
+      arePaused: true as boolean,
+    }
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -139,12 +163,7 @@ export default function Home() {
       ...prevInfo,
       ticker,
     }))
-    replaceFetchTimer(myInfo.reservation, async () => {
-      await Promise.all([
-        loadReservation(ticker),
-        loadToken(ticker),
-      ])
-    })
+    replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
   function returnUpdated(previous: object, path: string[], field: string, value: any) {
@@ -181,6 +200,7 @@ export default function Home() {
 
   async function reserveTicker(): Promise<TickerReservation> {
     const api: Polymesh = await getPolyWalletApi()
+    setStatus("Reserving ticker")
     const reservation: TickerReservation = await (await api.reserveTicker({ ticker: myInfo.ticker })).run()
     await setReservation(reservation)
     return reservation
@@ -190,6 +210,7 @@ export default function Home() {
     const api: Polymesh = await getPolyWalletApi()
     let reservation: TickerReservation = null
     try {
+      setStatus("Fetching ticker reservation")
       reservation = await api.getTickerReservation({ ticker })
     } catch (e) {
       if (!(e instanceof PolymeshError)) {
@@ -215,6 +236,7 @@ export default function Home() {
           },
         },
       }))
+      setToken(null)
     } else {
       const details: TickerReservationDetails = await reservation.details()
       setMyInfo((prevInfo) => ({
@@ -230,6 +252,7 @@ export default function Home() {
           },
         },
       }))
+      await loadToken(reservation.ticker)
     }
   }
 
@@ -239,6 +262,7 @@ export default function Home() {
   }
 
   async function createSecurityToken(): Promise<SecurityToken> {
+    setStatus("Creating token")
     const token: SecurityToken = await (await myInfo.reservation.current?.createToken({
       name: myInfo.token.detailsJson.name,
       totalSupply: new BigNumber("0"),
@@ -254,6 +278,7 @@ export default function Home() {
     const api: Polymesh = await getPolyWalletApi()
     let token: SecurityToken = null
     try {
+      setStatus("Fetching token")
       token = await api.getSecurityToken({ ticker })
     } catch (e) {
       if (!(e instanceof PolymeshError)) {
@@ -282,6 +307,7 @@ export default function Home() {
           },
         },
       }))
+      setComplianceRequirements(null, null)
     } else {
       const details: SecurityTokenDetails = await token.details()
       setMyInfo((prevInfo) => ({
@@ -300,15 +326,153 @@ export default function Home() {
           },
         },
       }))
+      await loadComplianceRequirements(token)
     }
   }
 
   async function transferTokenOwnership(): Promise<void> {
+    setStatus("Transferring token ownership")
     const token: SecurityToken = await (await myInfo.token.current.transferOwnership({
       target: myInfo.token.ownershipTarget,
     })).run()
+    setStatus("Token ownership transferred")
     await setToken(token)
     await loadYourTickers()
+  }
+
+  async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
+    setStatus("Loading compliance requirements")
+    const requirements: Requirement[] = await token.compliance.requirements.get()
+    const arePaused: boolean = await token.compliance.requirements.arePaused()
+    await setComplianceRequirements(token, requirements, arePaused)
+    return requirements
+  }
+
+  async function setComplianceRequirements(token: SecurityToken | null, requirements: Requirement[] | null, arePaused: boolean) {
+    if (token === null || requirements === null) {
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        requirements: {
+          ...prevInfo.requirements,
+          current: [],
+          arePaused: false,
+        }
+      }))
+    } else {
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        requirements: {
+          ...prevInfo.requirements,
+          current: requirements,
+          arePaused,
+        }
+      }))
+    }
+  }
+
+  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer) {
+    const trustedFor: string = trustedIssuer.trustedFor?.map((claimType: ClaimType) => claimType)?.join(", ") || "Nothing"
+    return <ul>
+      <li>Did: {trustedIssuer.identity.did === myInfo.myDid ? "me" : presentLongHex(trustedIssuer.identity.did)}</li>
+      <li>Trusted for: {trustedFor}</li>
+    </ul>
+  }
+
+  function presentTrustedClaimIssuers(trustedIssuers?: TrustedClaimIssuer[]) {
+    if (trustedIssuers === null || trustedIssuers.length === 0) return <div>"No trusted issuers"</div>
+    return <ul>{
+      trustedIssuers.map(presentTrustedClaimIssuer).map((presented, index: number) => <li>
+        Issuer {index}:{presented}
+      </li>)
+    }</ul>
+  }
+
+  function presentClaim(claim: Claim) {
+    const elements = [<li>Type: {claim.type}</li>]
+    if (isCddClaim(claim)) {
+      throw new Error(`Unexpected Cdd claim type: ${claim}`)
+    } else 
+    if (isInvestorUniquenessClaim(claim)) {
+      throw new Error(`Unexpected investor uniqueness claim type: ${claim}`)
+    } else if (isScopedClaim(claim)) {
+      elements.push(<li>Scope type: {claim.scope.type}</li>)
+      elements.push(<li>Scope value: {claim.scope.value}</li>)
+      if (claim.type === ClaimType.Jurisdiction)
+        elements.push(<li>Country code: {claim.code}</li>)
+    } else if (isUnScopedClaim(claim)) {
+      // Nothing else to add
+    } else {
+      throw new Error(`Unknown claim type: ${claim}`)
+    }
+    return <ul>{elements}</ul>
+  }
+
+  function presentClaims(claims?: Claim[]) {
+    if (claims === null || claims.length === 0) return <div>"No claims"</div>
+    return <ul>{
+      claims.map(presentClaim).map((presented, index: number) => <li>
+        Claim {index}:{presented}
+      </li>)
+    }</ul>
+  }
+
+  function presentCondition(condition: Condition) {
+    const elements = [
+      <li>Target: {condition.target}</li>,
+      <li>Trusted claim issuers: {presentTrustedClaimIssuers(condition.trustedClaimIssuers)}</li>,
+    ]
+    if (isSingleClaimCondition(condition)) {
+      elements.push(<li>Type: {condition.type}</li>)
+      elements.push(<li>Claim: {presentClaim(condition.claim)}</li>)
+    } else if (isMultiClaimCondition(condition)) {
+      elements.push(<li>Type: {condition.type}</li>)
+      elements.push(<li>Claims: {presentClaims(condition.claims)}</li>)
+    } else if (isIdentityCondition(condition)) {
+      elements.push(<li>Type: {condition.type}</li>)
+      elements.push(<li>Identity: {condition.identity.did === myInfo.myDid ? "me" : presentLongHex(condition.identity.did)}</li>)
+    } else if (isPrimaryIssuanceAgentCondition(condition)) {
+      elements.push(<li>Type: {condition.type}</li>)
+    } else {
+      throw new Error(`Unknown condition type: ${condition}`)
+    }
+    return <ul>{elements}</ul>
+  }
+
+  function presentConditions(conditions?: Condition[]) {
+    if (conditions === null || conditions.length === 0) return <div>"No conditions"</div>
+    return <ul>{
+      conditions.map(presentCondition).map((presented, index: number) => <li>
+        Condition {index}: {presented}
+      </li>)
+    }</ul>
+  }
+
+  function presentRequirement(requirement: Requirement) {
+    return <ul>
+      <li>Id: {requirement.id}</li>
+      <li>Conditions: {presentConditions(requirement.conditions)}</li>
+    </ul>
+  }
+
+  function presentRequirements(requirements?: Requirement[]) {
+    if (requirements === null || requirements.length === 0) return <div>"No requirements"</div>
+    return <ul>{
+      requirements.map(presentRequirement).map((presented, index: number) => <li>
+        Requirement: {index}: {presented}
+      </li>)
+    }</ul>
+  }
+
+  async function pauseCompliance(): Promise<SecurityToken> {
+    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.pause()).run()
+    setToken(updatedToken)
+    return updatedToken
+  }
+
+  async function resumeCompliance(): Promise<SecurityToken> {
+    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.unpause()).run()
+    setToken(updatedToken)
+    return updatedToken
   }
 
   return (
@@ -429,6 +593,7 @@ export default function Home() {
               const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
               return <div>
                 <div className="submit">
+                  New owner:&nbsp;
                   <input name="token-ownership-target" type="text" placeholder="0x1234" value={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token"], "ownershipTarget")} />
                   &nbsp;
                   <button className="submit transfer-token" onClick={transferTokenOwnership} disabled={!canManipulate}>Transfer ownership</button>
@@ -437,6 +602,25 @@ export default function Home() {
             })()
           }</div>
 
+        </fieldset>
+
+        <fieldset className={styles.card}>
+          <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
+
+          <div>{presentRequirements(myInfo.requirements.current)}</div>
+
+          <div>{
+            (() => {
+              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+              const canPause: boolean = canManipulate && !myInfo.requirements.arePaused
+              const canResume: boolean = canManipulate && myInfo.requirements.arePaused
+              return <div className="submit">
+                <button className="submit pause-compliance" onClick={pauseCompliance} disabled={!canPause}>Pause compliance</button>
+                &nbsp;
+                <button className="submit resume-compliance" onClick={resumeCompliance} disabled={!canResume}>Resume compliance</button>
+              </div>
+            })()
+          }</div>
         </fieldset>
 
       </main>
