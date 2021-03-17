@@ -210,18 +210,21 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function returnUpdated(previous: object, path: (string | number)[], field: string, value: any) {
+  function returnUpdated(previous: object, path: (string | number)[], field: string | number, value: any) {
+    if (path.length == 0 && typeof field === "number" && Array.isArray(previous)) return [
+        ...previous.slice(0, field),
+        value,
+        ...previous.slice(field + 1),
+      ]
     if (path.length == 0) return {
-      ...previous,
-      [field]: value,
-    }
-    if (typeof path[0] === "number" && Array.isArray(previous)) {
-      return [
+        ...previous,
+        [field]: value,
+      }
+    if (typeof path[0] === "number" && Array.isArray(previous)) return [
         ...previous.slice(0, path[0]),
         returnUpdated(previous[path[0]], path.slice(1), field, value),
         ...previous.slice(path[0] + 1),
       ]
-    }
     return {
       ...previous,
       [path[0]]: returnUpdated(previous[path[0]], path.slice(1), field, value),
@@ -232,7 +235,7 @@ export default function Home() {
     return e.target.checked
   }
 
-  function onValueChangedCreator(path: (string | number)[], field: string, valueProcessor?: (e) => Promise<any>) {
+  function onValueChangedCreator(path: (string | number)[], field: string | number, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       let info = myInfo
       path.forEach((pathBit: string) => {
@@ -423,7 +426,7 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: (string | number)[], field: string, valueProcessor?: (e) => Promise<any>) {
+  function onRequirementChangedCreator(path: (string | number)[], field: string | number, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       await onValueChangedCreator(path, field, valueProcessor)(e)
       setMyInfo((prevInfo) => ({
@@ -437,7 +440,20 @@ export default function Home() {
   }
 
   function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, requirementIndex: number, conditionIndex: number, issuerIndex: number) {
-    const trustedFor: string = trustedIssuer.trustedFor?.map((claimType: ClaimType) => claimType)?.join(", ") || "Nothing"
+    const trustedFor = trustedIssuer.trustedFor
+      ? <ul>{
+        trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li>
+          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "trustedFor"], claimTypeIndex)}>{
+            (() => {
+              const selects = []
+              let trustedForIndex: number = 0
+              for (const claimType in ClaimType) selects.push(<option value={claimType}>{claimType}:&nbsp;</option>)
+              return selects
+            })()
+          }</select>&nbsp;<button className="submit remove-trusted-for" onClick={() => removeTrustedFor(requirementIndex, conditionIndex, issuerIndex, claimTypeIndex)}>Remove {claimTypeIndex}</button>
+        </li>)
+      }</ul>
+      : "Not trusted for anything"
     return <ul>
       <li>Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
         onChange={onRequirementChangedCreator(
@@ -452,6 +468,29 @@ export default function Home() {
       <li>Trusted for: {trustedFor}
       </li>
     </ul>
+  }
+
+  function removeTrustedFor(requirementIndex: number, conditionIndex: number, issuerIndex: number, trustedForIndex: number): void {
+    setMyInfo((prevInfo) => {
+      const trustedIssuer = prevInfo.requirements.current[requirementIndex].conditions[conditionIndex].trustedClaimIssuers[issuerIndex]
+      const updatedTrustedFor = trustedIssuer.trustedFor ? [
+        ...trustedIssuer.trustedFor.slice(0, trustedForIndex),
+        ...trustedIssuer.trustedFor.slice(trustedForIndex + 1),
+      ] : []
+      return returnUpdated(
+        prevInfo,
+        getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
+        "trustedFor",
+        updatedTrustedFor)
+    })
+  }
+
+  function getTrustedForPath(requirementIndex: number, conditionIndex: number, issuerIndex: number, trustedForIndex: number): (string | number)[] {
+    return [
+      ...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
+      "trustedFor",
+      trustedForIndex
+    ]
   }
 
   function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, requirementIndex: number, conditionIndex: number) {
