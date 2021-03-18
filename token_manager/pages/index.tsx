@@ -26,6 +26,8 @@ import {
   ConditionTarget,
   ScopeType,
   CountryCode,
+  ResultSet,
+  ClaimData,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, Keyring, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import { CountryInfo, getCountryList } from "../src/types"
@@ -76,6 +78,9 @@ export default function Home() {
         works: null as boolean | null,
       },
     } as RequirementsInfoJson,
+    attestations: {
+      current: [] as ClaimData<Claim>[],
+    } as AttestationsInfoJSON,
   } as MyInfoJson)
   const countryList: CountryInfo[] = getCountryList()
 
@@ -86,6 +91,7 @@ export default function Home() {
     reservation: ReservationInfoJson,
     token: TokenInfoJson,
     requirements: RequirementsInfoJson,
+    attestations: AttestationsInfoJSON,
   }
 
   type ReservationInfoJson = {
@@ -125,6 +131,10 @@ export default function Home() {
     },
   }
 
+  type AttestationsInfoJSON = {
+    current: ClaimData<Claim>[],
+  }
+
   interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
   }
@@ -153,9 +163,11 @@ export default function Home() {
       web3UseRpcProvider
     } = require('@polkadot/extension-dapp')
 
-    const {
-      publicRuntimeConfig: {
+    const { 
+      publicRuntimeConfig: { 
         appName,
+        // TODO remove middlewareLink and middlewareKey if still undesirable
+        polymesh: { middlewareLink, middlewareKey }
       }
     } = getConfig()
     const polkaDotExtensions = await web3Enable(appName)
@@ -183,6 +195,10 @@ export default function Home() {
       nodeUrl: network.wssUrl,
       keyring: myKeyring,
       signer: polyWallet.signer,
+      middleware: {
+        link: middlewareLink,
+        key: middlewareKey,
+      }
     });
     (window || {})["api"] = api
     const myIdentity: CurrentIdentity = await api.getCurrentIdentity()
@@ -851,6 +867,42 @@ export default function Home() {
     setMyInfo((prevInfo) => returnUpdated(prevInfo, ["requirements", "settleSimulation"], "works", result.complies))
   }
 
+  async function loadAttestations(): Promise<void> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching attestations")
+    await setAttestations(await api.claims.getIssuedClaims({ target: me.did }))
+  }
+
+  async function setAttestations(myClaims: ResultSet<ClaimData<Claim>>): Promise<void> {
+    setMyInfo((prevInfo) => returnUpdated(prevInfo, ["attestations"], "current", myClaims.data))
+  }
+
+  function presentClaimData(claimData: ClaimData<Claim>) {
+    return <ul>
+      <li>Target: {claimData.target.did === myInfo.myDid ? "me" : presentLongHex(claimData.target.did)}</li>
+      <li>Issuer: {claimData.issuer.did === myInfo.myDid ? "me" :presentLongHex(claimData.issuer.did)}</li>
+      <li>Issued at: {claimData.issuedAt.toISOString()}</li>
+      <li>Expiry: {claimData.expiry?.toISOString}</li>
+      <li>Claim: {presentClaim(claimData.claim, null, null, null)}</li>
+    </ul>
+  }
+
+  function presentClaimDatas(claimDatas?: ClaimData<Claim>[]) {
+    if (claimDatas === null || claimDatas.length === 0) return <div>No attestations</div> 
+    return <ul>{
+      claimDatas
+        .map((claimData: ClaimData, index: number) => <li>
+        Attestation {index}:
+        {presentClaimData(claimData)}
+      </li>)
+    }</ul>
+  }
+
+  async function addAttestation() {
+
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -871,7 +923,7 @@ export default function Home() {
           </div>
           <div>
             <select name="myTickers" defaultValue={myInfo.token.detailsJson.assetType} onChange={onValueChangedCreator([], "ticker")}>
-              <option value="" key="Select 1">Select 1</option>
+              <option value="" key="Select 1" disabled={true}>Select 1</option>
               {
                 myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)
               }
@@ -910,7 +962,7 @@ export default function Home() {
                 <div className="submit">
                   <button className="submit transfer-reservation" onClick={transferReservationOwnership} disabled={!canCreate}>Transfer ownership</button>
                 </div>
-                <div  className={styles.card}>
+                <div className={styles.card}>
                   <div>
                     <label htmlFor="token-name">
                       <span className={styles.hasTitle} title="Long name of your security token">Name</span>
@@ -1023,6 +1075,23 @@ export default function Home() {
               <button className="submit simulate-compliance" onClick={simulateCompliance} disabled={myInfo.token.current === null}>Try</button>
             </div>
             <div>Result: {myInfo.requirements.settleSimulation.works === null ? "No info" : myInfo.requirements.settleSimulation.works ? "Aye" : "Nay"}</div>
+          </div>
+
+        </fieldset>
+
+        <fieldset className={styles.card}>
+          <legend>Attestations</legend>
+
+          <div className="submit">
+            <button className="submit load-attestations" onClick={loadAttestations}>Load my attestations</button>
+          </div>
+
+          <div>{
+            presentClaimDatas(myInfo.attestations.current)
+          }</div>
+
+          <div className={styles.card}>
+          <button className="submit add-attestation" onClick={addAttestation}>Add KYC attestation</button>
           </div>
 
         </fieldset>
