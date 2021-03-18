@@ -23,6 +23,7 @@ import {
   ResultSet,
   ClaimData,
   isInvestorUniquenessClaim,
+  Scope,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -143,15 +144,15 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function onValueChangedCreator(path: (string | number)[], field: string | number, valueProcessor?: (e) => Promise<any>) {
+  function onValueChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       let info = myInfo
       path.forEach((pathBit: string) => {
         info = info[pathBit]
       })
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
-      setMyInfo(returnUpdatedCreator(path, field, value))
-      if (field === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
+      setMyInfo(returnUpdatedCreator(path, value))
+      if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
         await Promise.all([
           loadReservation(value),
           loadToken(value),
@@ -225,7 +226,7 @@ export default function Home() {
 
   async function createSecurityToken(): Promise<SecurityToken> {
     setStatus("Creating token")
-    const token: SecurityToken = await (await myInfo.reservation.current?.createToken({
+    const token: SecurityToken = await (await myInfo.reservation.current.createToken({
       name: myInfo.token.detailsJson.name,
       totalSupply: new BigNumber("0"),
       isDivisible: myInfo.token.detailsJson.divisible,
@@ -336,9 +337,9 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: (string | number)[], field: string | number, valueProcessor?: (e) => Promise<any>) {
+  function onRequirementChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
-      await onValueChangedCreator(path, field, valueProcessor)(e)
+      await onValueChangedCreator(path, valueProcessor)(e)
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         requirements: {
@@ -353,7 +354,7 @@ export default function Home() {
     const trustedFor = trustedIssuer.trustedFor
       ? <ul>{
         trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li>
-          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "trustedFor"], claimTypeIndex)} disabled={!myInfo.requirements.canManipulate}>{
+          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "trustedFor", claimTypeIndex])} disabled={!myInfo.requirements.canManipulate}>{
             (() => {
               const selects = []
               for (const claimType in ClaimType) selects.push(<option value={claimType} key={claimType}>{claimType}</option>)
@@ -366,8 +367,7 @@ export default function Home() {
     return <ul>
       <li>Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
         onChange={onRequirementChangedCreator(
-          getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
-          "identity",
+          [...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "identity"],
           async (e) => {
             const api = await getPolyWalletApi()
             return api.getIdentity({ did: e.target.value })
@@ -391,8 +391,7 @@ export default function Home() {
       ]
       return returnUpdated(
         prevInfo,
-        getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
-        "trustedFor",
+        [...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "trustedFor"],
         updatedTrustedFor)
     })
   }
@@ -406,8 +405,7 @@ export default function Home() {
       ] : []
       return returnUpdated(
         prevInfo,
-        getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex),
-        "trustedFor",
+        [...getTrustedIssuerPath(requirementIndex, conditionIndex, issuerIndex), "trustedFor"],
         updatedTrustedFor)
     })
   }
@@ -437,8 +435,7 @@ export default function Home() {
       ]
       return returnUpdated(
         prevInfo,
-        getConditionPath(requirementIndex, conditionIndex),
-        "trustedClaimIssuers",
+        [...getConditionPath(requirementIndex, conditionIndex), "trustedClaimIssuers"],
         updatedIssuers)
     })
   }
@@ -452,8 +449,7 @@ export default function Home() {
       ] : []
       return returnUpdated(
         prevInfo,
-        getConditionPath(requirementIndex, conditionIndex),
-        "trustedClaimIssuers",
+        [...getConditionPath(requirementIndex, conditionIndex), "trustedClaimIssuers"],
         updatedIssuers)
     })
   }
@@ -468,7 +464,7 @@ export default function Home() {
 
   function presentClaim(claim: Claim, requirementIndex: number, conditionIndex: number, claimIndex: number | null) {
     const elements = [
-      <li>Type: &nbsp;<select defaultValue={claim.type} onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "type")} disabled={!myInfo.requirements.canManipulate}>{
+      <li>Type: &nbsp;<select defaultValue={claim.type} onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "type"])} disabled={!myInfo.requirements.canManipulate}>{
         (() => {
           const selects = []
           for (const claimType in ClaimType) selects.push(<option value={claimType} key={claimType}>{claimType}</option>)
@@ -479,12 +475,16 @@ export default function Home() {
     ]
     if (isCddClaim(claim)) {
       elements.push(<li>Id: <input defaultValue={claim.id} placeholder="123"
-        onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "id")} disabled={!myInfo.requirements.canManipulate} />
+        onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "id"])} disabled={!myInfo.requirements.canManipulate} />
       </li>)
     }
     if (isScopedClaim(claim)) {
+      if (typeof claim.scope === "undefined" || claim.scope === null) setMyInfo(returnUpdatedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope"], {
+        type: ScopeType.Custom,
+        value: "",
+      } as Scope))
       elements.push(<li>Scope type: &nbsp;
-        <select defaultValue={claim.scope?.type} onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope"], "type")} disabled={!myInfo.requirements.canManipulate}>{
+        <select defaultValue={claim.scope?.type} onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope", "type"])} disabled={!myInfo.requirements.canManipulate}>{
           (() => {
             const selects = []
             for (const scopeType in ScopeType) selects.push(<option value={scopeType} key={scopeType}>{scopeType}</option>)
@@ -493,20 +493,20 @@ export default function Home() {
         }</select>
       </li>)
       elements.push(<li>Scope value: <input defaultValue={claim.scope?.value} placeholder="ACME"
-        onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope"], "value")} disabled={!myInfo.requirements.canManipulate} />
+        onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scope", "value"])} disabled={!myInfo.requirements.canManipulate} />
       </li>)
     }
     if (isInvestorUniquenessClaim(claim)) {
       elements.push(<li>CDD id: <input defaultValue={claim.cddId} placeholder="123"
-        onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "cddId")} disabled={!myInfo.requirements.canManipulate} />
+        onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "cddId"])} disabled={!myInfo.requirements.canManipulate} />
       </li>)
       elements.push(<li>Scope id: <input defaultValue={claim.scopeId} placeholder="123"
-        onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "scopeId")} disabled={!myInfo.requirements.canManipulate} />
+        onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "scopeId"])} disabled={!myInfo.requirements.canManipulate} />
       </li>)
     }
     if (claim.type === ClaimType.Jurisdiction) {
       elements.push(<li>Country code: &nbsp;
-        <select defaultValue={claim.code} onChange={onRequirementChangedCreator(getClaimPath(requirementIndex, conditionIndex, claimIndex), "code")} disabled={!myInfo.requirements.canManipulate}>{
+        <select defaultValue={claim.code} onChange={onRequirementChangedCreator([...getClaimPath(requirementIndex, conditionIndex, claimIndex), "code"])} disabled={!myInfo.requirements.canManipulate}>{
           (() => {
             const selects = []
             for (const country in CountryCode) selects.push(<option value={country} key={country}>{country}</option>)
@@ -544,7 +544,7 @@ export default function Home() {
   function presentCondition(condition: Condition, requirementIndex: number, conditionIndex: number) {
     const elements = [
       <li>
-        Target: <select defaultValue={condition.target} onChange={onRequirementChangedCreator(getConditionPath(requirementIndex, conditionIndex), "target")} disabled={!myInfo.requirements.canManipulate}>{
+        Target: <select defaultValue={condition.target} onChange={onRequirementChangedCreator([...getConditionPath(requirementIndex, conditionIndex), "target"])} disabled={!myInfo.requirements.canManipulate}>{
           (() => {
             const selects = []
             for (const targetType in ConditionTarget) selects.push(<option value={targetType} key={targetType}>{targetType}</option>)
@@ -557,7 +557,7 @@ export default function Home() {
         {presentTrustedClaimIssuers(condition.trustedClaimIssuers, requirementIndex, conditionIndex)}
       </li>,
       <li>
-        Type: <select defaultValue={condition.type} onChange={onRequirementChangedCreator(getConditionPath(requirementIndex, conditionIndex), "type")} disabled={!myInfo.requirements.canManipulate}>{
+        Type: <select defaultValue={condition.type} onChange={onRequirementChangedCreator([...getConditionPath(requirementIndex, conditionIndex), "type"])} disabled={!myInfo.requirements.canManipulate}>{
           (() => {
             const selects = []
             for (const conditionType in ConditionType) selects.push(<option value={conditionType} key={conditionType}>{conditionType}</option>)
@@ -574,8 +574,7 @@ export default function Home() {
       elements.push(<li>
         Identity: <input defaultValue={condition.identity?.did} placeholder="0x123"
           onChange={onRequirementChangedCreator(
-            getConditionPath(requirementIndex, conditionIndex),
-            "identity",
+            [...getConditionPath(requirementIndex, conditionIndex), "identity"],
             async (e) => {
               const api = await getPolyWalletApi()
               return api.getIdentity({ did: e.target.value })
@@ -618,8 +617,7 @@ export default function Home() {
       ]
       return returnUpdated(
         prevInfo,
-        getRequirementPath(requirementIndex),
-        "conditions",
+        [...getRequirementPath(requirementIndex), "conditions"],
         updatedConditions)
     })
   }
@@ -633,8 +631,7 @@ export default function Home() {
       ]
       return returnUpdated(
         prevInfo,
-        getRequirementPath(requirementIndex),
-        "conditions",
+        [...getRequirementPath(requirementIndex), "conditions"],
         updatedConditions)
     })
   }
@@ -730,12 +727,12 @@ export default function Home() {
   }
 
   async function simulateCompliance(): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation"], "works", null))
+    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], null))
     const result: Compliance = await myInfo.token.current.compliance.requirements.checkSettle({
       from: myInfo.requirements.settleSimulation.sender,
       to: myInfo.requirements.settleSimulation.recipient,
     })
-    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation"], "works", result.complies))
+    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], result.complies))
   }
 
   async function loadAttestations(): Promise<void> {
@@ -746,7 +743,7 @@ export default function Home() {
   }
 
   async function setAttestations(myClaims: ResultSet<ClaimData<Claim>>): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["attestations"], "current", myClaims.data))
+    setMyInfo(returnUpdatedCreator(["attestations", "current"], myClaims.data))
   }
 
   function presentClaimData(claimData: ClaimData<Claim>) {
@@ -793,7 +790,7 @@ export default function Home() {
             <input name="ticker" id="ticker" type="text" placeholder="ACME" defaultValue={myInfo.ticker} onChange={onTickerChanged} />
           </div>
           <div>
-            <select name="myTickers" defaultValue={myInfo.token.detailsJson.assetType} onChange={onValueChangedCreator([], "ticker")}>
+            <select name="myTickers" defaultValue={myInfo.token.detailsJson.assetType} onChange={onValueChangedCreator(["ticker"])}>
               <option value="" key="Select 1" disabled={true}>Select 1</option>
               {
                 myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)
@@ -838,21 +835,21 @@ export default function Home() {
                     <label htmlFor="token-name">
                       <span className={styles.hasTitle} title="Long name of your security token">Name</span>
                     </label>
-                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.detailsJson.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "name")} />
+                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.detailsJson.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "name"])} />
                   </div>
                   <div>
                     <label htmlFor="token-divisible">
                       <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
                     </label>
-                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.detailsJson.divisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "divisible", checkboxProcessor)} />
+                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.detailsJson.divisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "divisible"], checkboxProcessor)} />
                   </div>
                   <div>
                     <label htmlFor="token-assetType">
                       <span className={styles.hasTitle} title="Pick one from the list or type what you want">Asset Type</span>
                     </label>
-                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "assetType")} />
+                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])} />
                     &nbsp;
-                    <select name="known-assetTypes" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson"], "assetType")}>{
+                    <select name="known-assetTypes" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])}>{
                       (() => {
                         const created = []
                         for (const knownType in KnownTokenType) {
@@ -894,7 +891,7 @@ export default function Home() {
               return <div>
                 <div className="submit">
                   New owner:&nbsp;
-                  <input name="token-ownership-target" type="text" placeholder="0x1234" defaultValue={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token"], "ownershipTarget")} />
+                  <input name="token-ownership-target" type="text" placeholder="0x1234" defaultValue={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "ownershipTarget"])} />
                   &nbsp;
                   <button className="submit transfer-token" onClick={transferTokenOwnership} disabled={!canManipulate}>Transfer ownership</button>
                 </div>
@@ -933,14 +930,14 @@ export default function Home() {
           <div className={styles.card}>
             <div>Would this transfer work?</div>
             <div>From:&nbsp;
-              <input defaultValue={myInfo.requirements.settleSimulation.sender} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation"], "sender")} />
+              <input defaultValue={myInfo.requirements.settleSimulation.sender} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "sender"])} />
               &nbsp;
-              <button className="submit pick-me-for-sender" onClick={onValueChangedCreator(["requirements", "settleSimulation"], "sender", getMyDid)}>Pick mine</button>
+              <button className="submit pick-me-for-sender" onClick={onValueChangedCreator(["requirements", "settleSimulation", "sender"], getMyDid)}>Pick mine</button>
             </div>
             <div>To:&nbsp;
-              <input defaultValue={myInfo.requirements.settleSimulation.recipient} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation"], "recipient")} />
+              <input defaultValue={myInfo.requirements.settleSimulation.recipient} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "recipient"])} />
               &nbsp;
-              <button className="submit pick-me-for-recipient" onClick={onValueChangedCreator(["requirements", "settleSimulation"], "recipient", getMyDid)}>Pick mine</button>
+              <button className="submit pick-me-for-recipient" onClick={onValueChangedCreator(["requirements", "settleSimulation", "recipient"], getMyDid)}>Pick mine</button>
             </div>
             <div className="submit">
               <button className="submit simulate-compliance" onClick={simulateCompliance} disabled={myInfo.token.current === null}>Try</button>

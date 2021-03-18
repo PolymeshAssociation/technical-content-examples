@@ -68,27 +68,19 @@ export async function checkboxProcessor(e): Promise<boolean> {
     return Promise.resolve(e.target.checked)
 }
 
-export function returnUpdated(previous: object, path: (string | number)[], field: string | number, value: any) {
-    if (path.length == 0 && typeof field === "number" && Array.isArray(previous)) return [
-        ...previous.slice(0, field),
-        value,
-        ...previous.slice(field + 1),
-    ]
-    if (path.length == 0) return {
-        ...previous,
-        [field]: value,
-    }
+export function returnUpdated(previous: object, path: (string | number)[], value: any) {
+    if (path.length === 0) return value
     if (typeof path[0] === "number" && Array.isArray(previous)) return [
         ...previous.slice(0, path[0]),
-        returnUpdated(previous[path[0]], path.slice(1), field, value),
+        returnUpdated(previous[path[0]], path.slice(1), value),
         ...previous.slice(path[0] + 1),
     ]
     return {
         ...previous,
-        [path[0]]: returnUpdated(previous[path[0]], path.slice(1), field, value),
+        [path[0]]: returnUpdated(previous[path[0]], path.slice(1), value),
     }
 }
 
-export function returnUpdatedCreator(path: (string | number)[], field: string | number, value: any) {
-    return (previous: object) => returnUpdated(previous, path, field, value)
+export function returnUpdatedCreator(path: (string | number)[], value: any) {
+    return (previous: object) => returnUpdated(previous, path, value)
 }
