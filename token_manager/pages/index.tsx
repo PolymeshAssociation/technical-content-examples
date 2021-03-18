@@ -1,5 +1,4 @@
 import Head from "next/head"
-import getConfig from "next/config"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
@@ -7,8 +6,6 @@ import {
   Compliance,
   Condition,
   CurrentIdentity,
-  IdentityCondition,
-  PrimaryIssuanceAgentCondition,
   isMultiClaimCondition,
   isSingleClaimCondition,
   KnownTokenType,
@@ -19,25 +16,35 @@ import {
   TrustedClaimIssuer,
   Claim,
   isScopedClaim,
-  UnscopedClaim,
-  InvestorUniquenessClaim,
-  CddClaim,
   ConditionType,
   ConditionTarget,
   ScopeType,
   CountryCode,
   ResultSet,
   ClaimData,
+  isInvestorUniquenessClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { Polymesh, Keyring, BigNumber } from '@polymathnetwork/polymesh-sdk'
-import { CountryInfo, getCountryList } from "../src/types"
-import { Identity, PolymeshError, TickerReservation } from "@polymathnetwork/polymesh-sdk/internal"
-
-const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
-const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
-const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
-const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
-const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
+import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
+import {
+  AttestationsInfoJSON,
+  CountryInfo,
+  getCountryList,
+  isCddClaim,
+  isIdentityCondition,
+  isPrimaryIssuanceAgentCondition,
+  MyInfoJson,
+  RequirementsInfoJson,
+  ReservationInfoJson,
+  TokenInfoJson,
+} from "../src/types"
+import { PolymeshError, TickerReservation } from "@polymathnetwork/polymesh-sdk/internal"
+import {
+  checkboxProcessor,
+  getBasicPolyWalletApi,
+  replaceFetchTimer,
+  returnUpdated,
+  returnUpdatedCreator,
+} from "../src/ui-helpers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -84,61 +91,6 @@ export default function Home() {
   } as MyInfoJson)
   const countryList: CountryInfo[] = getCountryList()
 
-  type MyInfoJson = {
-    ticker: string,
-    myDid: string,
-    myTickers: string[],
-    reservation: ReservationInfoJson,
-    token: TokenInfoJson,
-    requirements: RequirementsInfoJson,
-    attestations: AttestationsInfoJSON,
-  }
-
-  type ReservationInfoJson = {
-    fetchTimer: NodeJS.Timeout,
-    current: TickerReservation,
-    details: TickerReservationDetails,
-    detailsJson: {
-      owner: string,
-      expiryDate: string,
-      status: string,
-    }
-  }
-
-  type TokenInfoJson = {
-    current: SecurityToken,
-    details: SecurityTokenDetails,
-    detailsJson: {
-      name: string,
-      assetType: string,
-      owner: string,
-      divisible: boolean,
-      totalSupply: string,
-      primaryIssuanceAgent: string,
-    },
-    ownershipTarget: string,
-  }
-
-  type RequirementsInfoJson = {
-    current: Requirement[],
-    arePaused: boolean,
-    canManipulate: boolean,
-    modified: boolean,
-    settleSimulation: {
-      sender: string,
-      recipient: string,
-      works: boolean | null,
-    },
-  }
-
-  type AttestationsInfoJSON = {
-    current: ClaimData<Claim>[],
-  }
-
-  interface HasFetchTimer {
-    fetchTimer: NodeJS.Timeout | null
-  }
-
   function setStatus(content: string): void {
     const element = document.getElementById("status") as HTMLElement
     element.innerHTML = content
@@ -151,62 +103,13 @@ export default function Home() {
   }
 
   async function getPolyWalletApi(): Promise<Polymesh> {
-    setStatus("Getting your Polymesh Wallet")
-    if (typeof (window || {})["api"] !== "undefined") return (window || {})["api"]
-    // Move to top of the file when compilation error no longer present.
-    const {
-      web3Accounts,
-      web3AccountsSubscribe,
-      web3Enable,
-      web3FromAddress,
-      web3ListRpcProviders,
-      web3UseRpcProvider
-    } = require('@polkadot/extension-dapp')
-
-    const { 
-      publicRuntimeConfig: { 
-        appName,
-        // TODO remove middlewareLink and middlewareKey if still undesirable
-        polymesh: { middlewareLink, middlewareKey }
-      }
-    } = getConfig()
-    const polkaDotExtensions = await web3Enable(appName)
-    const polyWallets = polkaDotExtensions.filter(injected => injected.name === "polywallet")
-    if (polyWallets.length == 0) {
-      setStatus("You need to install the Polymesh Wallet extension")
-      throw new Error("No Polymesh Wallet")
-    }
-    const polyWallet = polyWallets[0]
-    setStatus("Verifying network")
-    const network = await polyWallet.network.get()
-    polyWallet.network.subscribe(() => window.location.reload())
-    web3AccountsSubscribe(() => window.location.reload())
-    setStatus("Fetching your account")
-    const myAccounts = await polyWallet.accounts.get()
-    if (myAccounts.length == 0) {
-      setStatus("You need to create an account in the Polymesh Wallet extension")
-      return
-    }
-    const myAccount = myAccounts[0]
-    const myKeyring = new Keyring()
-    myKeyring.addFromAddress(myAccount.address)
-    setStatus("Building your API");
-    const api: Polymesh = await Polymesh.connect({
-      nodeUrl: network.wssUrl,
-      keyring: myKeyring,
-      signer: polyWallet.signer,
-      middleware: {
-        link: middlewareLink,
-        key: middlewareKey,
-      }
-    });
-    (window || {})["api"] = api
+    const api: Polymesh = await getBasicPolyWalletApi(setStatus)
     const myIdentity: CurrentIdentity = await api.getCurrentIdentity()
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       myDid: myIdentity.did
     }))
-    return (window || {})["api"]
+    return api
   }
 
   async function getMyIdentity(): Promise<CurrentIdentity> {
@@ -215,13 +118,6 @@ export default function Home() {
 
   async function getMyDid(): Promise<string> {
     return (await getMyIdentity()).did
-  }
-
-  function replaceFetchTimer(where: HasFetchTimer, todo: () => void): NodeJS.Timeout {
-    if (where.fetchTimer !== null) clearTimeout(where.fetchTimer)
-    const timer: NodeJS.Timeout = setTimeout(todo, 1000)
-    where.fetchTimer = timer
-    return timer
   }
 
   async function loadYourTickers(): Promise<string[]> {
@@ -247,31 +143,6 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function returnUpdated(previous: object, path: (string | number)[], field: string | number, value: any) {
-    if (path.length == 0 && typeof field === "number" && Array.isArray(previous)) return [
-      ...previous.slice(0, field),
-      value,
-      ...previous.slice(field + 1),
-    ]
-    if (path.length == 0) return {
-      ...previous,
-      [field]: value,
-    }
-    if (typeof path[0] === "number" && Array.isArray(previous)) return [
-      ...previous.slice(0, path[0]),
-      returnUpdated(previous[path[0]], path.slice(1), field, value),
-      ...previous.slice(path[0] + 1),
-    ]
-    return {
-      ...previous,
-      [path[0]]: returnUpdated(previous[path[0]], path.slice(1), field, value),
-    }
-  }
-
-  async function checkboxProcessor(e): Promise<boolean> {
-    return Promise.resolve(e.target.checked)
-  }
-
   function onValueChangedCreator(path: (string | number)[], field: string | number, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       let info = myInfo
@@ -279,7 +150,7 @@ export default function Home() {
         info = info[pathBit]
       })
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
-      setMyInfo((prevInfo) => returnUpdated(prevInfo, path, field, value))
+      setMyInfo(returnUpdatedCreator(path, field, value))
       if (field === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
         await Promise.all([
           loadReservation(value),
@@ -859,12 +730,12 @@ export default function Home() {
   }
 
   async function simulateCompliance(): Promise<void> {
-    setMyInfo((prevInfo) => returnUpdated(prevInfo, ["requirements", "settleSimulation"], "works", null))
+    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation"], "works", null))
     const result: Compliance = await myInfo.token.current.compliance.requirements.checkSettle({
       from: myInfo.requirements.settleSimulation.sender,
       to: myInfo.requirements.settleSimulation.recipient,
     })
-    setMyInfo((prevInfo) => returnUpdated(prevInfo, ["requirements", "settleSimulation"], "works", result.complies))
+    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation"], "works", result.complies))
   }
 
   async function loadAttestations(): Promise<void> {
@@ -875,13 +746,13 @@ export default function Home() {
   }
 
   async function setAttestations(myClaims: ResultSet<ClaimData<Claim>>): Promise<void> {
-    setMyInfo((prevInfo) => returnUpdated(prevInfo, ["attestations"], "current", myClaims.data))
+    setMyInfo(returnUpdatedCreator(["attestations"], "current", myClaims.data))
   }
 
   function presentClaimData(claimData: ClaimData<Claim>) {
     return <ul>
       <li>Target: {claimData.target.did === myInfo.myDid ? "me" : presentLongHex(claimData.target.did)}</li>
-      <li>Issuer: {claimData.issuer.did === myInfo.myDid ? "me" :presentLongHex(claimData.issuer.did)}</li>
+      <li>Issuer: {claimData.issuer.did === myInfo.myDid ? "me" : presentLongHex(claimData.issuer.did)}</li>
       <li>Issued at: {claimData.issuedAt.toISOString()}</li>
       <li>Expiry: {claimData.expiry?.toISOString}</li>
       <li>Claim: {presentClaim(claimData.claim, null, null, null)}</li>
@@ -889,13 +760,13 @@ export default function Home() {
   }
 
   function presentClaimDatas(claimDatas?: ClaimData<Claim>[]) {
-    if (claimDatas === null || claimDatas.length === 0) return <div>No attestations</div> 
+    if (claimDatas === null || claimDatas.length === 0) return <div>No attestations</div>
     return <ul>{
       claimDatas
         .map((claimData: ClaimData, index: number) => <li>
-        Attestation {index}:
+          Attestation {index}:
         {presentClaimData(claimData)}
-      </li>)
+        </li>)
     }</ul>
   }
 
@@ -1091,7 +962,7 @@ export default function Home() {
           }</div>
 
           <div className={styles.card}>
-          <button className="submit add-attestation" onClick={addAttestation}>Add KYC attestation</button>
+            <button className="submit add-attestation" onClick={addAttestation}>Add KYC attestation</button>
           </div>
 
         </fieldset>
