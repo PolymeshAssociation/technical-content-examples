@@ -84,3 +84,13 @@ export function returnUpdated(previous: object, path: (string | number)[], value
 export function returnUpdatedCreator(path: (string | number)[], value: any) {
     return (previous: object) => returnUpdated(previous, path, value)
 }
+
+export function valueFinder(where: object, path: (string | number)[]): any {
+    return path.reduce((whereLeft: object, pathBit: string | number) => whereLeft[pathBit], where)
+}
+
+export function presentLongHex(hex: string): string {
+    const first: string = hex.slice(0, 8)
+    const last: string = hex.slice(-6)
+    return `${first}...${last}`
+}

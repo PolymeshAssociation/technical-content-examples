@@ -42,6 +42,7 @@ import { PolymeshError, TickerReservation } from "@polymathnetwork/polymesh-sdk/
 import {
   checkboxProcessor,
   getBasicPolyWalletApi,
+  presentLongHex,
   replaceFetchTimer,
   returnUpdated,
   returnUpdatedCreator,
@@ -97,12 +98,6 @@ export default function Home() {
     element.innerHTML = content
   }
 
-  function presentLongHex(hex: string): string {
-    const first: string = hex.slice(0, 8)
-    const last: string = hex.slice(-6)
-    return `${first}...${last}`
-  }
-
   async function getPolyWalletApi(): Promise<Polymesh> {
     const api: Polymesh = await getBasicPolyWalletApi(setStatus)
     const myIdentity: CurrentIdentity = await api.getCurrentIdentity()
@@ -146,10 +141,6 @@ export default function Home() {
 
   function onValueChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
-      let info = myInfo
-      path.forEach((pathBit: string) => {
-        info = info[pathBit]
-      })
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
       setMyInfo(returnUpdatedCreator(path, value))
       if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
