@@ -3,6 +3,7 @@ import {
     CddClaim,
     Claim,
     ClaimData,
+    ClaimTarget,
     ClaimType,
     Condition,
     ConditionType,
@@ -82,6 +83,12 @@ export type RequirementsInfoJson = {
 
 export type AttestationsInfoJSON = {
     current: ClaimData<Claim>[],
+    otherTarget: string,
+    toAdd: {
+        target: string,
+        expiry: Date | null,
+        claim: Claim,
+    }
 }
 
 export interface HasFetchTimer {
@@ -93,4 +100,5 @@ export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition
 export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
+export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
 
