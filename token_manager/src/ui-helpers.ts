@@ -85,7 +85,7 @@ export function returnUpdatedCreator(path: (string | number)[], value: any) {
     return (previous: object) => returnUpdated(previous, path, value)
 }
 
-export function valueFinder(where: object, path: (string | number)[]): any {
+export function findValue(where: object, path: (string | number)[]): any {
     return path.reduce((whereLeft: object, pathBit: string | number) => whereLeft[pathBit], where)
 }
 
