@@ -73,6 +73,12 @@ export type TokenInfoJson = {
         totalSupply: string,
         primaryIssuanceAgent: string,
     },
+    piaBalance: {
+        locked: string,
+        total: string,
+        toIssue: number,
+        toRedeem: number,
+    },
     ownershipTarget: string,
     piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
 }

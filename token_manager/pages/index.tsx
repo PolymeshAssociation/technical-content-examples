@@ -30,6 +30,7 @@ import {
   Authorization,
   AuthorizationType,
   Permissions,
+  PortfolioBalance,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -47,11 +48,11 @@ import {
   TokenInfoJson,
 } from "../src/types"
 import {
-  Account,
   AddInvestorUniquenessClaimParams,
   AuthorizationRequest,
   DefaultPortfolio,
   Identity,
+  issueTokens,
   ModifyPrimaryIssuanceAgentParams,
   NumberedPortfolio,
   PolymeshError,
@@ -93,6 +94,12 @@ export default function Home() {
         divisible: false as boolean,
         totalSupply: "null" as string,
         primaryIssuanceAgent: "null" as string,
+      },
+      piaBalance: {
+        locked: "" as string,
+        total: "" as string,
+        toIssue: 0 as  number,
+        toRedeem: 0 as  number,
       },
       ownershipTarget: "" as string,
       piaChangeInfo: {
@@ -313,11 +320,19 @@ export default function Home() {
             totalSupply: "null",
             primaryIssuanceAgent: "null",
           },
+          piaBalance: {
+            locked: "",
+            total: "",
+            toIssue: 0,
+            toRedeem: 0,
+          },
         },
       }))
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
+      const defaultPortfolio: DefaultPortfolio = await details.primaryIssuanceAgent.portfolios.getPortfolio()
+      const balance: PortfolioBalance = (await defaultPortfolio.getTokenBalances({ tokens: [token] }))[0]
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         token: {
@@ -331,6 +346,12 @@ export default function Home() {
             divisible: details.isDivisible,
             totalSupply: details.totalSupply.toString(10),
             primaryIssuanceAgent: details.primaryIssuanceAgent.did,
+          },
+          piaBalance: {
+            locked: balance.locked.toString(10),
+            total: balance.total.toString(10),
+            toIssue: 0,
+            toRedeem: 0,
           },
         },
       }))
@@ -350,10 +371,30 @@ export default function Home() {
 
   async function changeTokenPia(): Promise<void> {
     setStatus("Changing token PIA")
-    const queue = await myInfo.token.current.modifyPrimaryIssuanceAgent(myInfo.token.piaChangeInfo)
-    await queue.run()
-    setStatus("PIA changed")
+    await (await myInfo.token.current.modifyPrimaryIssuanceAgent(myInfo.token.piaChangeInfo)).run()
+    setStatus("PIA change queued in authorisations")
     await loadAuthorisations()
+  }
+
+  async function removeTokenPia(): Promise<void> {
+    setStatus("Removing token PIA")
+    await (await myInfo.token.current.removePrimaryIssuanceAgent()).run()
+    setStatus("PIA removed")
+    await loadToken(myInfo.ticker)
+  }
+
+  async function issueTokens(): Promise<void> {
+    setStatus("Issuing tokens")
+    const updatedToken: SecurityToken = await (await myInfo.token.current.issuance.issue({ amount: new BigNumber(myInfo.token.piaBalance.toIssue) })).run()
+    setStatus("Tokens issued")
+    await setToken(updatedToken)
+  }
+
+  async function redeemTokens(): Promise<void> {
+    setStatus("Redeeming tokens")
+    await (await myInfo.token.current.redeem({ amount: new BigNumber(myInfo.token.piaBalance.toRedeem) })).run()
+    setStatus("Tokens redeemed")
+    await loadToken(myInfo.ticker)
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -1056,7 +1097,11 @@ export default function Home() {
                 <li key="owner">Owned by: {myInfo.token.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
                 <li key="assetType">As asset type: {myInfo.token.detailsJson.assetType}</li>
                 <li key="divisible">{myInfo.token.detailsJson.divisible ? "" : "not"} divisible</li>
-                <li key="pia">With PIA: {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}</li>
+                <li key="pia">
+                  With PIA: {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}
+                  &nbsp;
+                  <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={myInfo.token.detailsJson.owner !== myInfo.myDid }>Remove</button>
+                </li>
                 <li key="totalSupply">And total supply of: {myInfo.token.detailsJson.totalSupply}</li>
               </ul>
             })()
@@ -1094,6 +1139,33 @@ export default function Home() {
                   <button className="submit change-token-pia" onClick={changeTokenPia} disabled={!canManipulate}>Change PIA</button>
                   <br/>
                   See lower for the pending authorisation
+                </div>
+              })()
+            }
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Issuance</legend>
+
+            <div>
+              PIA's {myInfo.ticker} default portfolio balance total: {myInfo.token.piaBalance.total}. Locked: {myInfo.token.piaBalance.locked}
+            </div>
+            {
+              (() => {
+                const isPia: boolean = myInfo.token?.detailsJson?.primaryIssuanceAgent === myInfo.myDid
+                const isOwner: boolean = myInfo.token?.detailsJson?.owner === myInfo.myDid
+                const canManipulate: boolean = isPia || isOwner
+                const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
+                return <div className="submit">
+                  Amount to issue&nbsp;
+                  <input name="token-issue-amount" type="number" placeholder="100" defaultValue={myInfo.token.piaBalance.toIssue} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toIssue"])}/>
+                  &nbsp;
+                  <button className="submit issue-pia" onClick={issueTokens} disabled={!canManipulate}>Issue</button>
+                  <br/>
+                  Amount to redeem&nbsp;
+                  <input name="token-redeem-amount" type="number" placeholder="100" defaultValue={myInfo.token.piaBalance.toRedeem} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toRedeem"])}/>
+                  &nbsp;
+                  <button className="submit issue-pia" onClick={redeemTokens} disabled={!canManipulate}>Redeem</button>
                 </div>
               })()
             }
