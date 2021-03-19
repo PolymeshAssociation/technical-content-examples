@@ -18,6 +18,7 @@ import {
     TickerReservationDetails,
     UnscopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
+import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/internal"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -88,7 +89,8 @@ export type AttestationsInfoJSON = {
         target: string,
         expiry: Date | null,
         claim: Claim,
-    }
+    },
+    uniquenessToAdd: AddInvestorUniquenessClaimParams,
 }
 
 export interface HasFetchTimer {

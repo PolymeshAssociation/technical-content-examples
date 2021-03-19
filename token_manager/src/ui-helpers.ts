@@ -53,6 +53,7 @@ export async function getBasicPolyWalletApi(setStatus: (content: string) => void
             key: middlewareKey,
         }
     });
+    (window || {})["polyWallet"] = polyWallet;
     (window || {})["api"] = api
     return (window || {})["api"]
 }

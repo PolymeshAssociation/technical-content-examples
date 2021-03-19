@@ -43,7 +43,11 @@ import {
   ReservationInfoJson,
   TokenInfoJson,
 } from "../src/types"
-import { PolymeshError, TickerReservation } from "@polymathnetwork/polymesh-sdk/internal"
+import {
+  AddInvestorUniquenessClaimParams,
+  PolymeshError,
+  TickerReservation,
+} from "@polymathnetwork/polymesh-sdk/internal"
 import {
   checkboxProcessor,
   findValue,
@@ -53,7 +57,6 @@ import {
   returnUpdated,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
-import { ClaimOperation } from "@polymathnetwork/polymesh-sdk/types/internal"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -104,6 +107,16 @@ export default function Home() {
           type: ClaimType.NoData,
         } as Claim,
       } as ClaimTarget,
+      uniquenessToAdd: {
+        scope: {
+          type: ScopeType.Ticker,
+          value: "" as string,
+        } as Scope,
+        cddId: "" as string,
+        proof: "" as string,
+        scopeId: "" as string,
+        expiry: null as Date | null,
+      } as AddInvestorUniquenessClaimParams,
     } as AttestationsInfoJSON,
   } as MyInfoJson)
   const countryList: CountryInfo[] = getCountryList()
@@ -401,6 +414,28 @@ export default function Home() {
     }</ul>
   }
 
+  function presentScope(scope: Scope, location: (string | number)[], canManipulate: boolean) {
+    if (typeof scope === "undefined" || scope === null) {
+      const defaultScope: Scope = { type: ScopeType.Custom, value: "" }
+      setMyInfo(returnUpdatedCreator([...location], defaultScope as Scope))
+      scope = defaultScope
+    }
+    return <ul>
+      <li key="type">Type: &nbsp;
+        <select defaultValue={scope.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>{
+          (() => {
+            const selects = []
+            for (const scopeType in ScopeType) selects.push(<option value={scopeType} key={scopeType}>{scopeType}</option>)
+            return selects
+          })()
+        }</select>
+      </li>
+      <li key="value">Value: <input defaultValue={scope.value} placeholder="ACME"
+        onChange={onRequirementChangedCreator([...location, "value"])} disabled={!canManipulate} />
+      </li>
+    </ul>
+  }
+
   function presentClaim(claim: Claim, location: (string | number)[], canManipulate: boolean) {
     const elements = [
       <li key="type">Type: &nbsp;<select defaultValue={claim.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>{
@@ -418,21 +453,7 @@ export default function Home() {
       </li>)
     }
     if (isScopedClaim(claim)) {
-      if (typeof claim.scope === "undefined" || claim.scope === null) setMyInfo(returnUpdatedCreator([...location, "scope"], {
-        type: ScopeType.Custom,
-        value: "",
-      } as Scope))
-      elements.push(<li key="scopeType">Scope type: &nbsp;
-        <select defaultValue={claim.scope?.type} onChange={onRequirementChangedCreator([...location, "scope", "type"])} disabled={!canManipulate}>{
-          (() => {
-            const selects = []
-            for (const scopeType in ScopeType) selects.push(<option value={scopeType} key={scopeType}>{scopeType}</option>)
-            return selects
-          })()
-        }</select>
-      </li>)
-      elements.push(<li key="scopeValue">Scope value: <input defaultValue={claim.scope?.value} placeholder="ACME"
-        onChange={onRequirementChangedCreator([...location, "scope", "value"])} disabled={!canManipulate} />
+      elements.push(<li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}
       </li>)
     }
     if (isInvestorUniquenessClaim(claim)) {
@@ -474,6 +495,20 @@ export default function Home() {
         .map((claim: Claim, claimIndex: number) => presentClaim(claim, [...location, claimIndex], canManipulate))
         .map((presented, claimIndex: number) => <li key={claimIndex}>Claim {claimIndex}:{presented}</li>)
     }</ul>
+  }
+
+  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: (string | number)[], canManipulate: boolean) {
+    return <ul>
+      <li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>
+      <li key="cddId">CDD id:
+        <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />
+        &nbsp;
+        <button className="submit load-cdd-id" onClick={() => fetchMyCddId([...location, "cddId"])} disabled={!canManipulate}>Load it</button>
+      </li>
+      <li key="proof">Proof:&nbsp;<input defaultValue={claim.proof} placeholder="123" disabled={true} /></li>
+      <li key="scopeId">Scope id:&nbsp;<input defaultValue={claim.scopeId} placeholder="123" disabled={true} /></li>
+      <li key="expiry">Expiry:&nbsp;<input defaultValue={claim.expiry?.toISOString()} placeholder="2020-12-31" disabled={!canManipulate} /></li>
+    </ul>
   }
 
   function presentCondition(condition: Condition, location: (string | number)[], canManipulate: boolean) {
@@ -642,7 +677,11 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["attestations", "current"], myClaims))
   }
 
-  // Assumes the location is that of a Claim attached to a ClaimData
+  async function fetchMyCddId(location: (string | number)[]): Promise<void> {
+    const api: Polymesh = await getPolyWalletApi()
+    return fetchCddId(location, await api.getCurrentIdentity())
+  }
+
   async function fetchCddId(location: (string | number)[], target: string | Identity): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
     const targetDid: string = typeof target === "string" ? target : target.did
@@ -652,9 +691,7 @@ export default function Home() {
       target: target,
       includeExpired: false,
     }))
-    console.log(claims)
     if (claims.length === 0) throw new Error(`No CDD claims attached to ${targetDid}`)
-    console.log(target, location, (claims[0].claim as CddClaim).id)
     setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
   }
 
@@ -744,6 +781,31 @@ export default function Home() {
     setStatus("Adding attestation")
     await (await api.claims.addClaims({ claims: [toAdd] })).run()
     setStatus("Attestation added")
+  }
+
+  async function addUniquenessAttestation(location: (string | number)[]) {
+    const toAdd: AddInvestorUniquenessClaimParams = Object.assign({}, findValue(myInfo, location))
+    const api: Polymesh = await getPolyWalletApi()
+    const currentIdentity: CurrentIdentity = await api.getCurrentIdentity()
+    const polyWallet = (window || {})["polyWallet"]
+    const network = await polyWallet.network.get()
+    const crypto = await import('@polymathnetwork/confidential-identity')
+    const data = await polyWallet.uid.requestProof({ ticker: toAdd.scope.value })
+      .catch((e) => {
+        if (e.message !== "Uid not found") throw e
+        const mockedUid: string = crypto.create_mocked_investor_uid(currentIdentity.did)
+        return polyWallet.uid.provide({
+          uid: mockedUid,
+          did: currentIdentity.did,
+          network: network.name,
+        })
+      })
+      .then(() => polyWallet.uid.requestProof({ ticker: toAdd.scope.value }))
+    toAdd.proof = data.proof
+    toAdd.scopeId = data.scope_id
+    setMyInfo(returnUpdatedCreator([...location, "proof"], data.proof))
+    setMyInfo(returnUpdatedCreator([...location, "scopeId"], data.scope_id))
+    await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
   return (
@@ -945,6 +1007,17 @@ export default function Home() {
             }</div>
             <div className="submit">
               <button className="submit add-attestation" onClick={() => addAttestation(["attestations", "toAdd"])}>Add KYC attestation</button>
+            </div>
+            <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware needs to be updated</div>
+          </div>
+
+          <div className={styles.card}>
+            <div>Investor uniqueness to add to yourself:</div>
+            <div>{
+              presentAddInvestorUniquenessClaimParams(myInfo.attestations.uniquenessToAdd, ["attestations", "uniquenessToAdd"], true)
+            }</div>
+            <div className="submit">
+              <button className="submit add-unique-attestation" onClick={() => addUniquenessAttestation(["attestations", "uniquenessToAdd"])}>Add uniqueness attestation</button>
             </div>
             <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware needs to be updated</div>
           </div>
