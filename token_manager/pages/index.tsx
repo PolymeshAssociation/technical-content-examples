@@ -1011,11 +1011,21 @@ export default function Home() {
     const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
     portfolios[0].getCustodian()
     setStatus(`Portfolios of ${presentLongHex(whose)} retrieved`)
-    await setMyPortfolios(portfolios)
+    await setPortfolios(portfolios)
     return portfolios
   }
 
-  async function setMyPortfolios(portfolios: [DefaultPortfolio, ...NumberedPortfolio[]]): Promise<void> {
+  async function loadMyCustodiedPortfolios(): Promise<(DefaultPortfolio | NumberedPortfolio)[]> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Loading my custodied portfolios")
+    const result: ResultSet<DefaultPortfolio | NumberedPortfolio> = await me.portfolios.getCustodiedPortfolios()
+    setStatus("My custodied portfolios loaded")
+    await setPortfolios(result.data)
+    return result.data
+  }
+
+  async function setPortfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[]): Promise<void> {
     const portfolioInfos: PortfolioInfoJson[] = await Promise.all(portfolios
       .map((portfolio: DefaultPortfolio | NumberedPortfolio) => portfolio.getCustodian()
         .then((custodian: Identity) => ({
@@ -1355,10 +1365,12 @@ export default function Home() {
         </fieldset>
 
         <fieldset className={styles.card}>
-          <legend>My portfolios</legend>
+          <legend>Portfolios</legend>
 
           <div className="submit">
             <button className="submit load-my-portfolios" onClick={loadMyPortfolios}>Load my portfolios</button>
+            &nbsp;
+            <button className="submit load-my-custodied-portfolios" onClick={loadMyCustodiedPortfolios}>Load my custodied portfolios</button>
             <br/>
             <button className="submit load-portfolios" onClick={loadOtherPortfolios}>Load portfolios of</button>
             &nbsp;
@@ -1367,7 +1379,7 @@ export default function Home() {
 
           {presentPorfoliosJson(myInfo.portfolios.details, ["portfolios", "details"], true)}
 
-          <div>See above for the pending authorisation</div>
+          <div>See in the authorisations box above<br/>for the pending custody authorisation</div>
         </fieldset>
 
         <fieldset className={styles.card}>
