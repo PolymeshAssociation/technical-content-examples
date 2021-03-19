@@ -43,6 +43,7 @@ import {
   isIdentityCondition,
   isPrimaryIssuanceAgentCondition,
   MyInfoJson,
+  PortfolioInfoJson,
   RequirementsInfoJson,
   ReservationInfoJson,
   TokenInfoJson,
@@ -52,7 +53,6 @@ import {
   AuthorizationRequest,
   DefaultPortfolio,
   Identity,
-  issueTokens,
   ModifyPrimaryIssuanceAgentParams,
   NumberedPortfolio,
   PolymeshError,
@@ -142,6 +142,11 @@ export default function Home() {
         expiry: null as Date | null,
       } as AddInvestorUniquenessClaimParams,
     } as AttestationsInfoJSON,
+    portfolios: {
+      current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
+      otherOwner: "" as string,
+      details: [] as PortfolioInfoJson[],
+    },
     capitalDistributions: {
       current: [],
       toAdd: {
@@ -391,7 +396,7 @@ export default function Home() {
   }
 
   async function redeemTokens(): Promise<void> {
-    setStatus("Redeeming tokens")
+    setStatus(`Redeeming ${myInfo.token.piaBalance.toRedeem} ${myInfo.token.current.ticker} tokens`)
     await (await myInfo.token.current.redeem({ amount: new BigNumber(myInfo.token.piaBalance.toRedeem) })).run()
     setStatus("Tokens redeemed")
     await loadToken(myInfo.ticker)
@@ -761,13 +766,13 @@ export default function Home() {
 
   function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: (string | number)[]) {
     return <ul>
-      <li key="owner">Owner:&nbsp;{portfolio.owner.did}</li>
-      <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id : "null"}</li>
+      <li key="owner">Owner:&nbsp;{portfolio.owner.did === myInfo.myDid ? "me" : presentLongHex(portfolio.owner.did)}</li>
+      <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null"}</li>
     </ul>
   }
 
   function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: (string | number)[]) {
-    if (portfolios === null) return "null"
+    if (portfolios === null) return "There are no portfolios"
     return <ul>{
       portfolios
         .map((portfolio: DefaultPortfolio | NumberedPortfolio, portfolioIndex: number) => presentPorfolio(portfolio, [...location, portfolioIndex]))
@@ -989,6 +994,83 @@ export default function Home() {
     await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
+  async function loadMyPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    return await loadPortfolios(me.did)
+  }
+
+  async function loadOtherPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
+    return await loadPortfolios(myInfo.portfolios.otherOwner)
+  }
+
+  async function loadPortfolios(whose: string): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
+    const api: Polymesh = await getPolyWalletApi()
+    const who: Identity = api.getIdentity({ did: whose })
+    setStatus(`Loading portfolios of ${presentLongHex(whose)}`)
+    const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
+    portfolios[0].getCustodian()
+    setStatus(`Portfolios of ${presentLongHex(whose)} retrieved`)
+    await setMyPortfolios(portfolios)
+    return portfolios
+  }
+
+  async function setMyPortfolios(portfolios: [DefaultPortfolio, ...NumberedPortfolio[]]): Promise<void> {
+    const portfolioInfos: PortfolioInfoJson[] = await Promise.all(portfolios
+      .map((portfolio: DefaultPortfolio | NumberedPortfolio) => portfolio.getCustodian()
+        .then((custodian: Identity) => ({
+          original: portfolio,
+          owner: portfolio.owner.did,
+          id: portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null",
+          custodian: custodian.did,
+        }))))
+    setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
+  }
+
+  async function setCustodian(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void>{
+    setStatus("Setting custodian")
+    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.custodian })).run()
+    setStatus("Custodian set")
+    await loadMyPortfolios()
+  }
+
+  async function relinquishCustody(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void>{
+    setStatus("Relinquishing custody")
+    console.log(portfolio)
+    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.owner })).run()
+    setStatus("Custody relinquished")
+    await loadPortfolios(portfolio.owner)
+  }
+
+  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: (string | number)[], canManipulate: boolean) {
+    const isCustodied: boolean = portfolio.owner !== portfolio.custodian
+    const isMine: boolean = portfolio.owner === myInfo.myDid
+    const canSetCustody: boolean = canManipulate && isMine && !isCustodied
+    const canRelinquish: boolean = canManipulate && isCustodied
+    return <ul>
+      <li key="owner">Owner:&nbsp;{portfolio.owner === myInfo.myDid ? "me" : presentLongHex(portfolio.owner)}</li>
+      <li key="id">Id:&nbsp;{portfolio.id}</li>
+      <li key="custodian">Custodian:&nbsp;
+        <input defaultValue={portfolio.custodian} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "custodian"])} disabled={!canSetCustody}/>
+        &nbsp;
+        <button className="submit set-custodian" onClick={() => setCustodian(portfolio, location)} disabled={!canSetCustody}>Set</button>
+        &nbsp;
+        <button className="submit unset-custodian" onClick={() => relinquishCustody(portfolio, location)} disabled={!canRelinquish}>Unset</button>
+      </li>
+    </ul>
+  }
+
+  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean) {
+    if (portfolios === null) return "There are no portfolios"
+    return <ul>{
+      portfolios
+        .map((portfolio: PortfolioInfoJson, portfolioIndex: number) => presentPorfolioJson(portfolio, [...location, portfolioIndex], canManipulate))
+        .map((presented, portfolioIndex: number) => <li key={portfolioIndex}>
+          Portfolio {portfolioIndex}:&nbsp;{presented}
+        </li>)
+    }</ul>
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -1092,15 +1174,17 @@ export default function Home() {
 
           <div>{
             (() => {
+              const owner: string = myInfo.token.detailsJson.owner
+              const pia: string = myInfo.token.detailsJson.primaryIssuanceAgent
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
-                <li key="owner">Owned by: {myInfo.token.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
+                <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
                 <li key="assetType">As asset type: {myInfo.token.detailsJson.assetType}</li>
                 <li key="divisible">{myInfo.token.detailsJson.divisible ? "" : "not"} divisible</li>
                 <li key="pia">
-                  With PIA: {myInfo.token.detailsJson.primaryIssuanceAgent === myInfo.myDid ? "me" : presentLongHex(myInfo.token.detailsJson.primaryIssuanceAgent)}
+                  With PIA: {pia === myInfo.myDid ? "me" : presentLongHex(pia)}
                   &nbsp;
-                  <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={myInfo.token.detailsJson.owner !== myInfo.myDid }>Remove</button>
+                  <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={owner !== myInfo.myDid || owner === pia}>Remove</button>
                 </li>
                 <li key="totalSupply">And total supply of: {myInfo.token.detailsJson.totalSupply}</li>
               </ul>
@@ -1145,7 +1229,7 @@ export default function Home() {
           </fieldset>
 
           <fieldset className={styles.card}>
-            <legend>Issuance</legend>
+            <legend>Issuance - Redemption</legend>
 
             <div>
               PIA's {myInfo.ticker} default portfolio balance total: {myInfo.token.piaBalance.total}. Locked: {myInfo.token.piaBalance.locked}
@@ -1158,12 +1242,12 @@ export default function Home() {
                 const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
                 return <div className="submit">
                   Amount to issue&nbsp;
-                  <input name="token-issue-amount" type="number" placeholder="100" defaultValue={myInfo.token.piaBalance.toIssue} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toIssue"])}/>
+                  <input name="token-issue-amount" type="string" placeholder="100" defaultValue={myInfo.token.piaBalance.toIssue} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toIssue"])}/>
                   &nbsp;
                   <button className="submit issue-pia" onClick={issueTokens} disabled={!canManipulate}>Issue</button>
                   <br/>
                   Amount to redeem&nbsp;
-                  <input name="token-redeem-amount" type="number" placeholder="100" defaultValue={myInfo.token.piaBalance.toRedeem} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toRedeem"])}/>
+                  <input name="token-redeem-amount" type="string" placeholder="100" defaultValue={myInfo.token.piaBalance.toRedeem} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toRedeem"])}/>
                   &nbsp;
                   <button className="submit issue-pia" onClick={redeemTokens} disabled={!canManipulate}>Redeem</button>
                 </div>
@@ -1268,6 +1352,22 @@ export default function Home() {
             <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware needs to be updated</div>
           </div>
 
+        </fieldset>
+
+        <fieldset className={styles.card}>
+          <legend>My portfolios</legend>
+
+          <div className="submit">
+            <button className="submit load-my-portfolios" onClick={loadMyPortfolios}>Load my portfolios</button>
+            <br/>
+            <button className="submit load-portfolios" onClick={loadOtherPortfolios}>Load portfolios of</button>
+            &nbsp;
+            <input defaultValue={myInfo.portfolios.otherOwner} placeholder="0x123" onChange={onRequirementChangedCreator(["portfolios", "otherOwner"])}/>
+          </div>
+
+          {presentPorfoliosJson(myInfo.portfolios.details, ["portfolios", "details"], true)}
+
+          <div>See above for the pending authorisation</div>
         </fieldset>
 
         <fieldset className={styles.card}>

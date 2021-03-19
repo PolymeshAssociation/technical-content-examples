@@ -8,8 +8,10 @@ import {
     Condition,
     ConditionType,
     CountryCode,
+    DefaultPortfolio,
     IdentityCondition,
     InvestorUniquenessClaim,
+    NumberedPortfolio,
     PrimaryIssuanceAgentCondition,
     Requirement,
     SecurityToken,
@@ -48,6 +50,7 @@ export type MyInfoJson = {
     token: TokenInfoJson,
     requirements: RequirementsInfoJson,
     authorisations: AuthorisationInfoJson,
+    portfolios: PortfoliosInfoJson,
     attestations: AttestationsInfoJSON,
 }
 
@@ -108,6 +111,19 @@ export type AttestationsInfoJSON = {
         claim: Claim,
     },
     uniquenessToAdd: AddInvestorUniquenessClaimParams,
+}
+
+export type PortfoliosInfoJson = {
+    current: [DefaultPortfolio, ...NumberedPortfolio[]] | null,
+    otherOwner: string,
+    details: PortfolioInfoJson[],
+}
+
+export type PortfolioInfoJson = {
+    original: DefaultPortfolio |NumberedPortfolio,
+    owner: string,
+    id: string | null,
+    custodian: string,
 }
 
 export interface HasFetchTimer {
