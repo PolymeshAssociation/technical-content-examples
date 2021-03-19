@@ -18,7 +18,11 @@ import {
     TickerReservationDetails,
     UnscopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/internal"
+import {
+    AddInvestorUniquenessClaimParams,
+    AuthorizationRequest,
+    ModifyPrimaryIssuanceAgentParams,
+} from "@polymathnetwork/polymesh-sdk/internal"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -38,10 +42,12 @@ export function getCountryList(): CountryInfo[] {
 export type MyInfoJson = {
     ticker: string,
     myDid: string,
+    myAddress: string,
     myTickers: string[],
     reservation: ReservationInfoJson,
     token: TokenInfoJson,
     requirements: RequirementsInfoJson,
+    authorisations: AuthorisationInfoJson,
     attestations: AttestationsInfoJSON,
 }
 
@@ -68,6 +74,7 @@ export type TokenInfoJson = {
         primaryIssuanceAgent: string,
     },
     ownershipTarget: string,
+    piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
 }
 
 export type RequirementsInfoJson = {
@@ -80,6 +87,10 @@ export type RequirementsInfoJson = {
         recipient: string,
         works: boolean | null,
     },
+}
+
+export type AuthorisationInfoJson = {
+    current: AuthorizationRequest[],
 }
 
 export type AttestationsInfoJSON = {

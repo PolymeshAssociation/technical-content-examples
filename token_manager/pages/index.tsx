@@ -26,12 +26,15 @@ import {
   Scope,
   ClaimTarget,
   IdentityWithClaims,
-  Identity,
   CddClaim,
+  Authorization,
+  AuthorizationType,
+  Permissions,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
   AttestationsInfoJSON,
+  AuthorisationInfoJson,
   CountryInfo,
   getCountryList,
   isCddClaim,
@@ -44,7 +47,13 @@ import {
   TokenInfoJson,
 } from "../src/types"
 import {
+  Account,
   AddInvestorUniquenessClaimParams,
+  AuthorizationRequest,
+  DefaultPortfolio,
+  Identity,
+  ModifyPrimaryIssuanceAgentParams,
+  NumberedPortfolio,
   PolymeshError,
   TickerReservation,
 } from "@polymathnetwork/polymesh-sdk/internal"
@@ -62,6 +71,7 @@ export default function Home() {
   const [myInfo, setMyInfo] = useState({
     ticker: "" as string,
     myDid: "" as string,
+    myAddress: "" as string,
     myTickers: [] as string[],
     reservation: {
       fetchTimer: null as NodeJS.Timeout,
@@ -85,6 +95,10 @@ export default function Home() {
         primaryIssuanceAgent: "null" as string,
       },
       ownershipTarget: "" as string,
+      piaChangeInfo: {
+        target: "" as string | Identity,
+        requestExpiry: null as Date | null,
+      } as ModifyPrimaryIssuanceAgentParams,
     } as TokenInfoJson,
     requirements: {
       current: [] as Requirement[],
@@ -97,6 +111,9 @@ export default function Home() {
         works: null as boolean | null,
       },
     } as RequirementsInfoJson,
+    authorisations: {
+      current:[] as AuthorizationRequest[],
+    } as AuthorisationInfoJson,
     attestations: {
       current: [] as ClaimData<Claim>[],
       otherTarget: "" as string,
@@ -118,6 +135,15 @@ export default function Home() {
         expiry: null as Date | null,
       } as AddInvestorUniquenessClaimParams,
     } as AttestationsInfoJSON,
+    capitalDistributions: {
+      current: [],
+      toAdd: {
+        kind: "" as string,
+        issuedAt: null as Date | null,
+        checkpointId: "" as string,
+        details: "" as string,
+      },
+    }
   } as MyInfoJson)
   const countryList: CountryInfo[] = getCountryList()
 
@@ -320,6 +346,14 @@ export default function Home() {
     setStatus("Token ownership transferred")
     await setToken(token)
     await loadYourTickers()
+  }
+
+  async function changeTokenPia(): Promise<void> {
+    setStatus("Changing token PIA")
+    const queue = await myInfo.token.current.modifyPrimaryIssuanceAgent(myInfo.token.piaChangeInfo)
+    await queue.run()
+    setStatus("PIA changed")
+    await loadAuthorisations()
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -656,6 +690,112 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], result.complies))
   }
 
+  async function loadAuthorisations() {
+    const api: Polymesh = await getPolyWalletApi();
+    setMyInfo(returnUpdatedCreator(["myAddress"], api.getAccount()))
+    setMyInfo(returnUpdatedCreator(["myDid"], (await api.getCurrentIdentity()).did))
+    const authorisations: AuthorizationRequest[] = [
+      ...(await (await api.getCurrentIdentity()).authorizations.getSent()).data,
+      ...await (await api.getCurrentIdentity()).authorizations.getReceived(),
+    ]
+    await setAuthorisations(authorisations)
+  }
+
+  async function setAuthorisations(authorisations: AuthorizationRequest[]): Promise<void> {
+    setMyInfo(returnUpdatedCreator(["authorisations", "current"], authorisations))
+  }
+
+  function presentPermissions(permissions: Permissions, location: (string | number)[]) {
+    return <ul>
+      <li key="portfolios">Portfolios:&nbsp;{presentPorfolios(permissions.portfolios, [...location, "portfolios"])}</li>
+      <li key="tokens">Tokens:&nbsp;{
+        permissions.tokens === null ? "null" : permissions.tokens
+          .map((token: SecurityToken) => token.ticker)
+          .join(", ")
+      }</li>
+      <li key="transactionGroups">Transaction groups:&nbsp;{permissions.transactionGroups === null ? "null" : permissions.transactionGroups.join(", ")}</li>
+      <li key="transactions">Transactions:&nbsp;{permissions.transactions === null ? "null" : permissions.transactions.join(", ")}</li>
+    </ul>
+  }
+
+  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: (string | number)[]) {
+    return <ul>
+      <li key="owner">Owner:&nbsp;{portfolio.owner.did}</li>
+      <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id : "null"}</li>
+    </ul>
+  }
+
+  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: (string | number)[]) {
+    if (portfolios === null) return "null"
+    return <ul>{
+      portfolios
+        .map((portfolio: DefaultPortfolio | NumberedPortfolio, portfolioIndex: number) => presentPorfolio(portfolio, [...location, portfolioIndex]))
+        .map((presented, portfolioIndex: number) => <li key={portfolioIndex}>
+          Portfolio {portfolioIndex}:&nbsp;{presented}
+        </li>)
+    }</ul>
+  }
+
+  function presentAuthorisation(authorisation: Authorization, location: (string | number)[]) {
+    const elements = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
+    if (authorisation.type === AuthorizationType.NoData) { // Add nothing
+    } else if (authorisation.type === AuthorizationType.PortfolioCustody) {
+      elements.push(<li key="value">Value:&nbsp;{presentPorfolio(authorisation.value, [...location, "value"])}</li>)
+    } else if (authorisation.type === AuthorizationType.JoinIdentity) {
+      elements.push(<li key="value">Value:{presentPermissions(authorisation.value, [...location, "value"])}</li>)
+    } else {
+      elements.push(<li key="value">Value:&nbsp;{authorisation.value}</li>)
+    }
+    return <ul>{elements}</ul>
+  }
+
+  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: (string | number)[]) {
+    const amIssuer: boolean = authorisationRequest.issuer.did === myInfo.myDid
+    const target: string = authorisationRequest.target instanceof Identity ? authorisationRequest.target.did : authorisationRequest.target.address
+    const amTarget: boolean = target === myInfo.myDid || target === myInfo.myAddress
+    return <ul>
+      <li key="id">
+        AuthId: {authorisationRequest.authId.toString(10)}
+        &nbsp;
+        <button className="submit accept-auth-request" onClick={() => acceptRequest(location)} disabled={!amTarget}>Accept</button>
+        &nbsp;
+        <button className="submit reject-auth-request" onClick={() => rejectRequest(location)} disabled={!amIssuer && !amTarget}>Reject</button>
+      </li>
+      <li key="issuer">Issuer: {amIssuer ? "me" : presentLongHex(authorisationRequest.issuer.did)}</li>
+      <li key="target">Target: {amTarget ? "me" : presentLongHex(target)}</li>
+      <li key="expiry">Expiry: {authorisationRequest.expiry?.toISOString()}</li>
+      <li key="data">Data: {presentAuthorisation(authorisationRequest.data, [...location, "data"])}</li>
+    </ul>
+  }
+
+  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: (string | number)[]) {
+    if (typeof authorisationRequests === "undefined" || authorisationRequests === null || authorisationRequests.length === 0) return <div>No authorisations</div>
+    return <ul>{
+      authorisationRequests
+        .map((request: AuthorizationRequest, requestIndex: number) => presentAuthorisationRequest(request, [...location, requestIndex]))
+        .map((presented, requestIndex: number) => <li key={requestIndex}>
+          Authorisation {requestIndex}:&nbsp;
+          {presented}
+        </li>)
+    }</ul>
+  }
+
+  async function acceptRequest(location: (string | number)[]): Promise<void> {
+    const request: AuthorizationRequest = findValue(myInfo, location)
+    setStatus(`Accepting request ${request.authId}`)
+    await (await request.accept()).run()
+    setStatus(`Request ${request.authId} accepted`)
+    await loadAuthorisations()
+  }
+
+  async function rejectRequest(location: (string | number)[]): Promise<void> {
+    const request: AuthorizationRequest = findValue(myInfo, location)
+    setStatus(`Rejecting request ${request.authId}`)
+    await (await request.remove()).run()
+    setStatus(`Request ${request.authId} rejected`)
+    await loadAuthorisations()
+  }
+
   async function loadAttestationsReceived(): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
     const me: CurrentIdentity = await api.getCurrentIdentity()
@@ -922,19 +1062,42 @@ export default function Home() {
             })()
           }</div>
 
-          <div className={styles.card}>{
-            (() => {
-              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
-              return <div>
-                <div className="submit">
-                  New owner:&nbsp;
+          <fieldset className={styles.card}>
+            <legend>New owner</legend>
+            {
+              (() => {
+                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+                return <div className="submit">
+                  Target:&nbsp;
                   <input name="token-ownership-target" type="text" placeholder="0x1234" defaultValue={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "ownershipTarget"])} />
                   &nbsp;
                   <button className="submit transfer-token" onClick={transferTokenOwnership} disabled={!canManipulate}>Transfer ownership</button>
                 </div>
-              </div>
-            })()
-          }</div>
+              })()
+            }
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>New PIA</legend>
+            {
+              (() => {
+                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+                const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
+                return <div className="submit">
+                  Target:&nbsp;
+                  <input name="token-pia-target" type="text" placeholder="0x1234" defaultValue={target} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"])} />
+                  <br/>
+                  Request expiry:&nbsp;
+                  <input name="token-pia-expiry" type="text" placeholder="2020-12-31" defaultValue={myInfo.token.piaChangeInfo.requestExpiry?.toISOString()} disabled={!canManipulate}
+                    onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"], (e) => Promise.resolve(new Date(e.target.value)))}/>
+                  &nbsp;
+                  <button className="submit change-token-pia" onClick={changeTokenPia} disabled={!canManipulate}>Change PIA</button>
+                  <br/>
+                  See lower for the pending authorisation
+                </div>
+              })()
+            }
+          </fieldset>
 
         </fieldset>
 
@@ -951,7 +1114,7 @@ export default function Home() {
             (() => {
               const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid && myInfo.requirements.modified
               return <div className="submit">
-                <button className="submit save-requirements" onClick={saveRequirements} disabled={!canManipulate}>Save requirements</button>
+                <button className="submit save-requirements" onClick={saveRequirements} disabled={!canManipulate}>Save the whole list of requirements</button>
               </div>
             })()
           }</div>
@@ -985,6 +1148,17 @@ export default function Home() {
         </fieldset>
 
         <fieldset className={styles.card}>
+          <legend>My authorisations</legend>
+
+          <div className="submit">
+            <button className="submit load-authorisations" onClick={loadAuthorisations}>Load authorisations</button>
+          </div>
+
+          <div>{presentAuthorisationRequests(myInfo.authorisations.current, ["authorisations", "current"])}</div>
+
+        </fieldset>
+
+        <fieldset className={styles.card}>
           <legend>Attestations</legend>
 
           <div className="submit">
@@ -1008,7 +1182,7 @@ export default function Home() {
             <div className="submit">
               <button className="submit add-attestation" onClick={() => addAttestation(["attestations", "toAdd"])}>Add KYC attestation</button>
             </div>
-            <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware needs to be updated</div>
+            <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware first needs to be updated</div>
           </div>
 
           <div className={styles.card}>
@@ -1020,6 +1194,15 @@ export default function Home() {
               <button className="submit add-unique-attestation" onClick={() => addUniquenessAttestation(["attestations", "uniquenessToAdd"])}>Add uniqueness attestation</button>
             </div>
             <div>It takes some time for the added attestation<br/>to show in the list above because the<br/>middleware needs to be updated</div>
+          </div>
+
+        </fieldset>
+
+        <fieldset className={styles.card}>
+          <legend>Corporate actions for: {myInfo.token.current?.ticker}</legend>
+
+          <div className={styles.card}>
+            <div>Create new:</div>
           </div>
 
         </fieldset>
