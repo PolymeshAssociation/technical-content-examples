@@ -31,14 +31,20 @@ import {
   AuthorizationType,
   Permissions,
   PortfolioBalance,
+  CheckpointWithCreationDate,
+  CalendarUnit,
+  ScheduleWithDetails,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
-  AttestationsInfoJSON,
+  AttestationsInfoJson,
   AuthorisationInfoJson,
+  CheckpointInfoJson,
+  CheckpointScheduleInfoJson,
   CountryInfo,
   getCountryList,
   isCddClaim,
+  isCheckpointWithCreationDate,
   isClaimData,
   isIdentityCondition,
   isPrimaryIssuanceAgentCondition,
@@ -51,6 +57,8 @@ import {
 import {
   AddInvestorUniquenessClaimParams,
   AuthorizationRequest,
+  Checkpoint,
+  CheckpointSchedule,
   DefaultPortfolio,
   Identity,
   ModifyPrimaryIssuanceAgentParams,
@@ -141,11 +149,25 @@ export default function Home() {
         scopeId: "" as string,
         expiry: null as Date | null,
       } as AddInvestorUniquenessClaimParams,
-    } as AttestationsInfoJSON,
+    } as AttestationsInfoJson,
     portfolios: {
       current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
       otherOwner: "" as string,
       details: [] as PortfolioInfoJson[],
+    },
+    checkpoints: {
+      current: [] as CheckpointWithCreationDate[],
+      details: [] as CheckpointInfoJson[],
+      scheduledToAdd: {
+        start: new Date(),
+        period: {
+          amount: 3,
+          unit: CalendarUnit.Month,
+        },
+        repetitions: 0,
+      },
+      currentSchedules: [] as CheckpointSchedule[],
+      scheduleDetails: [] as CheckpointScheduleInfoJson[],
     },
     capitalDistributions: {
       current: [],
@@ -407,6 +429,7 @@ export default function Home() {
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
     await setComplianceRequirements(token, requirements, arePaused)
+    await loadCheckpoints(token)
     return requirements
   }
 
@@ -1046,7 +1069,6 @@ export default function Home() {
 
   async function relinquishCustody(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void>{
     setStatus("Relinquishing custody")
-    console.log(portfolio)
     await (await portfolio.original.setCustodian({ targetIdentity: portfolio.owner })).run()
     setStatus("Custody relinquished")
     await loadPortfolios(portfolio.owner)
@@ -1071,7 +1093,7 @@ export default function Home() {
   }
 
   function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean) {
-    if (portfolios === null) return "There are no portfolios"
+    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return "There are no portfolios"
     return <ul>{
       portfolios
         .map((portfolio: PortfolioInfoJson, portfolioIndex: number) => presentPorfolioJson(portfolio, [...location, portfolioIndex], canManipulate))
@@ -1079,6 +1101,135 @@ export default function Home() {
           Portfolio {portfolioIndex}:&nbsp;{presented}
         </li>)
     }</ul>
+  }
+
+  async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithCreationDate[]> {
+    const checkpoints: CheckpointWithCreationDate[] = await token.checkpoints.get()
+    await setCheckpoints(checkpoints)
+    await loadCheckpointSchedules(token)
+    return checkpoints
+  }
+
+  async function setCheckpoints(current: CheckpointWithCreationDate[]): Promise<CheckpointInfoJson[]> {
+    setMyInfo(returnUpdatedCreator(["checkpoints", "current"], current))
+    const details: CheckpointInfoJson[] = await Promise.all(current
+      .map((checkpointWith: CheckpointWithCreationDate) => getCheckpointInfo(checkpointWith)))
+    setMyInfo(returnUpdatedCreator(["checkpoints", "details"], details))
+    return details
+  }
+
+  async function getCheckpointInfo(checkpointWith: CheckpointWithCreationDate | Checkpoint): Promise<CheckpointInfoJson> {
+    const checkpoint: Checkpoint = isCheckpointWithCreationDate(checkpointWith) ? checkpointWith.checkpoint : checkpointWith
+    const [totalSupply, createdAt]: [BigNumber, Date] = await Promise.all([
+      checkpoint.totalSupply(),
+      isCheckpointWithCreationDate(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt()
+    ]) 
+    return {
+      checkpoint: checkpoint,
+      totalSupply: totalSupply,
+      createdAt: createdAt,
+      whoseBalance: "",
+      balance: new BigNumber(0),
+    }
+  }
+
+  async function createCheckpoint(): Promise<Checkpoint> {
+    const checkpoint: Checkpoint = await (await myInfo.token.current.checkpoints.create()).run()
+    await loadCheckpoints(myInfo.token.current)
+    return checkpoint
+  }
+
+  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: (string | number)[]): Promise<BigNumber> {
+    const balance: BigNumber = await checkpoint.checkpoint.balance({ identity: whoseBalance })
+    setMyInfo(returnUpdatedCreator([...location, "balance"], balance))
+    return balance
+  }
+
+  async function createScheduledCheckpoint(): Promise<CheckpointSchedule> {
+    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.createSchedule(myInfo.checkpoints.scheduledToAdd)).run()
+    await loadCheckpointSchedules(myInfo.token.current)
+    return schedule
+  }
+
+  async function loadCheckpointSchedules(token: SecurityToken): Promise<ScheduleWithDetails[]> {
+    const schedules: ScheduleWithDetails[] = await token.checkpoints.getSchedules()
+    await setCheckpointSchedules(schedules)
+    return schedules
+  }
+
+  async function setCheckpointSchedules(currentSchedules: ScheduleWithDetails[]): Promise<CheckpointScheduleInfoJson[]> {
+    setMyInfo(returnUpdatedCreator(["checkpoints", "currentSchedules"], currentSchedules))
+    const scheduleDetails: CheckpointScheduleInfoJson[] = await Promise.all(currentSchedules.map(getScheduleInfo))
+    setMyInfo(returnUpdatedCreator(["checkpoints", "scheduleDetails"], scheduleDetails))
+    return scheduleDetails
+  }
+
+  async function getScheduleInfo(schedule: ScheduleWithDetails): Promise<CheckpointScheduleInfoJson> {
+    const createdCheckpoints: Checkpoint[] = await schedule.schedule.getCheckpoints()
+    const createdCheckpointInfos: CheckpointInfoJson[] = await Promise.all(createdCheckpoints.map(getCheckpointInfo))
+    const exists: boolean = await schedule.schedule.exists()
+    return {
+      schedule: schedule.schedule,
+      remainingCheckpoints: schedule.details.remainingCheckpoints,
+      nextCheckpointDate: schedule.details.nextCheckpointDate,
+      createdCheckpoints: createdCheckpointInfos,
+      exists: exists,
+    }
+  }
+
+  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: (string | number)[], canManipulate: boolean) {
+    return <ul>
+      <li key="id">Id: {checkpointInfo.checkpoint.id.toString(10)}</li>
+      <li key="ticker">Ticker: {checkpointInfo.checkpoint.ticker}</li>
+      <li key="totalSupply">Total supply: {checkpointInfo.totalSupply.toString(10)}</li>
+      <li key="createdAt">Created at: {checkpointInfo.createdAt.toISOString()}</li>
+      <li key="balanceOf">Balance of:&nbsp;
+        <input defaultValue={checkpointInfo.whoseBalance} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "whoseBalance"])}/>
+        &nbsp;
+        <button className="submit get-balanceOf" onClick={() => loadBalanceAtCheckpoint(checkpointInfo, checkpointInfo.whoseBalance, location)}>Fetch</button>
+        <br/>
+        Is&nbsp;{ `${checkpointInfo.balance.toString(10)} ${checkpointInfo.checkpoint.ticker}` }
+      </li>
+    </ul>
+  }
+
+  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: (string | number)[], canManipulate: boolean) {
+    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return "There are no checkpoints"
+    return <ul>{
+      checkpoints
+        .map((checkpoint: CheckpointInfoJson, checkpointIndex: number) => presentCheckpoint(checkpoint, [...location, checkpointIndex], canManipulate))
+        .map((presented, checkpointIndex: number) => <li key={checkpointIndex}>
+          Checkpoint {checkpointIndex}:&nbsp;{presented}
+        </li>)
+    }</ul>
+  }
+
+  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean) {
+    return <ul>
+      <li key="exists">Exists: {scheduleInfo.exists}</li>
+      <li key="remainingCheckpoints">Remaining checkpoints: {scheduleInfo.remainingCheckpoints.toString(10)}</li>
+      <li key="nextCheckpointDate">Next checkpoint date: {scheduleInfo.nextCheckpointDate.toISOString()}</li>
+      <li key="createdCheckpoints">Created checkpoints: {presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>
+    </ul>
+  }
+
+  function presentCheckpointSchedules(schedules: CheckpointScheduleInfoJson[], location: (string | number)[], canManipulate: boolean) {
+    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return "There are no checkpoint schedules"
+    return <ul>{
+      schedules
+        .map((schedule: CheckpointScheduleInfoJson, scheduleIndex: number) => presentCheckpointSchedule(schedule, [...location, scheduleIndex], canManipulate))
+        .map((presented, scheduleIndex: number) => <li key={scheduleIndex}>
+          Checkpoint schedule {scheduleIndex}:&nbsp;{presented}
+        </li>)
+    }</ul>
+  }
+
+  function onRequirementChangedDateCreator(path: (string | number)[]) {
+    return onRequirementChangedCreator(path, (e) => {
+      const newDate: Date = new Date(e.target.value)
+      if (newDate.toDateString() === "Invalid Date") return Promise.resolve(findValue(myInfo, path))
+      return Promise.resolve(newDate)
+    })
   }
 
   return (
@@ -1383,11 +1534,64 @@ export default function Home() {
         </fieldset>
 
         <fieldset className={styles.card}>
-          <legend>Corporate actions for: {myInfo.token.current?.ticker}</legend>
+          <legend>Checkpoints for: {myInfo.token.current?.ticker}</legend>
 
-          <div className={styles.card}>
-            <div>Create new:</div>
-          </div>
+          <div className="submit">{
+              (() => {
+                const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.detailsJson?.owner === myInfo.myDid
+                return <div className="submit">
+                  <button className="submit create-checkpoint" onClick={createCheckpoint} disabled={!canManipulate}>Create 1 now</button>
+                </div>
+              })()
+            }</div>
+
+          <div>{presentCheckpoints(myInfo.checkpoints?.details, ["checkpoints", "details"], true)}</div>
+
+          <div className={styles.card}>{
+            (() => {
+              const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.detailsJson?.owner === myInfo.myDid
+              return <div>
+                Create new:
+                <ul>
+                  <li key="start">
+                    Start at:&nbsp;
+                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.start?.toISOString()} placeholder="2021-12-31T06:00:00Z" disabled={!canManipulate}
+                      onChange={onRequirementChangedDateCreator(["checkpoints", "scheduledToAdd", "start"])}/>
+                  </li>
+                  <li key="periodValue">
+                    Period value:&nbsp;
+                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.period?.amount?.toString(10)} placeholder="5" disabled={!canManipulate}
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "amount"], (e) => Promise.resolve(parseInt(e.target.value)))}/>
+                  </li>
+                  <li key="periodUnit">
+                    Period unit:&nbsp;
+                    <select defaultValue={myInfo.checkpoints.scheduledToAdd.period?.unit} disabled={!canManipulate}
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "unit"])}>{
+                      (() => {
+                        const selects = []
+                        for (const calendarUnit in CalendarUnit) selects.push(<option value={calendarUnit} key={calendarUnit}>{calendarUnit}</option>)
+                        return selects
+                      })()
+                    }</select>
+                  </li>
+                  <li key="repetitions">
+                    Repetitions:&nbsp;
+                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.repetitions.toString(10)} placeholder="0" disabled={!canManipulate}
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "repetitions"], (e) => Promise.resolve(parseInt(e.target.value)))}/>
+                  </li>
+                </ul>
+
+                <div className="submit">
+                  <div className="submit">
+                    <button className="submit create-scheduled-checkpoint" onClick={createScheduledCheckpoint} disabled={!canManipulate}>Create scheduled</button>
+                  </div>
+                </div>
+
+              </div>
+            })()
+          }</div>
+
+          <div>{presentCheckpointSchedules(myInfo.checkpoints.scheduleDetails, ["checkpoints", "scheduleDetails"], true)}</div>
 
         </fieldset>
 

@@ -1,6 +1,7 @@
 import countries from "i18n-iso-countries"
 import {
     CddClaim,
+    CheckpointWithCreationDate,
     Claim,
     ClaimData,
     ClaimTarget,
@@ -23,8 +24,12 @@ import {
 import {
     AddInvestorUniquenessClaimParams,
     AuthorizationRequest,
+    Checkpoint,
+    CheckpointSchedule,
+    CreateCheckpointScheduleParams,
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -51,7 +56,8 @@ export type MyInfoJson = {
     requirements: RequirementsInfoJson,
     authorisations: AuthorisationInfoJson,
     portfolios: PortfoliosInfoJson,
-    attestations: AttestationsInfoJSON,
+    attestations: AttestationsInfoJson,
+    checkpoints: CheckpointsInfoJson,
 }
 
 export type ReservationInfoJson = {
@@ -102,17 +108,6 @@ export type AuthorisationInfoJson = {
     current: AuthorizationRequest[],
 }
 
-export type AttestationsInfoJSON = {
-    current: ClaimData<Claim>[],
-    otherTarget: string,
-    toAdd: {
-        target: string,
-        expiry: Date | null,
-        claim: Claim,
-    },
-    uniquenessToAdd: AddInvestorUniquenessClaimParams,
-}
-
 export type PortfoliosInfoJson = {
     current: [DefaultPortfolio, ...NumberedPortfolio[]] | null,
     otherOwner: string,
@@ -126,6 +121,41 @@ export type PortfolioInfoJson = {
     custodian: string,
 }
 
+export type AttestationsInfoJson = {
+    current: ClaimData<Claim>[],
+    otherTarget: string,
+    toAdd: {
+        target: string,
+        expiry: Date | null,
+        claim: Claim,
+    },
+    uniquenessToAdd: AddInvestorUniquenessClaimParams,
+}
+
+export type CheckpointsInfoJson = {
+    current: CheckpointWithCreationDate[],
+    details: CheckpointInfoJson[],
+    scheduledToAdd: CreateCheckpointScheduleParams,
+    currentSchedules: CheckpointSchedule[],
+    scheduleDetails: CheckpointScheduleInfoJson[],
+}
+
+export type CheckpointInfoJson = {
+    checkpoint: Checkpoint,
+    totalSupply: BigNumber,
+    createdAt: Date,
+    whoseBalance: string,
+    balance: BigNumber,
+}
+
+export type CheckpointScheduleInfoJson = {
+    schedule: CheckpointSchedule,
+    remainingCheckpoints: number,
+    nextCheckpointDate: Date,
+    createdCheckpoints: CheckpointInfoJson[],
+    exists: boolean,
+}
+
 export interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
 }
@@ -136,4 +166,5 @@ export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddCl
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
+export const isCheckpointWithCreationDate = (checkpointInfo: CheckpointWithCreationDate | Checkpoint): checkpointInfo is CheckpointWithCreationDate => typeof (checkpointInfo as CheckpointWithCreationDate).createdAt !== "undefined"
 
