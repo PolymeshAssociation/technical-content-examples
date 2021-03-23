@@ -10,6 +10,7 @@ import {
     ConditionType,
     CountryCode,
     DefaultPortfolio,
+    EventIdentifier,
     IdentityCondition,
     InvestorUniquenessClaim,
     NumberedPortfolio,
@@ -73,6 +74,7 @@ export type ReservationInfoJson = {
 
 export type TokenInfoJson = {
     current: SecurityToken,
+    createdAt: EventIdentifier,
     details: SecurityTokenDetails,
     detailsJson: {
         name: string,

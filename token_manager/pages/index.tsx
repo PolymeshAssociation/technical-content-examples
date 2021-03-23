@@ -34,6 +34,7 @@ import {
   CheckpointWithCreationDate,
   CalendarUnit,
   ScheduleWithDetails,
+  EventIdentifier,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -358,6 +359,7 @@ export default function Home() {
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
+      const createdAt: EventIdentifier = await token.createdAt()
       const defaultPortfolio: DefaultPortfolio = await details.primaryIssuanceAgent.portfolios.getPortfolio()
       const balance: PortfolioBalance = (await defaultPortfolio.getTokenBalances({ tokens: [token] }))[0]
       setMyInfo((prevInfo) => ({
@@ -365,6 +367,7 @@ export default function Home() {
         token: {
           ...prevInfo.token,
           current: token,
+          createdAt: createdAt,
           details: details,
           detailsJson: {
             name: details.name,
@@ -1146,6 +1149,7 @@ export default function Home() {
   }
 
   async function createScheduledCheckpoint(): Promise<CheckpointSchedule> {
+    console.log(myInfo.checkpoints.scheduledToAdd)
     const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.createSchedule(myInfo.checkpoints.scheduledToAdd)).run()
     await loadCheckpointSchedules(myInfo.token.current)
     return schedule
@@ -1342,6 +1346,7 @@ export default function Home() {
                 <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
                 <li key="assetType">As asset type: {myInfo.token.detailsJson.assetType}</li>
                 <li key="divisible">{myInfo.token.detailsJson.divisible ? "" : "not"} divisible</li>
+                <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate}</li>
                 <li key="pia">
                   With PIA: {pia === myInfo.myDid ? "me" : presentLongHex(pia)}
                   &nbsp;
