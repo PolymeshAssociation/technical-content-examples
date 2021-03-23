@@ -70,7 +70,13 @@ export async function checkboxProcessor(e): Promise<boolean> {
 }
 
 export function returnUpdated(previous: object, path: (string | number)[], value: any) {
-    if (path.length === 0) return value
+    if (path.length === 0) {
+        if (typeof value === "object" && !Array.isArray(value)) return {
+            ...previous,
+            ...value,
+        }
+        return value
+    }
     if (typeof path[0] === "number" && Array.isArray(previous)) return [
         ...previous.slice(0, path[0]),
         returnUpdated(previous[path[0]], path.slice(1), value),
@@ -88,6 +94,30 @@ export function returnUpdatedCreator(path: (string | number)[], value: any) {
 
 export function findValue(where: object, path: (string | number)[]): any {
     return path.reduce((whereLeft: object, pathBit: string | number) => whereLeft[pathBit], where)
+}
+
+export function returnAddedArrayCreator(containerLocation: (string | number)[], dummy: any) {
+    return (prevInfo) => {
+        const container = findValue(prevInfo, containerLocation) || []
+        if (!Array.isArray(container)) throw new Error("Only works with arrays")
+        const updatedContainer = [...container, dummy]
+        return returnUpdated(prevInfo, containerLocation, updatedContainer)
+    }
+}
+
+export function returnRemovedArrayCreator(location: (string | number)[]) {
+    return (prevInfo) => {
+        const containerPath = location.slice(0, -1)
+        const container = findValue(prevInfo, containerPath)
+        if (!Array.isArray(container)) throw new Error("Only works with arrays")
+        const lastPathBit = location[location.length - 1]
+        if (typeof lastPathBit !== "number") throw new Error("Only works with an array index")
+        const updatedContainer = [
+            ...container.slice(0, lastPathBit),
+            ...container.slice(lastPathBit + 1),
+        ]
+        return returnUpdated(prevInfo, containerPath, updatedContainer)
+    }
 }
 
 export function presentLongHex(hex: string): string {

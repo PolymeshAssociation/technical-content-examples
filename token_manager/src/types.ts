@@ -1,5 +1,6 @@
 import countries from "i18n-iso-countries"
 import {
+    CalendarUnit,
     CddClaim,
     CheckpointWithCreationDate,
     Claim,
@@ -16,6 +17,8 @@ import {
     NumberedPortfolio,
     PrimaryIssuanceAgentCondition,
     Requirement,
+    Scope,
+    ScopeType,
     SecurityToken,
     SecurityTokenDetails,
     TickerReservation,
@@ -28,6 +31,7 @@ import {
     Checkpoint,
     CheckpointSchedule,
     CreateCheckpointScheduleParams,
+    Identity,
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
@@ -65,25 +69,12 @@ export type ReservationInfoJson = {
     fetchTimer: NodeJS.Timeout,
     current: TickerReservation,
     details: TickerReservationDetails,
-    detailsJson: {
-        owner: string,
-        expiryDate: string,
-        status: string,
-    }
 }
 
 export type TokenInfoJson = {
     current: SecurityToken,
     createdAt: EventIdentifier,
     details: SecurityTokenDetails,
-    detailsJson: {
-        name: string,
-        assetType: string,
-        owner: string,
-        divisible: boolean,
-        totalSupply: string,
-        primaryIssuanceAgent: string,
-    },
     piaBalance: {
         locked: string,
         total: string,
@@ -117,7 +108,7 @@ export type PortfoliosInfoJson = {
 }
 
 export type PortfolioInfoJson = {
-    original: DefaultPortfolio |NumberedPortfolio,
+    original: DefaultPortfolio | NumberedPortfolio,
     owner: string,
     id: string | null,
     custodian: string,
@@ -156,6 +147,89 @@ export type CheckpointScheduleInfoJson = {
     nextCheckpointDate: Date,
     createdCheckpoints: CheckpointInfoJson[],
     exists: boolean,
+}
+
+export function getEmptyMyInfo(): MyInfoJson {
+    return {
+        ticker: "" as string,
+        myDid: "" as string,
+        myAddress: "" as string,
+        myTickers: [] as string[],
+        reservation: {
+            fetchTimer: null as NodeJS.Timeout,
+            current: null as TickerReservation,
+            details: null as TickerReservationDetails,
+        } as ReservationInfoJson,
+        token: {
+            current: null as SecurityToken,
+            details: null as SecurityTokenDetails,
+            piaBalance: {
+                locked: "" as string,
+                total: "" as string,
+                toIssue: 0 as number,
+                toRedeem: 0 as number,
+            },
+            ownershipTarget: "" as string,
+            piaChangeInfo: {
+                target: "" as string | Identity,
+                requestExpiry: null as Date | null,
+            } as ModifyPrimaryIssuanceAgentParams,
+        } as TokenInfoJson,
+        requirements: {
+            current: [] as Requirement[],
+            arePaused: true as boolean,
+            canManipulate: false as boolean,
+            modified: false as boolean,
+            settleSimulation: {
+                sender: "" as string,
+                recipient: "" as string,
+                works: null as boolean | null,
+            },
+        } as RequirementsInfoJson,
+        authorisations: {
+            current: [] as AuthorizationRequest[],
+        } as AuthorisationInfoJson,
+        attestations: {
+            current: [] as ClaimData<Claim>[],
+            otherTarget: "" as string,
+            toAdd: {
+                target: "" as string,
+                expiry: null as Date | null,
+                claim: {
+                    type: ClaimType.NoData,
+                } as Claim,
+            } as ClaimTarget,
+            uniquenessToAdd: {
+                scope: {
+                    type: ScopeType.Ticker,
+                    value: "" as string,
+                } as Scope,
+                cddId: "" as string,
+                proof: "" as string,
+                scopeId: "" as string,
+                expiry: null as Date | null,
+            } as AddInvestorUniquenessClaimParams,
+        } as AttestationsInfoJson,
+        portfolios: {
+            current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
+            otherOwner: "" as string,
+            details: [] as PortfolioInfoJson[],
+        },
+        checkpoints: {
+            current: [] as CheckpointWithCreationDate[],
+            details: [] as CheckpointInfoJson[],
+            scheduledToAdd: {
+                start: new Date(),
+                period: {
+                    amount: 3,
+                    unit: CalendarUnit.Month,
+                },
+                repetitions: 0,
+            },
+            currentSchedules: [] as CheckpointSchedule[],
+            scheduleDetails: [] as CheckpointScheduleInfoJson[],
+        },
+    }
 }
 
 export interface HasFetchTimer {

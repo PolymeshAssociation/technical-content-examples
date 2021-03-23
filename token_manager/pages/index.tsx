@@ -12,7 +12,6 @@ import {
   Requirement,
   SecurityToken,
   SecurityTokenDetails,
-  TickerReservationDetails,
   TrustedClaimIssuer,
   Claim,
   isScopedClaim,
@@ -34,26 +33,21 @@ import {
   CheckpointWithCreationDate,
   CalendarUnit,
   ScheduleWithDetails,
-  EventIdentifier,
+  TickerReservationStatus,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
-  AttestationsInfoJson,
-  AuthorisationInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleInfoJson,
   CountryInfo,
   getCountryList,
+  getEmptyMyInfo,
   isCddClaim,
   isCheckpointWithCreationDate,
   isClaimData,
   isIdentityCondition,
   isPrimaryIssuanceAgentCondition,
-  MyInfoJson,
   PortfolioInfoJson,
-  RequirementsInfoJson,
-  ReservationInfoJson,
-  TokenInfoJson,
 } from "../src/types"
 import {
   AddInvestorUniquenessClaimParams,
@@ -62,7 +56,6 @@ import {
   CheckpointSchedule,
   DefaultPortfolio,
   Identity,
-  ModifyPrimaryIssuanceAgentParams,
   NumberedPortfolio,
   PolymeshError,
   TickerReservation,
@@ -73,113 +66,13 @@ import {
   getBasicPolyWalletApi,
   presentLongHex,
   replaceFetchTimer,
-  returnUpdated,
+  returnAddedArrayCreator,
+  returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
 
 export default function Home() {
-  const [myInfo, setMyInfo] = useState({
-    ticker: "" as string,
-    myDid: "" as string,
-    myAddress: "" as string,
-    myTickers: [] as string[],
-    reservation: {
-      fetchTimer: null as NodeJS.Timeout,
-      current: null as TickerReservation,
-      details: null as TickerReservationDetails,
-      detailsJson: {
-        owner: "null" as string,
-        expiryDate: "null" as string,
-        status: "null" as string,
-      },
-    } as ReservationInfoJson,
-    token: {
-      current: null as SecurityToken,
-      details: null as SecurityTokenDetails,
-      detailsJson: {
-        name: "null" as string,
-        assetType: "null" as string,
-        owner: "null" as string,
-        divisible: false as boolean,
-        totalSupply: "null" as string,
-        primaryIssuanceAgent: "null" as string,
-      },
-      piaBalance: {
-        locked: "" as string,
-        total: "" as string,
-        toIssue: 0 as  number,
-        toRedeem: 0 as  number,
-      },
-      ownershipTarget: "" as string,
-      piaChangeInfo: {
-        target: "" as string | Identity,
-        requestExpiry: null as Date | null,
-      } as ModifyPrimaryIssuanceAgentParams,
-    } as TokenInfoJson,
-    requirements: {
-      current: [] as Requirement[],
-      arePaused: true as boolean,
-      canManipulate: false as boolean,
-      modified: false as boolean,
-      settleSimulation: {
-        sender: "" as string,
-        recipient: "" as string,
-        works: null as boolean | null,
-      },
-    } as RequirementsInfoJson,
-    authorisations: {
-      current:[] as AuthorizationRequest[],
-    } as AuthorisationInfoJson,
-    attestations: {
-      current: [] as ClaimData<Claim>[],
-      otherTarget: "" as string,
-      toAdd: {
-        target: "" as string,
-        expiry: null as Date | null,
-        claim: {
-          type: ClaimType.NoData,
-        } as Claim,
-      } as ClaimTarget,
-      uniquenessToAdd: {
-        scope: {
-          type: ScopeType.Ticker,
-          value: "" as string,
-        } as Scope,
-        cddId: "" as string,
-        proof: "" as string,
-        scopeId: "" as string,
-        expiry: null as Date | null,
-      } as AddInvestorUniquenessClaimParams,
-    } as AttestationsInfoJson,
-    portfolios: {
-      current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
-      otherOwner: "" as string,
-      details: [] as PortfolioInfoJson[],
-    },
-    checkpoints: {
-      current: [] as CheckpointWithCreationDate[],
-      details: [] as CheckpointInfoJson[],
-      scheduledToAdd: {
-        start: new Date(),
-        period: {
-          amount: 3,
-          unit: CalendarUnit.Month,
-        },
-        repetitions: 0,
-      },
-      currentSchedules: [] as CheckpointSchedule[],
-      scheduleDetails: [] as CheckpointScheduleInfoJson[],
-    },
-    capitalDistributions: {
-      current: [],
-      toAdd: {
-        kind: "" as string,
-        issuedAt: null as Date | null,
-        checkpointId: "" as string,
-        details: "" as string,
-      },
-    }
-  } as MyInfoJson)
+  const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
   const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string): void {
@@ -190,10 +83,7 @@ export default function Home() {
   async function getPolyWalletApi(): Promise<Polymesh> {
     const api: Polymesh = await getBasicPolyWalletApi(setStatus)
     const myIdentity: CurrentIdentity = await api.getCurrentIdentity()
-    setMyInfo((prevInfo) => ({
-      ...prevInfo,
-      myDid: myIdentity.did
-    }))
+    setMyInfo(returnUpdatedCreator(["myDid"], myIdentity.did))
     return api
   }
 
@@ -212,19 +102,13 @@ export default function Home() {
     const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: me });
     const myTickers: string[] = [...myTokens, ...myReservations]
       .map((element: SecurityToken | TickerReservation) => element.ticker)
-    setMyInfo((prevInfo) => ({
-      ...prevInfo,
-      myTickers,
-    }))
+    setMyInfo(returnUpdatedCreator(["myTickers"], myTickers))
     return myTickers
   }
 
   async function onTickerChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     const ticker: string = e.target.value
-    setMyInfo((prevInfo) => ({
-      ...prevInfo,
-      ticker,
-    }))
+    setMyInfo(returnUpdatedCreator(["ticker"], ticker))
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
@@ -232,13 +116,14 @@ export default function Home() {
     return async function (e): Promise<void> {
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
       setMyInfo(returnUpdatedCreator(path, value))
-      if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => {
-        await Promise.all([
-          loadReservation(value),
-          loadToken(value),
-        ])
-      })
+      if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => await loadReservation(value))
     }
+  }
+
+  function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
+    const selects: JSX.Element[] = []
+    for (const element in theEnum) selects.push(<option value={element} key={element}>{element}</option>)
+    return selects
   }
 
   async function reserveTicker(): Promise<TickerReservation> {
@@ -266,34 +151,15 @@ export default function Home() {
 
   async function setReservation(reservation: TickerReservation | null): Promise<void> {
     if (reservation === null) {
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        reservation: {
-          ...prevInfo.reservation,
-          current: null,
-          details: null,
-          detailsJson: {
-            owner: "null",
-            expiryDate: "null",
-            status: "null",
-          },
-        },
+      setMyInfo(returnUpdatedCreator(["reservation"], {
+        current: null,
+        details: null,
       }))
       setToken(null)
     } else {
-      const details: TickerReservationDetails = await reservation.details()
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        reservation: {
-          ...prevInfo.reservation,
-          current: reservation,
-          details: details,
-          detailsJson: {
-            owner: details.owner.did,
-            expiryDate: details.expiryDate?.toISOString() || "null",
-            status: details.status,
-          },
-        },
+      setMyInfo(returnUpdatedCreator(["reservation"], {
+        current: reservation,
+        details: await reservation.details()
       }))
       await loadToken(reservation.ticker)
     }
@@ -307,9 +173,9 @@ export default function Home() {
   async function createSecurityToken(): Promise<SecurityToken> {
     setStatus("Creating token")
     const token: SecurityToken = await (await myInfo.reservation.current.createToken({
-      name: myInfo.token.detailsJson.name,
+      name: myInfo.token.details?.name,
       totalSupply: new BigNumber("0"),
-      isDivisible: myInfo.token.detailsJson.divisible,
+      isDivisible: myInfo.token.details?.isDivisible,
       tokenType: KnownTokenType.EquityPreferred,
     })).run()
     await setToken(token)
@@ -334,55 +200,30 @@ export default function Home() {
 
   async function setToken(token: SecurityToken | null): Promise<void> {
     if (token === null) {
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        token: {
-          ...prevInfo.token,
-          current: null,
-          details: null,
-          detailsJson: {
-            name: "null",
-            assetType: "null",
-            owner: "null",
-            divisible: false,
-            totalSupply: "null",
-            primaryIssuanceAgent: "null",
-          },
-          piaBalance: {
-            locked: "",
-            total: "",
-            toIssue: 0,
-            toRedeem: 0,
-          },
+      setMyInfo(returnUpdatedCreator(["token"], {
+        current: null,
+        details: null,
+        piaBalance: {
+          locked: "",
+          total: "",
+          toIssue: 0,
+          toRedeem: 0,
         },
       }))
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
-      const createdAt: EventIdentifier = await token.createdAt()
       const defaultPortfolio: DefaultPortfolio = await details.primaryIssuanceAgent.portfolios.getPortfolio()
       const balance: PortfolioBalance = (await defaultPortfolio.getTokenBalances({ tokens: [token] }))[0]
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        token: {
-          ...prevInfo.token,
-          current: token,
-          createdAt: createdAt,
-          details: details,
-          detailsJson: {
-            name: details.name,
-            assetType: details.assetType,
-            owner: details.owner.did,
-            divisible: details.isDivisible,
-            totalSupply: details.totalSupply.toString(10),
-            primaryIssuanceAgent: details.primaryIssuanceAgent.did,
-          },
-          piaBalance: {
-            locked: balance.locked.toString(10),
-            total: balance.total.toString(10),
-            toIssue: 0,
-            toRedeem: 0,
-          },
+      setMyInfo(returnUpdatedCreator(["token"], {
+        current: token,
+        createdAt: await token.createdAt(),
+        details: details,
+        piaBalance: {
+          locked: balance.locked.toString(10),
+          total: balance.total.toString(10),
+          toIssue: 0,
+          toRedeem: 0,
         },
       }))
       await loadComplianceRequirements(token)
@@ -415,7 +256,9 @@ export default function Home() {
 
   async function issueTokens(): Promise<void> {
     setStatus("Issuing tokens")
-    const updatedToken: SecurityToken = await (await myInfo.token.current.issuance.issue({ amount: new BigNumber(myInfo.token.piaBalance.toIssue) })).run()
+    const updatedToken: SecurityToken = await (await myInfo.token.current.issuance.issue({
+      amount: new BigNumber(myInfo.token.piaBalance.toIssue)
+    })).run()
     setStatus("Tokens issued")
     await setToken(updatedToken)
   }
@@ -438,15 +281,11 @@ export default function Home() {
 
   async function setComplianceRequirements(token: SecurityToken | null, requirements: Requirement[] | null, arePaused: boolean) {
     if (token === null || requirements === null) {
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        requirements: {
-          ...prevInfo.requirements,
-          current: [],
-          arePaused: false,
-          canManipulate: false,
-          modified: false,
-        },
+      setMyInfo(returnUpdatedCreator(["requirements"], {
+        current: [],
+        arePaused: false,
+        canManipulate: false,
+        modified: false,
       }))
     } else {
       setMyInfo((prevInfo) => ({
@@ -462,30 +301,20 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>) {
+  function onRequirementChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
     return async function (e): Promise<void> {
       await onValueChangedCreator(path, valueProcessor)(e)
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        requirements: {
-          ...prevInfo.requirements,
-          modified: true,
-        }
-      }))
+      setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
     }
   }
 
-  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, location: (string | number)[], canManipulate: boolean) {
-    const trustedFor = trustedIssuer.trustedFor
+  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, location: (string | number)[], canManipulate: boolean): JSX.Element {
+    const trustedFor: JSX.Element = trustedIssuer.trustedFor
       ? <ul>{
         trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li key={claimTypeIndex}>
-          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>{
-            (() => {
-              const selects = []
-              for (const claimType in ClaimType) selects.push(<option value={claimType} key={claimType}>{claimType}</option>)
-              return selects
-            })()
-          }</select>&nbsp;<button className="submit remove-trusted-for" onClick={() => removeFromMyInfoArray([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>Remove {claimTypeIndex}</button>
+          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>
+            {presentEnumOptions(ClaimType)}
+          </select>&nbsp;<button className="submit remove-trusted-for" onClick={() => removeFromMyRequirementArray([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>Remove {claimTypeIndex}</button>
         </li>)
       }</ul>
       : <div>Not trusted for anything</div>
@@ -493,34 +322,31 @@ export default function Home() {
       <li key="identity">Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
         onChange={onRequirementChangedCreator(
           [...location, "identity"],
-          async (e) => {
-            const api = await getPolyWalletApi()
-            return api.getIdentity({ did: e.target.value })
-          })}
+          async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))}
         disabled={!canManipulate}
       />
       </li>
       <li key="trustedFor">Trusted for:&nbsp;
-        <button className="submit add-trusted-for" onClick={() => addToMyInfoArray([...location, "trustedFor"], ClaimType.Accredited)} disabled={!canManipulate}>Add trusted for</button>
+        <button className="submit add-trusted-for" onClick={() => addToMyRequirementArray([...location, "trustedFor"], ClaimType.Accredited)} disabled={!canManipulate}>Add trusted for</button>
         {trustedFor}
       </li>
     </ul>
   }
 
-  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, location: (string | number)[], canManipulate: boolean) {
+  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0) return <div>No trusted issuers</div>
     return <ul>{
       trustedIssuers
         .map((trustedIssuer: TrustedClaimIssuer, issuerIndex: number) => presentTrustedClaimIssuer(trustedIssuer, [...location, issuerIndex], canManipulate))
-        .map((presented, issuerIndex: number) => <li key={issuerIndex}>
+        .map((presented: JSX.Element, issuerIndex: number) => <li key={issuerIndex}>
           Issuer {issuerIndex}:&nbsp;
-          <button className="submit remove-trusted-claim-issuer" onClick={() => removeFromMyInfoArray([...location, issuerIndex])} disabled={!canManipulate}>Remove {issuerIndex}</button>
+          <button className="submit remove-trusted-claim-issuer" onClick={() => removeFromMyRequirementArray([...location, issuerIndex])} disabled={!canManipulate}>Remove {issuerIndex}</button>
           {presented}
         </li>)
     }</ul>
   }
 
-  function presentScope(scope: Scope, location: (string | number)[], canManipulate: boolean) {
+  function presentScope(scope: Scope, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (typeof scope === "undefined" || scope === null) {
       const defaultScope: Scope = { type: ScopeType.Custom, value: "" }
       setMyInfo(returnUpdatedCreator([...location], defaultScope as Scope))
@@ -528,47 +354,39 @@ export default function Home() {
     }
     return <ul>
       <li key="type">Type: &nbsp;
-        <select defaultValue={scope.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>{
-          (() => {
-            const selects = []
-            for (const scopeType in ScopeType) selects.push(<option value={scopeType} key={scopeType}>{scopeType}</option>)
-            return selects
-          })()
-        }</select>
+        <select defaultValue={scope.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
+          {presentEnumOptions(ScopeType)}
+        </select>
       </li>
-      <li key="value">Value: <input defaultValue={scope.value} placeholder="ACME"
-        onChange={onRequirementChangedCreator([...location, "value"])} disabled={!canManipulate} />
+      <li key="value">Value:&nbsp;
+        <input defaultValue={scope.value} placeholder="ACME" onChange={onRequirementChangedCreator([...location, "value"])} disabled={!canManipulate} />
       </li>
     </ul>
   }
 
-  function presentClaim(claim: Claim, location: (string | number)[], canManipulate: boolean) {
-    const elements = [
-      <li key="type">Type: &nbsp;<select defaultValue={claim.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>{
-        (() => {
-          const selects = []
-          for (const claimType in ClaimType) selects.push(<option value={claimType} key={claimType}>{claimType}</option>)
-          return selects
-        })()
-      }</select>
+  function presentClaim(claim: Claim, location: (string | number)[], canManipulate: boolean): JSX.Element {
+    const elements: JSX.Element[] = [
+      <li key="type">Type: &nbsp;
+        <select defaultValue={claim.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
+          {presentEnumOptions(ClaimType)}
+        </select>
       </li>
     ]
     if (isCddClaim(claim)) {
-      elements.push(<li key="id">Id: <input defaultValue={claim.id} placeholder="123"
-        onChange={onRequirementChangedCreator([...location, "id"])} disabled={!canManipulate} />
+      elements.push(<li key="id">Id:&nbsp;
+        <input defaultValue={claim.id} placeholder="123" onChange={onRequirementChangedCreator([...location, "id"])} disabled={!canManipulate} />
       </li>)
     }
     if (isScopedClaim(claim)) {
-      elements.push(<li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}
-      </li>)
+      elements.push(<li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>)
     }
     if (isInvestorUniquenessClaim(claim)) {
       const claimData: ClaimData | ClaimTarget = findValue(myInfo, location.slice(0, -1))
       const target: string | Identity = claimData?.target
       const targetDid: string = typeof target === "string" ? target : target.did
-      const hasTarget = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
-      elements.push(<li key="cddId">CDD id: <input defaultValue={claim.cddId} placeholder="123"
-        onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />&nbsp;
+      const hasTarget: boolean = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
+      elements.push(<li key="cddId">CDD id:
+        <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />&nbsp;
         {
           (() => {
             if (typeof target === "undefined" || isClaimData(claimData)) return ""
@@ -576,25 +394,21 @@ export default function Home() {
           })()
         }
       </li>)
-      elements.push(<li key="scopeId">Scope id: <input defaultValue={claim.scopeId} placeholder="123"
-        onChange={onRequirementChangedCreator([...location, "scopeId"])} disabled={!canManipulate} />
+      elements.push(<li key="scopeId">Scope id:&nbsp;
+        <input defaultValue={claim.scopeId} placeholder="123" onChange={onRequirementChangedCreator([...location, "scopeId"])} disabled={!canManipulate} />
       </li>)
     }
     if (claim.type === ClaimType.Jurisdiction) {
       elements.push(<li key="countryCode">Country code:&nbsp;
-        <select defaultValue={claim.code} onChange={onRequirementChangedCreator([...location, "code"])} disabled={!canManipulate}>{
-          (() => {
-            const selects = []
-            for (const country in CountryCode) selects.push(<option value={country} key={country}>{country}</option>)
-            return selects
-          })()
-        }</select>
+        <select defaultValue={claim.code} onChange={onRequirementChangedCreator([...location, "code"])} disabled={!canManipulate}>
+          {presentEnumOptions(CountryCode)}
+        </select>
       </li>)
     }
     return <ul>{elements}</ul>
   }
 
-  function presentClaims(claims: Claim[] | null, location: (string | number)[], canManipulate: boolean) {
+  function presentClaims(claims: Claim[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (typeof claims === "undefined" || claims === null || claims.length === 0) return <div>No claims</div>
     return <ul>{
       claims
@@ -603,10 +417,10 @@ export default function Home() {
     }</ul>
   }
 
-  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: (string | number)[], canManipulate: boolean) {
+  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: (string | number)[], canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>
-      <li key="cddId">CDD id:
+      <li key="cddId">CDD id:&nbsp;
         <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />
         &nbsp;
         <button className="submit load-cdd-id" onClick={() => fetchMyCddId([...location, "cddId"])} disabled={!canManipulate}>Load it</button>
@@ -617,30 +431,22 @@ export default function Home() {
     </ul>
   }
 
-  function presentCondition(condition: Condition, location: (string | number)[], canManipulate: boolean) {
-    const dummyTrustedClaimIssuer = { identity: null, trustedFor: [] }
-    const elements = [
-      <li key="target">
-        Target: <select defaultValue={condition.target} onChange={onRequirementChangedCreator([...location, "target"])} disabled={!canManipulate}>{
-          (() => {
-            const selects = []
-            for (const targetType in ConditionTarget) selects.push(<option value={targetType} key={targetType}>{targetType}</option>)
-            return selects
-          })()
-        }</select>
+  function presentCondition(condition: Condition, location: (string | number)[], canManipulate: boolean): JSX.Element {
+    const dummyTrustedClaimIssuer: TrustedClaimIssuer = { identity: null, trustedFor: [] }
+    const elements: JSX.Element[] = [
+      <li key="target">Target:
+        <select defaultValue={condition.target} onChange={onRequirementChangedCreator([...location, "target"])} disabled={!canManipulate}>
+          {presentEnumOptions(ConditionTarget)}
+        </select>
       </li>,
       <li key="trustedClaimIssuers">Trusted claim issuers:&nbsp;
-        <button className="submit add-trusted-claim-issuer" onClick={() => addToMyInfoArray([...location, "trustedClaimIssuers"], dummyTrustedClaimIssuer)} disabled={!canManipulate}>Add trusted claim issuer</button>
+        <button className="submit add-trusted-claim-issuer" onClick={() => addToMyRequirementArray([...location, "trustedClaimIssuers"], dummyTrustedClaimIssuer)} disabled={!canManipulate}>Add trusted claim issuer</button>
         {presentTrustedClaimIssuers(condition.trustedClaimIssuers, [...location, "trustedClaimIssuers"], canManipulate)}
       </li>,
-      <li key="type">
-        Type: <select defaultValue={condition.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>{
-          (() => {
-            const selects = []
-            for (const conditionType in ConditionType) selects.push(<option value={conditionType} key={conditionType}>{conditionType}</option>)
-            return selects
-          })()
-        }</select>
+      <li key="type">Type:
+        <select defaultValue={condition.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
+          {presentEnumOptions(ConditionType)}
+        </select>
       </li>,
     ]
     if (isSingleClaimCondition(condition)) {
@@ -648,16 +454,11 @@ export default function Home() {
     } else if (isMultiClaimCondition(condition)) {
       elements.push(<li key="claims">Claims: {presentClaims(condition.claims, [...location, "claims"], canManipulate)}</li>)
     } else if (isIdentityCondition(condition)) {
-      elements.push(<li key="identity">
-        Identity: <input defaultValue={condition.identity?.did} placeholder="0x123"
+      elements.push(<li key="identity">Identity:&nbsp;
+        <input defaultValue={condition.identity?.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "identity"],
-            async (e) => {
-              const api = await getPolyWalletApi()
-              return api.getIdentity({ did: e.target.value })
-            })}
-          disabled={!canManipulate}
-        />
+            async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))} />
       </li>)
     } else if (isPrimaryIssuanceAgentCondition(condition)) { // Nothing to do
     } else {
@@ -666,20 +467,19 @@ export default function Home() {
     return <ul>{elements}</ul>
   }
 
-  function presentConditions(conditions: Condition[] | null, location: (string | number)[], canManipulate: boolean) {
+  function presentConditions(conditions: Condition[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (conditions === null || conditions.length === 0) return <div>No conditions</div>
     return <ul>{
       conditions
         .map((condition: Condition, conditionIndex: number) => presentCondition(condition, [...location, conditionIndex], canManipulate))
-        .map((presented, conditionIndex: number) => <li key={conditionIndex}>
-          Condition {conditionIndex}:&nbsp;
-          <button className="submit remove-condition" onClick={() => removeFromMyInfoArray([...location, conditionIndex])} disabled={!canManipulate}>Remove {conditionIndex}</button>
+        .map((presented: JSX.Element, conditionIndex: number) => <li key={conditionIndex}>Condition {conditionIndex}:&nbsp;
+          <button className="submit remove-condition" onClick={() => removeFromMyRequirementArray([...location, conditionIndex])} disabled={!canManipulate}>Remove {conditionIndex}</button>
           {presented}
         </li>)
     }</ul>
   }
 
-  function presentRequirement(requirement: Requirement, location: (string | number)[], canManipulate: boolean) {
+  function presentRequirement(requirement: Requirement, location: (string | number)[], canManipulate: boolean): JSX.Element {
     const dummyCondition: Condition = {
       target: null,
       type: ConditionType.IsPresent,
@@ -690,51 +490,36 @@ export default function Home() {
     return <ul>
       <li key="id">Id: {requirement.id}</li>
       <li key="conditions">Conditions:&nbsp;
-        <button className="submit add-condition" onClick={() => addToMyInfoArray([...location, "conditions"], dummyCondition)} disabled={!canManipulate}>Add condition</button>
+        <button className="submit add-condition" onClick={() => addToMyRequirementArray([...location, "conditions"], dummyCondition)} disabled={!canManipulate}>Add condition</button>
         {presentConditions(requirement.conditions, [...location, "conditions"], canManipulate)}
       </li>
     </ul>
   }
 
-  function presentRequirements(requirements: Requirement[] | null, location: (string | number)[], canManipulate: boolean) {
+  function presentRequirements(requirements: Requirement[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (typeof requirements === "undefined" || requirements === null || requirements.length === 0) return <div>No requirements</div>
     return <ul>{
       requirements
         .map((requirement: Requirement, requirementIndex: number) => presentRequirement(requirement, [...location, requirementIndex], canManipulate))
-        .map((presented, requirementIndex: number) => <li key={requirementIndex}>
-          Requirement {requirementIndex}:&nbsp;
-        <button className="submit remove-requirement" onClick={() => removeFromMyInfoArray([...location, requirementIndex])} disabled={!canManipulate}>Remove {requirementIndex}</button>
+        .map((presented: JSX.Element, requirementIndex: number) => <li key={requirementIndex}>Requirement {requirementIndex}:&nbsp;
+          <button className="submit remove-requirement" onClick={() => removeFromMyRequirementArray([...location, requirementIndex])} disabled={!canManipulate}>Remove {requirementIndex}</button>
           {presented}
         </li>)
     }</ul>
   }
 
-  function addToMyInfoArray(containerLocation: (string | number)[], dummy: any): void {
-    setMyInfo((prevInfo) => {
-      const container = findValue(prevInfo, containerLocation) || []
-      if (!Array.isArray(container)) throw new Error("Only works with arrays")
-      const updatedContainer = [...container, dummy]
-      return returnUpdated(prevInfo, containerLocation, updatedContainer)
-    })
+  function addToMyRequirementArray(containerLocation: (string | number)[], dummy: any): void {
+    setMyInfo(returnAddedArrayCreator(containerLocation, dummy))
+    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
   }
 
-  function removeFromMyInfoArray(location: (string | number)[]): void {
-    setMyInfo((prevInfo) => {
-      const containerPath = location.slice(0, -1)
-      const container = findValue(prevInfo, containerPath)
-      if (!Array.isArray(container)) throw new Error("Only works with arrays")
-      const lastPathBit = location[location.length - 1]
-      if (typeof lastPathBit !== "number") throw new Error("Only works with an array index")
-      const updatedContainer = [
-        ...container.slice(0, lastPathBit),
-        ...container.slice(lastPathBit + 1),
-      ]
-      return returnUpdated(prevInfo, containerPath, updatedContainer)
-    })
+  function removeFromMyRequirementArray(containerLocation: (string | number)[]): void {
+    setMyInfo(returnRemovedArrayCreator(containerLocation))
+    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
   }
 
   async function saveRequirements(): Promise<SecurityToken> {
-    const updatedToken = await (await myInfo.token.current.compliance.requirements.set({
+    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.set({
       requirements: myInfo.requirements.current.map((requirement: Requirement) => requirement.conditions)
     })).run()
     setToken(updatedToken)
@@ -762,7 +547,7 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], result.complies))
   }
 
-  async function loadAuthorisations() {
+  async function loadAuthorisations(): Promise<void> {
     const api: Polymesh = await getPolyWalletApi();
     setMyInfo(returnUpdatedCreator(["myAddress"], api.getAccount()))
     setMyInfo(returnUpdatedCreator(["myDid"], (await api.getCurrentIdentity()).did))
@@ -777,7 +562,7 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["authorisations", "current"], authorisations))
   }
 
-  function presentPermissions(permissions: Permissions, location: (string | number)[]) {
+  function presentPermissions(permissions: Permissions, location: (string | number)[]): JSX.Element {
     return <ul>
       <li key="portfolios">Portfolios:&nbsp;{presentPorfolios(permissions.portfolios, [...location, "portfolios"])}</li>
       <li key="tokens">Tokens:&nbsp;{
@@ -790,15 +575,15 @@ export default function Home() {
     </ul>
   }
 
-  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: (string | number)[]) {
+  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: (string | number)[]): JSX.Element {
     return <ul>
       <li key="owner">Owner:&nbsp;{portfolio.owner.did === myInfo.myDid ? "me" : presentLongHex(portfolio.owner.did)}</li>
       <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null"}</li>
     </ul>
   }
 
-  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: (string | number)[]) {
-    if (portfolios === null) return "There are no portfolios"
+  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: (string | number)[]): JSX.Element {
+    if (portfolios === null) return <div>"There are no portfolios"</div>
     return <ul>{
       portfolios
         .map((portfolio: DefaultPortfolio | NumberedPortfolio, portfolioIndex: number) => presentPorfolio(portfolio, [...location, portfolioIndex]))
@@ -808,8 +593,8 @@ export default function Home() {
     }</ul>
   }
 
-  function presentAuthorisation(authorisation: Authorization, location: (string | number)[]) {
-    const elements = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
+  function presentAuthorisation(authorisation: Authorization, location: (string | number)[]): JSX.Element {
+    const elements: JSX.Element[] = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
     if (authorisation.type === AuthorizationType.NoData) { // Add nothing
     } else if (authorisation.type === AuthorizationType.PortfolioCustody) {
       elements.push(<li key="value">Value:&nbsp;{presentPorfolio(authorisation.value, [...location, "value"])}</li>)
@@ -821,7 +606,7 @@ export default function Home() {
     return <ul>{elements}</ul>
   }
 
-  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: (string | number)[]) {
+  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: (string | number)[]): JSX.Element {
     const amIssuer: boolean = authorisationRequest.issuer.did === myInfo.myDid
     const target: string = authorisationRequest.target instanceof Identity ? authorisationRequest.target.did : authorisationRequest.target.address
     const amTarget: boolean = target === myInfo.myDid || target === myInfo.myAddress
@@ -833,21 +618,20 @@ export default function Home() {
         &nbsp;
         <button className="submit reject-auth-request" onClick={() => rejectRequest(location)} disabled={!amIssuer && !amTarget}>Reject</button>
       </li>
-      <li key="issuer">Issuer: {amIssuer ? "me" : presentLongHex(authorisationRequest.issuer.did)}</li>
-      <li key="target">Target: {amTarget ? "me" : presentLongHex(target)}</li>
-      <li key="expiry">Expiry: {authorisationRequest.expiry?.toISOString()}</li>
-      <li key="data">Data: {presentAuthorisation(authorisationRequest.data, [...location, "data"])}</li>
+      <li key="issuer">Issuer:&nbsp;{amIssuer ? "me" : presentLongHex(authorisationRequest.issuer.did)}</li>
+      <li key="target">Target:&nbsp;{amTarget ? "me" : presentLongHex(target)}</li>
+      <li key="expiry">Expiry:&nbsp;{authorisationRequest.expiry?.toISOString()}</li>
+      <li key="data">Data:&nbsp;{presentAuthorisation(authorisationRequest.data, [...location, "data"])}</li>
     </ul>
   }
 
-  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: (string | number)[]) {
+  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: (string | number)[]): JSX.Element {
     if (typeof authorisationRequests === "undefined" || authorisationRequests === null || authorisationRequests.length === 0) return <div>No authorisations</div>
     return <ul>{
       authorisationRequests
         .map((request: AuthorizationRequest, requestIndex: number) => presentAuthorisationRequest(request, [...location, requestIndex]))
         .map((presented, requestIndex: number) => <li key={requestIndex}>
-          Authorisation {requestIndex}:&nbsp;
-          {presented}
+          Authorisation {requestIndex}:&nbsp;{presented}
         </li>)
     }</ul>
   }
@@ -907,42 +691,35 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
   }
 
-  function presentClaimData(claimData: ClaimData<Claim>, location: (string | number)[], canManipulate: boolean) {
+  function presentClaimData(claimData: ClaimData<Claim>, location: (string | number)[], canManipulate: boolean): JSX.Element {
     canManipulate = claimData.issuer.did === myInfo.myDid
     return <ul>
       <li key="target">Target:&nbsp;
-        <input defaultValue={claimData.target.did} placeholder="0x123"
+        <input defaultValue={claimData.target.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "target"],
-            async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))}
-          disabled={!canManipulate}
-        />
+            async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
       </li>
       <li key="issuer">Issuer:&nbsp;
-        <input defaultValue={claimData.issuer.did} placeholder="0x123"
+        <input defaultValue={claimData.issuer.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "issuer"],
-            async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))}
-          disabled={!canManipulate}
-        />
+            async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
       </li>
       <li key="issuedAt">Issued at: {claimData.issuedAt.toISOString()}</li>
       <li key="expiry">Expiry:&nbsp;
-        <input defaultValue={claimData.expiry?.toISOString() || ""} placeholder="2020-12-01 "
+        <input defaultValue={claimData.expiry?.toISOString() || ""} placeholder="2020-12-01" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "expiry"],
-            async (e) => new Date(e.target.value))}
-          disabled={!canManipulate}
-        />
+            async (e) => Promise.resolve(new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
-        
         {presentClaim(claimData.claim, [...location, "claim"], canManipulate)}
       </li>
     </ul>
   }
 
-  function presentClaimTarget(claimTarget: ClaimTarget, location: (string | number)[], canManipulate: boolean) {
+  function presentClaimTarget(claimTarget: ClaimTarget, location: (string | number)[], canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="target">Target:&nbsp;
         <input defaultValue={typeof claimTarget.target === "string" ? claimTarget.target : claimTarget.target.did} placeholder="0x123"
@@ -951,12 +728,10 @@ export default function Home() {
         />
       </li>
       <li key="expiry">Expiry:&nbsp;
-        <input defaultValue={claimTarget.expiry?.toISOString() || null} placeholder="2020-12-01 "
+        <input defaultValue={claimTarget.expiry?.toISOString() || null} placeholder="2020-12-01" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "expiry"],
-            async (e) => e.target.value === "" ? null : new Date(e.target.value))}
-          disabled={!canManipulate}
-        />
+            async (e) => Promise.resolve(e.target.value === "" ? null : new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
         {presentClaim(claimTarget.claim, [...location, "claim"], canManipulate)}
@@ -964,7 +739,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentClaimDatas(claimDatas: ClaimData<Claim>[] | null, location: (string | number)[], canManipulate: boolean) {
+  function presentClaimDatas(claimDatas: ClaimData<Claim>[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
     if (typeof claimDatas === "undefined" || claimDatas === null || claimDatas.length === 0) return <div>No attestations</div>
     return <ul>{
       claimDatas
@@ -979,7 +754,7 @@ export default function Home() {
     }</ul>
   }
 
-  async function revokeAttestation(location: (string | number)[]) {
+  async function revokeAttestation(location: (string | number)[]): Promise<void> {
     const toRevoke = findValue(myInfo, location)
     const api: Polymesh = await getPolyWalletApi()
     await (await api.claims.revokeClaims({
@@ -987,7 +762,7 @@ export default function Home() {
     })).run()
   }
 
-  async function addAttestation(location: (string | number)[]) {
+  async function addAttestation(location: (string | number)[]): Promise<void> {
     const toAdd: ClaimTarget = findValue(myInfo, location)
     const api: Polymesh = await getPolyWalletApi()
     setStatus("Adding attestation")
@@ -995,7 +770,7 @@ export default function Home() {
     setStatus("Attestation added")
   }
 
-  async function addUniquenessAttestation(location: (string | number)[]) {
+  async function addUniquenessAttestation(location: (string | number)[]): Promise<void> {
     const toAdd: AddInvestorUniquenessClaimParams = Object.assign({}, findValue(myInfo, location))
     const api: Polymesh = await getPolyWalletApi()
     const currentIdentity: CurrentIdentity = await api.getCurrentIdentity()
@@ -1077,7 +852,7 @@ export default function Home() {
     await loadPortfolios(portfolio.owner)
   }
 
-  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: (string | number)[], canManipulate: boolean) {
+  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
     const isCustodied: boolean = portfolio.owner !== portfolio.custodian
     const isMine: boolean = portfolio.owner === myInfo.myDid
     const canSetCustody: boolean = canManipulate && isMine && !isCustodied
@@ -1095,12 +870,12 @@ export default function Home() {
     </ul>
   }
 
-  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean) {
-    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return "There are no portfolios"
+  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return <div>"There are no portfolios"</div>
     return <ul>{
       portfolios
         .map((portfolio: PortfolioInfoJson, portfolioIndex: number) => presentPorfolioJson(portfolio, [...location, portfolioIndex], canManipulate))
-        .map((presented, portfolioIndex: number) => <li key={portfolioIndex}>
+        .map((presented: JSX.Element, portfolioIndex: number) => <li key={portfolioIndex}>
           Portfolio {portfolioIndex}:&nbsp;{presented}
         </li>)
     }</ul>
@@ -1149,7 +924,6 @@ export default function Home() {
   }
 
   async function createScheduledCheckpoint(): Promise<CheckpointSchedule> {
-    console.log(myInfo.checkpoints.scheduledToAdd)
     const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.createSchedule(myInfo.checkpoints.scheduledToAdd)).run()
     await loadCheckpointSchedules(myInfo.token.current)
     return schedule
@@ -1181,12 +955,12 @@ export default function Home() {
     }
   }
 
-  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: (string | number)[], canManipulate: boolean) {
+  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
     return <ul>
-      <li key="id">Id: {checkpointInfo.checkpoint.id.toString(10)}</li>
-      <li key="ticker">Ticker: {checkpointInfo.checkpoint.ticker}</li>
-      <li key="totalSupply">Total supply: {checkpointInfo.totalSupply.toString(10)}</li>
-      <li key="createdAt">Created at: {checkpointInfo.createdAt.toISOString()}</li>
+      <li key="id">Id:&nbsp;{checkpointInfo.checkpoint.id.toString(10)}</li>
+      <li key="ticker">Ticker:&nbsp;{checkpointInfo.checkpoint.ticker}</li>
+      <li key="totalSupply">Total supply:&nbsp;{checkpointInfo.totalSupply.toString(10)}</li>
+      <li key="createdAt">Created at:&nbsp;{checkpointInfo.createdAt.toISOString()}</li>
       <li key="balanceOf">Balance of:&nbsp;
         <input defaultValue={checkpointInfo.whoseBalance} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "whoseBalance"])}/>
         &nbsp;
@@ -1197,33 +971,33 @@ export default function Home() {
     </ul>
   }
 
-  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: (string | number)[], canManipulate: boolean) {
-    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return "There are no checkpoints"
+  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return <div>"There are no checkpoints"</div>
     return <ul>{
       checkpoints
         .map((checkpoint: CheckpointInfoJson, checkpointIndex: number) => presentCheckpoint(checkpoint, [...location, checkpointIndex], canManipulate))
-        .map((presented, checkpointIndex: number) => <li key={checkpointIndex}>
+        .map((presented: JSX.Element, checkpointIndex: number) => <li key={checkpointIndex}>
           Checkpoint {checkpointIndex}:&nbsp;{presented}
         </li>)
     }</ul>
   }
 
-  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean) {
+  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
     return <ul>
-      <li key="exists">Exists: {scheduleInfo.exists}</li>
-      <li key="remainingCheckpoints">Remaining checkpoints: {scheduleInfo.remainingCheckpoints.toString(10)}</li>
-      <li key="nextCheckpointDate">Next checkpoint date: {scheduleInfo.nextCheckpointDate.toISOString()}</li>
-      <li key="createdCheckpoints">Created checkpoints: {presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>
+      <li key="exists">Exists:&nbsp;{scheduleInfo.exists}</li>
+      <li key="remainingCheckpoints">Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}</li>
+      <li key="nextCheckpointDate">Next checkpoint date:&nbsp;{scheduleInfo.nextCheckpointDate.toISOString()}</li>
+      <li key="createdCheckpoints">Created checkpoints:&nbsp;{presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>
     </ul>
   }
 
-  function presentCheckpointSchedules(schedules: CheckpointScheduleInfoJson[], location: (string | number)[], canManipulate: boolean) {
-    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return "There are no checkpoint schedules"
+  function presentCheckpointSchedules(schedules: CheckpointScheduleInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>"There are no checkpoint schedules"</div>
     return <ul>{
       schedules
         .map((schedule: CheckpointScheduleInfoJson, scheduleIndex: number) => presentCheckpointSchedule(schedule, [...location, scheduleIndex], canManipulate))
-        .map((presented, scheduleIndex: number) => <li key={scheduleIndex}>
-          Checkpoint schedule {scheduleIndex}:&nbsp;{presented}
+        .map((presented: JSX.Element, scheduleIndex: number) => <li key={scheduleIndex}>
+          Checkpoint schedule&nbsp;{scheduleIndex}:&nbsp;{presented}
         </li>)
     }</ul>
   }
@@ -1255,11 +1029,9 @@ export default function Home() {
             <input name="ticker" id="ticker" type="text" placeholder="ACME" defaultValue={myInfo.ticker} onChange={onTickerChanged} />
           </div>
           <div>
-            <select name="myTickers" defaultValue={myInfo.token.detailsJson.assetType} onChange={onValueChangedCreator(["ticker"])}>
+            <select name="myTickers" defaultValue={myInfo.token.details?.assetType} onChange={onValueChangedCreator(["ticker"])}>
               <option value="" key="Select 1" disabled={true}>Select 1</option>
-              {
-                myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)
-              }
+              {myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)}
             </select>
             &nbsp;
             <button className="submit my-tickers" onClick={loadYourTickers}>Load my tickers</button>
@@ -1281,16 +1053,16 @@ export default function Home() {
             (() => {
               if (myInfo.reservation.current === null) return "There is no reservation"
               else return <ul>
-                <li key="owner">Owned by: {myInfo.reservation.detailsJson.owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
-                <li key="status">With status: {myInfo.reservation.detailsJson.status}</li>
-                <li key="expiry">Valid until: {myInfo.reservation.detailsJson.expiryDate}</li>
+                <li key="owner">Owned by: {myInfo.reservation.details?.owner?.did === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.details?.owner?.did)}</li>
+                <li key="status">With status: {myInfo.reservation.details?.status}</li>
+                <li key="expiry">Valid until: {myInfo.reservation.details?.expiryDate?.toISOString()}</li>
               </ul>
             })()
           }</div>
 
           <div>{
             (() => {
-              const canCreate: boolean = myInfo.reservation.current !== null && myInfo.reservation.detailsJson.status === "Reserved" && myInfo.reservation.detailsJson.owner === myInfo.myDid
+              const canCreate: boolean = myInfo.reservation.current !== null && myInfo.reservation.details?.status === TickerReservationStatus.Reserved && myInfo.reservation.details?.owner?.did === myInfo.myDid
               return <div>
                 <div className="submit">
                   <button className="submit transfer-reservation" onClick={transferReservationOwnership} disabled={!canCreate}>Transfer ownership</button>
@@ -1300,29 +1072,23 @@ export default function Home() {
                     <label htmlFor="token-name">
                       <span className={styles.hasTitle} title="Long name of your security token">Name</span>
                     </label>
-                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.detailsJson.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "name"])} />
+                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.details?.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "name"])} />
                   </div>
                   <div>
                     <label htmlFor="token-divisible">
                       <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
                     </label>
-                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.detailsJson.divisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "divisible"], checkboxProcessor)} />
+                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "divisible"], checkboxProcessor)} />
                   </div>
                   <div>
                     <label htmlFor="token-assetType">
                       <span className={styles.hasTitle} title="Pick one from the list or type what you want">Asset Type</span>
                     </label>
-                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])} />
+                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])} />
                     &nbsp;
-                    <select name="known-assetTypes" defaultValue={myInfo.token.detailsJson.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])}>{
-                      (() => {
-                        const created = []
-                        for (const knownType in KnownTokenType) {
-                          created.push(<option value={knownType} key={knownType}>{knownType}</option>)
-                        }
-                        return created
-                      })()
-                    }</select>
+                    <select name="known-assetTypes" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])}>
+                      {presentEnumOptions(KnownTokenType)}
+                    </select>
                   </div>
                   <div className="submit">
                     <button className="submit create-token" onClick={createSecurityToken} disabled={!canCreate}>Create token</button>
@@ -1339,20 +1105,20 @@ export default function Home() {
 
           <div>{
             (() => {
-              const owner: string = myInfo.token.detailsJson.owner
-              const pia: string = myInfo.token.detailsJson.primaryIssuanceAgent
+              const owner: string = myInfo.token.details?.owner?.did
+              const pia: string = myInfo.token.details?.primaryIssuanceAgent?.did
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
-                <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.detailsJson.owner)}</li>
-                <li key="assetType">As asset type: {myInfo.token.detailsJson.assetType}</li>
-                <li key="divisible">{myInfo.token.detailsJson.divisible ? "" : "not"} divisible</li>
+                <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.details?.owner?.did)}</li>
+                <li key="assetType">As asset type: {myInfo.token.details?.assetType}</li>
+                <li key="divisible">{myInfo.token.details?.isDivisible ? "" : "not"} divisible</li>
                 <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate}</li>
                 <li key="pia">
                   With PIA: {pia === myInfo.myDid ? "me" : presentLongHex(pia)}
                   &nbsp;
                   <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={owner !== myInfo.myDid || owner === pia}>Remove</button>
                 </li>
-                <li key="totalSupply">And total supply of: {myInfo.token.detailsJson.totalSupply}</li>
+                <li key="totalSupply">And total supply of: {myInfo.token.details?.totalSupply?.toString(10)}</li>
               </ul>
             })()
           }</div>
@@ -1361,7 +1127,7 @@ export default function Home() {
             <legend>New owner</legend>
             {
               (() => {
-                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid
                 return <div className="submit">
                   Target:&nbsp;
                   <input name="token-ownership-target" type="text" placeholder="0x1234" defaultValue={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "ownershipTarget"])} />
@@ -1376,7 +1142,7 @@ export default function Home() {
             <legend>New PIA</legend>
             {
               (() => {
-                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid
+                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid
                 const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
                 return <div className="submit">
                   Target:&nbsp;
@@ -1402,8 +1168,8 @@ export default function Home() {
             </div>
             {
               (() => {
-                const isPia: boolean = myInfo.token?.detailsJson?.primaryIssuanceAgent === myInfo.myDid
-                const isOwner: boolean = myInfo.token?.detailsJson?.owner === myInfo.myDid
+                const isPia: boolean = myInfo.token?.details?.primaryIssuanceAgent?.did === myInfo.myDid
+                const isOwner: boolean = myInfo.token?.details?.owner?.did === myInfo.myDid
                 const canManipulate: boolean = isPia || isOwner
                 const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
                 return <div className="submit">
@@ -1427,14 +1193,14 @@ export default function Home() {
           <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
 
           <div className="submit">
-            <button className="submit add-requirement" onClick={() => addToMyInfoArray(["requirements", "current"], { id: Math.round(Math.random() * 1000), conditions: [] })} disabled={!myInfo.requirements.canManipulate}>Add requirement</button>
+            <button className="submit add-requirement" onClick={() => addToMyRequirementArray(["requirements", "current"], { id: Math.round(Math.random() * 1000), conditions: [] })} disabled={!myInfo.requirements.canManipulate}>Add requirement</button>
           </div>
 
           <div>{presentRequirements(myInfo.requirements.current, ["requirements", "current"], myInfo.requirements.canManipulate)}</div>
 
           <div>{
             (() => {
-              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.detailsJson.owner === myInfo.myDid && myInfo.requirements.modified
+              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid && myInfo.requirements.modified
               return <div className="submit">
                 <button className="submit save-requirements" onClick={saveRequirements} disabled={!canManipulate}>Save the whole list of requirements</button>
               </div>
@@ -1492,15 +1258,11 @@ export default function Home() {
             <input defaultValue={myInfo.attestations.otherTarget} placeholder="0x123" onChange={onRequirementChangedCreator(["attestations", "otherTarget"])}/>
           </div>
 
-          <div>{
-            presentClaimDatas(myInfo.attestations.current, ["attestations", "current"], true)
-          }</div>
+          <div>{presentClaimDatas(myInfo.attestations.current, ["attestations", "current"], true)}</div>
 
           <div className={styles.card}>
             <div>Attestation to add:</div>
-            <div>{
-              presentClaimTarget(myInfo.attestations.toAdd, ["attestations", "toAdd"], true)
-            }</div>
+            <div>{presentClaimTarget(myInfo.attestations.toAdd, ["attestations", "toAdd"], true)}</div>
             <div className="submit">
               <button className="submit add-attestation" onClick={() => addAttestation(["attestations", "toAdd"])}>Add KYC attestation</button>
             </div>
@@ -1509,9 +1271,9 @@ export default function Home() {
 
           <div className={styles.card}>
             <div>Investor uniqueness to add to yourself:</div>
-            <div>{
-              presentAddInvestorUniquenessClaimParams(myInfo.attestations.uniquenessToAdd, ["attestations", "uniquenessToAdd"], true)
-            }</div>
+
+            <div>{presentAddInvestorUniquenessClaimParams(myInfo.attestations.uniquenessToAdd, ["attestations", "uniquenessToAdd"], true)}</div>
+
             <div className="submit">
               <button className="submit add-unique-attestation" onClick={() => addUniquenessAttestation(["attestations", "uniquenessToAdd"])}>Add uniqueness attestation</button>
             </div>
@@ -1543,7 +1305,7 @@ export default function Home() {
 
           <div className="submit">{
               (() => {
-                const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.detailsJson?.owner === myInfo.myDid
+                const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
                 return <div className="submit">
                   <button className="submit create-checkpoint" onClick={createCheckpoint} disabled={!canManipulate}>Create 1 now</button>
                 </div>
@@ -1554,7 +1316,7 @@ export default function Home() {
 
           <div className={styles.card}>{
             (() => {
-              const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.detailsJson?.owner === myInfo.myDid
+              const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
               return <div>
                 Create new:
                 <ul>
@@ -1571,13 +1333,9 @@ export default function Home() {
                   <li key="periodUnit">
                     Period unit:&nbsp;
                     <select defaultValue={myInfo.checkpoints.scheduledToAdd.period?.unit} disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "unit"])}>{
-                      (() => {
-                        const selects = []
-                        for (const calendarUnit in CalendarUnit) selects.push(<option value={calendarUnit} key={calendarUnit}>{calendarUnit}</option>)
-                        return selects
-                      })()
-                    }</select>
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "unit"])}>
+                        {presentEnumOptions(CalendarUnit)}
+                    </select>
                   </li>
                   <li key="repetitions">
                     Repetitions:&nbsp;
