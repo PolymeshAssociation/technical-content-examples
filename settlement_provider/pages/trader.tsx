@@ -232,10 +232,6 @@ export default function Home() {
     await changeMyOrder(e.target.name, e.target.value)
   }
 
-  function onMyOrderNumberChanged(e: React.ChangeEvent<HTMLInputElement>): void {
-    changeMyOrder(e.target.name, parseInt(e.target.value))
-  }
-
   function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
@@ -541,7 +537,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-quantity">The quantity</label>
-              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo.order.quantity} onChange={onMyOrderNumberChanged}></input>
+              <input name="quantity" id="order-quantity" type="number" placeholder="12345" value={myInfo.order.quantity} onChange={onMyOrderChanged}></input>
             </div>
 
             <div>
@@ -551,7 +547,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="order-price">At the USD price of</label>
-              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo.order.price} onChange={onMyOrderNumberChanged}></input>
+              <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo.order.price} onChange={onMyOrderChanged}></input>
             </div>
 
             <div>
