@@ -158,6 +158,7 @@ export default function Home() {
     ])
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching your jurisdiction claims from EzKyc")
     const issuedClaims: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({
       targets: [me.did],
       trustedClaimIssuers: [ezKycDid],

@@ -3,7 +3,12 @@ import { CustomerInfo, ICustomerInfo, InvalidCountryCodeError, InvalidPolymeshDi
 import { ICustomerDb, UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 import ClaimForwarderFactory from "../../../src/claimForwarderFactory"
-import { ClaimsAddedResult, IClaimForwarder, NonExistentCustomerPolymeshIdError } from "../../../src/claimForwarder"
+import {
+    ClaimsAddedResult,
+    ClaimsRevokedResult,
+    IClaimForwarder,
+    NonExistentCustomerPolymeshIdError,
+} from "../../../src/claimForwarder"
 import { TooManyClaimsCustomerError } from "../../../src/claimForwarderPoly"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
@@ -19,7 +24,7 @@ async function setCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult |
     let toReturn: ClaimsAddedResult | null = {
         status: true,
     }
-    if (customerInfo.polymeshDid !== null) {
+    if (customerInfo.polymeshDid !== null && customerInfo.polymeshDid !== "") {
         const claimForwarder: IClaimForwarder = await ClaimForwarderFactory()
         if (customerInfo.valid) {
             toReturn = await claimForwarder.addJurisdictionClaim(customerInfo)
@@ -31,20 +36,22 @@ async function setCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult |
     return toReturn
 }
 
-async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult | null> {
+async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResult | ClaimsRevokedResult | null> {
     const id: string = <string>req.query.id
     const customerDb: ICustomerDb = await customerDbFactory()
     const customerInfo: ICustomerInfo = await customerDb.getCustomerInfoById(id)
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
-    let toReturn: ClaimsAddedResult = {
+    let toReturn: ClaimsAddedResult | ClaimsRevokedResult = {
         status: true
     }
     if (customerInfo.polymeshDid !== null) {
         const claimForwarder: IClaimForwarder = await ClaimForwarderFactory()
         if (customerInfo.valid) {
             toReturn = await claimForwarder.addJurisdictionClaim(customerInfo)
+        } else if (!customerInfo.valid) {
+            toReturn = await claimForwarder.revokeJurisdictionClaim(customerInfo)
         } else if (!(await claimForwarder.hasValidIdentity(customerInfo))) {
             throw new NonExistentCustomerPolymeshIdError(customerInfo)
         }

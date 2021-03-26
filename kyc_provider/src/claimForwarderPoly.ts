@@ -1,14 +1,28 @@
 import { ICustomerInfo } from "./customerInfo"
 import {
+    ClaimForwarderError,
+    ClaimsAddedResult,
+    ClaimsRevokedResult,
     IClaimForwarder,
-    ClaimsAddedResult, ClaimsRevokedResult,
-    ClaimForwarderError, NonExistentKycIdentityError,
-    NoClaimForCustomerError, InvalidCustomerError, IncompleteCustomerError,
+    IncompleteCustomerError,
+    JurisdictionClaim,
+    NoClaimForCustomerError,
     NonExistentCustomerPolymeshIdError,
+    NonExistentKycIdentityError,
 } from "./claimForwarder"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { Identity, ScopeType, ClaimType, ClaimData, ResultSet, IdentityWithClaims } from "@polymathnetwork/polymesh-sdk/types"
-import { CurrentIdentity, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
+import {
+    ClaimData,
+    ClaimType,
+    Identity,
+    IdentityWithClaims,
+    ResultSet,
+    ScopeType,
+} from "@polymathnetwork/polymesh-sdk/types"
+import {
+    CurrentIdentity,
+    TransactionQueue,
+} from "@polymathnetwork/polymesh-sdk/internal"
 
 export interface ClaimsAddedResultPoly extends ClaimsAddedResult {
     blockHashes: string[]
@@ -44,10 +58,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             this.api.isIdentityValid({ "identity": customer.polymeshDid })
     }
 
-    async getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData> {
-        if (!customer.valid) {
-            throw new InvalidCustomerError(customer)
-        }
+    async getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData<JurisdictionClaim>> {
         if (customer.polymeshDid === null) {
             throw new IncompleteCustomerError(customer)
         }
@@ -75,18 +86,22 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         } else if (claims.length > 1) {
             throw new TooManyClaimsCustomerError(customer, claims.length)
         }
-        return claims[0]
+        return claims[0] as ClaimData<JurisdictionClaim>
     }
 
     async addJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsAddedResultPoly> {
-        let claim: ClaimData
+        let claim: ClaimData<JurisdictionClaim>
         try {
             claim = await this.getJurisdictionClaim(customer)
-            // Already has a claim, no need to add.
-            return {
-                status: true,
-                blockHashes: [],
+            if (claim.claim.code === customer.country) {
+                // Already has a correct claim, no need to add.
+                return {
+                    status: true,
+                    blockHashes: [],
+                }
             }
+            // Let's revoke the claim with the wrong jurisdiction
+            await this.revokeJurisdictionClaim(customer)
         } catch (e) {
             if (!(e instanceof NoClaimForCustomerError)) {
                 // Need to revoke before adding
@@ -114,7 +129,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
     }
 
     async revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResult> {
-        let claim: ClaimData
+        let claim: ClaimData<JurisdictionClaim>
         try {
             claim = await this.getJurisdictionClaim(customer)
         } catch (e) {
@@ -126,7 +141,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             }
             throw e
         }
-        const revokeQueue = await this.api.claims.revokeClaims({
+        const revokeQueue: TransactionQueue<void> = await this.api.claims.revokeClaims({
             claims: [claim],
         })
         await revokeQueue.run()

@@ -1,12 +1,24 @@
-import { Identity, ClaimData } from "@polymathnetwork/polymesh-sdk/types"
-import { ICustomerInfo } from "./customerInfo"
+import {
+    Identity,
+    ClaimData,
+    ClaimType,
+    CountryCode,
+    Scope,
+} from "@polymathnetwork/polymesh-sdk/types"
+import { ICustomerInfo, } from "./customerInfo"
 
 export interface IClaimForwarder {
     getServiceProviderIdentity(): Promise<Identity>
     hasValidIdentity(customer: ICustomerInfo): Promise<boolean>
-    getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData>
+    getJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimData<JurisdictionClaim>>
     addJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsAddedResult>
     revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResult>
+}
+
+export type JurisdictionClaim = {
+    type: ClaimType.Jurisdiction;
+    code: CountryCode;
+    scope: Scope;
 }
 
 export interface ClaimsAddedResult {
