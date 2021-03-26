@@ -11,7 +11,7 @@ export interface ICustomerInfo {
     passport: string
     valid: boolean
     toJSON(): CustomerJson
-    patch(extra: CustomerJson): void
+    patch(extra: Partial<CustomerJson>): void
 }
 
 export class CustomerInfo implements ICustomerInfo {
@@ -40,7 +40,7 @@ export class CustomerInfo implements ICustomerInfo {
         }
     }
 
-    patch(extra: CustomerJson): void {
+    patch(extra: Partial<CustomerJson>): void {
         this.name = typeof extra.name !== "undefined" ? extra.name : this.name
         this.country = typeof extra.country !== "undefined" ? extra.country : this.country
         this.passport = typeof extra.passport !== "undefined" ? extra.passport : this.passport

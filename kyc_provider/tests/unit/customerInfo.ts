@@ -1,6 +1,6 @@
 import { describe } from "mocha"
 import { expect } from "chai"
-import { CustomerInfo, CustomerJson } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson, } from "../../src/customerInfo"
 
 describe("CustomerInfo Unit Tests", () => {
 
@@ -54,8 +54,8 @@ describe("CustomerInfo Unit Tests", () => {
         }
         const info = new CustomerInfo(bareInfo)
 
-        info.patch(<CustomerJson>{
-            name: "Jane Doe"
+        info.patch({
+            name: "Jane Doe",
         })
 
         expect(info.toJSON()).to.deep.equal({
@@ -73,7 +73,7 @@ describe("CustomerInfo Unit Tests", () => {
         }
         const info = new CustomerInfo(bareInfo)
 
-        info.patch(<CustomerJson>{
+        info.patch({
             name: "Jane Doe",
             valid: false,
         })

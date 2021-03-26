@@ -85,7 +85,9 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             await handleKycCustomerId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                status: "ok",
+            })
             expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal(bareInfo)
         })
 
@@ -106,7 +108,9 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             await handleKycCustomerId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                status: "ok",
+            })
             expect((await customerDb.getCustomerInfoById("4")).toJSON()).to.deep.equal({
                 ...bareInfo,
                 valid: false,
@@ -158,7 +162,9 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             await handleKycCustomerId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
-            expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
+            expect(JSON.parse(res._getData())).to.deep.equal({
+                status: "ok",
+            })
             expect((await customerDb.getCustomerInfoById("3")).toJSON()).to.deep.equal({
                 ...bareInfo,
                 passport: "12346",

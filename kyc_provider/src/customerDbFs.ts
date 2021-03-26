@@ -1,6 +1,6 @@
 import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
-import { ICustomerInfo, CustomerInfo, CustomerJson } from "./customerInfo"
+import { ICustomerInfo, CustomerInfo, CustomerJson, } from "./customerInfo"
 import { ICustomerDb, UnknownCustomerError } from "./customerDb"
 
 const exists = promisify(existsAsync)

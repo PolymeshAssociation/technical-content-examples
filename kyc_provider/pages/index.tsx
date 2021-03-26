@@ -142,7 +142,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid}/>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div>
