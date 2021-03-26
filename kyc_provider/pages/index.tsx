@@ -1,20 +1,20 @@
 import Head from "next/head"
-import getConfig from "next/config"
 import React, { useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
 import {
-  Claim,
   ClaimData,
   ClaimType,
+  CountryCode,
   CurrentIdentity,
-  Identity,
   IdentityWithClaims,
   ResultSet,
+  ScopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
-import { CountryInfo, getCountryList } from "../src/types"
+import { Polymesh } from '@polymathnetwork/polymesh-sdk'
+import { CountryInfo, getCountryList, } from "../src/types"
 import { CustomerJson } from "../src/customerInfo"
+import { getPolyWalletApi } from "../src/ui-helpers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -28,6 +28,7 @@ export default function Home() {
       polymeshDid: "",
     } as CustomerJson,
     modified: false,
+    myAttestations: [] as IdentityWithClaims[],
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -42,65 +43,10 @@ export default function Home() {
     if (response.status != 200) {
       setStatus("Something went wrong when getting the EzKyc information")
       console.log(response)
-      throw new Error("Failed to get EzKyc did");
+      throw new Error("Failed to get EzKyc did")
     }
     setStatus("Received EzKyc did")
     return (await response.json())["did"]
-  }
-
-  async function getPolyWalletApi(): Promise<Polymesh> {
-    setStatus("Getting your Polymesh Wallet")
-    if (typeof (window || {})["api"] !== "undefined") return (window || {})["api"]
-    // Move to top of the file when compilation error no longer present.
-    const {
-      web3Accounts,
-      web3Enable,
-      web3FromAddress,
-      web3ListRpcProviders,
-      web3UseRpcProvider
-    } = require('@polkadot/extension-dapp')
-
-    const {
-      publicRuntimeConfig: {
-        appName,
-        // TODO remove middlewareLink and middlewareKey if still undesirable
-        polymesh: { nodeUrl, middlewareLink, middlewareKey }
-      }
-    } = getConfig()
-    const polkaDotExtensions = await web3Enable(appName)
-    const polyWallets = polkaDotExtensions.filter(injected => injected.name === "polywallet")
-    if (polyWallets.length == 0) {
-      setStatus("You need to install the Polymesh Wallet extension")
-      throw new Error("No Polymesh Wallet")
-    }
-    const polyWallet = polyWallets[0]
-    setStatus("Verifying network")
-    const network = await polyWallet.network.get()
-    if (network.wssUrl !== nodeUrl) {
-      setStatus(`Your network needs to match ${nodeUrl}`)
-      throw new Error(`Incompatible nodeUrl ${network.wssUrl} / ${nodeUrl}`)
-    }
-    setStatus("Fetching your account")
-    const myAccounts = await polyWallet.accounts.get()
-    if (myAccounts.length == 0) {
-      setStatus("You need to create an account in the Polymesh Wallet extension")
-      return
-    }
-    const myAccount = myAccounts[0]
-    const myKeyring = new Keyring()
-    myKeyring.addFromAddress(myAccount.address)
-    const mySigner = polyWallet.signer
-    setStatus("Building your API");
-    (window || {})["api"] = await Polymesh.connect({
-      nodeUrl,
-      keyring: myKeyring,
-      signer: polyWallet.signer,
-      middleware: {
-        link: middlewareLink,
-        key: middlewareKey
-      }
-    })
-    return (window || {})["api"]
   }
 
   async function getMyInfo(): Promise<Response> {
@@ -184,7 +130,7 @@ export default function Home() {
 
   async function setDidFromPolyWallet(): Promise<string> {
     setStatus("Getting your PolyWallet")
-    const api: Polymesh = await getPolyWalletApi()
+    const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your account")
     const did: string = (await api.getCurrentIdentity()).did
     setMyInfo((prevInfo) => ({
@@ -204,11 +150,11 @@ export default function Home() {
     return setDidFromPolyWallet()
   }
 
-  async function fetchMyClaim(e): Promise<ClaimData<Claim> | null> {
+  async function fetchMyAttestations(e): Promise<IdentityWithClaims[]> {
     e.preventDefault() // prevent page from submitting form
     const [ezKycDid, api]: [string, Polymesh] = await Promise.all([
       getEzKycDid(),
-      getPolyWalletApi()
+      getPolyWalletApi(setStatus)
     ])
     setStatus("Fetching your identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
@@ -220,14 +166,11 @@ export default function Home() {
       start: 0,
       size: 20
     })
-    console.log(issuedClaims);
-    if (issuedClaims.data.length == 0) {
-      setStatus("There are no claims for you")
-      return null
-    } else {
-      const issuedClaim: IdentityWithClaims = issuedClaims.data[0]
-      return issuedClaim.claims[0]
-    }
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      myAttestations: issuedClaims.data,
+    }))
+    return issuedClaims.data
   }
 
   return (
@@ -259,6 +202,10 @@ export default function Home() {
             </div>
 
           </fieldset>
+
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
 
           <fieldset className={styles.card}>
             <legend>What we need from you</legend>
@@ -315,17 +262,49 @@ export default function Home() {
               <button className="submit myUpdates" disabled={!myInfo.modified} onClick={submitMyInfo}>Submit your updated situation</button>
             </div>
 
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Your attestations</legend>
+
             <div className="submit">
-              <button className="submit myClaim" disabled={!myInfo.info.valid} onClick={fetchMyClaim}>Fetch My Claim</button>
+              <button className="submit myClaim" disabled={myInfo.info.polymeshDid === ""} onClick={fetchMyAttestations}>Fetch My Attestations</button>
             </div>
+
+            <div>{(() => {
+              if (myInfo.myAttestations.length === 0) return <div>There are no attestations</div>
+              return <ul>{myInfo.myAttestations
+                .map((attestation: IdentityWithClaims, index: number) => <li key={index}>
+                  Attestation {index}:<ul>
+                    <li key="identity">Identity:&nbsp;{attestation.identity.did}</li>
+                    <li key="claims">Claims:{(() => {
+                      if (attestation.claims.length === 0) return "There are no claims"
+                      return <ul>{attestation.claims
+                        .map((claim: ClaimData<ScopedClaim>, claimIndex: number) => <li key={claimIndex}>
+                          Claim {claimIndex}:<ul>
+                            <li key="issuer">Issuer:&nbsp;{claim.issuer.did}</li>
+                            <li key="issuedAt">Issued at:&nbsp;{claim.issuedAt.toISOString()}</li>
+                            <li key="expiry">Expiry:&nbsp;{claim.expiry?.toISOString() || "None"}</li>
+                            <li key="type">Type:&nbsp;{claim.claim.type}</li>
+                            <li key="jurisdiction">Jurisdiction:&nbsp;{(() => {
+                              if (claim.claim.type !== ClaimType.Jurisdiction) return "Wrongly not a jurisdiction claim"
+                              const countryCode: CountryCode = claim.claim.code
+                              const country: CountryInfo = countryList.find((countryInfo: CountryInfo) => countryInfo.value === countryCode.toString())
+                              return `${countryCode.toString()} - ${country.label}`
+                            })()}</li>
+                            <li key="scope">Scope:&nbsp;{claim.claim.scope.type} = {claim.claim.scope.value}</li>
+                          </ul>
+                        </li>)}
+                      </ul>
+                    })()}</li>
+                  </ul>
+                </li>)}
+              </ul>
+            })()}</div>
 
           </fieldset>
 
         </form>
-
-        <div id="status" className={styles.status}>
-          Latest status will show here
-        </div>
       </main>
 
       <footer className={styles.footer}>
