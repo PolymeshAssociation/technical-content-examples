@@ -1,15 +1,15 @@
 import { describe } from "mocha"
 import { expect } from "chai"
-import { CustomerInfo } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson } from "../../src/customerInfo"
 
 describe("CustomerInfo Unit Tests", () => {
 
     it("can construct from JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "name": "John Doe",
-            "country": "Gb",
-            "passport": "12345",
-            "valid": true,
+        const bareInfo: CustomerJson = {
+            name: "John Doe",
+            country: "Gb",
+            passport: "12345",
+            valid: true,
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -20,10 +20,10 @@ describe("CustomerInfo Unit Tests", () => {
     })
 
     it("can construct from incomplete JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "name": "John Doe",
-            "country": "Gb",
-            "valid": true,
+        const bareInfo: CustomerJson = <CustomerJson>{
+            name: "John Doe",
+            country: "Gb",
+            valid: true,
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -34,11 +34,11 @@ describe("CustomerInfo Unit Tests", () => {
     })
 
     it("can convert to JSON", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "name": "John Doe",
-            "country": "Gb",
-            "passport": "12345",
-            "valid": true,
+        const bareInfo: CustomerJson = {
+            name: "John Doe",
+            country: "Gb",
+            passport: "12345",
+            valid: true,
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -46,42 +46,42 @@ describe("CustomerInfo Unit Tests", () => {
     })
 
     it("can patch name with single JSON info", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "name": "John Doe",
-            "country": "Gb",
-            "passport": "12345",
-            "valid": true,
+        const bareInfo: CustomerJson = {
+            name: "John Doe",
+            country: "Gb",
+            passport: "12345",
+            valid: true,
         }
         const info = new CustomerInfo(bareInfo)
 
-        info.patch(<JSON><unknown>{
-            "name": "Jane Doe"
+        info.patch(<CustomerJson>{
+            name: "Jane Doe"
         })
 
         expect(info.toJSON()).to.deep.equal({
             ...bareInfo,
-            "name": "Jane Doe",
+            name: "Jane Doe",
         })
     })
 
     it("can patch name with partial JSON info", () => {
-        const bareInfo: JSON = <JSON><unknown>{
-            "name": "John Doe",
-            "country": "Gb",
-            "passport": "12345",
-            "valid": true,
+        const bareInfo: CustomerJson = {
+            name: "John Doe",
+            country: "Gb",
+            passport: "12345",
+            valid: true,
         }
         const info = new CustomerInfo(bareInfo)
 
-        info.patch(<JSON><unknown>{
-            "name": "Jane Doe",
-            "valid": false,
+        info.patch(<CustomerJson>{
+            name: "Jane Doe",
+            valid: false,
         })
 
         expect(info.toJSON()).to.deep.equal({
             ...bareInfo,
-            "name": "Jane Doe",
-            "valid": false,
+            name: "Jane Doe",
+            valid: false,
         })
     })
 

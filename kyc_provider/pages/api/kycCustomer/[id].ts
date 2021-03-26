@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { CustomerInfo, ICustomerInfo } from "../../../src/customerInfo"
-import { UnknownCustomerError } from "../../../src/customerDb"
+import { ICustomerDb, UnknownCustomerError } from "../../../src/customerDb"
 import customerDbFactory from "../../../src/customerDbFactory"
 
 async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> {
@@ -8,18 +8,18 @@ async function getCustomerInfoById(req: NextApiRequest): Promise<ICustomerInfo> 
 }
 
 async function setCustomerInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id
-    const customerDb = await customerDbFactory()
-    const customerInfo = new CustomerInfo(typeof req.body === "string"
+    const id: string = <string>req.query.id
+    const customerDb: ICustomerDb = await customerDbFactory()
+    const customerInfo: ICustomerInfo = new CustomerInfo(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
     await customerDb.setCustomerInfo(id, customerInfo)
 }
 
 async function updateCustomerInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id
-    const customerDb = await customerDbFactory()
-    const customerInfo = await customerDb.getCustomerInfoById(id)
+    const id: string = <string>req.query.id
+    const customerDb: ICustomerDb = await customerDbFactory()
+    const customerInfo: ICustomerInfo = await customerDb.getCustomerInfoById(id)
     customerInfo.patch(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
@@ -35,23 +35,23 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             case "PUT":
                 await setCustomerInfo(req)
                 res.status(200).json({
-                    "status": "ok",
+                    status: "ok",
                 })
                 break
             case "PATCH":
                 await updateCustomerInfo(req)
                 res.status(200).json({
-                    "status": "ok",
+                    status: "ok",
                 })
                 break
             default:
                 res.status(405).end()
         }
-    } catch(e) {
+    } catch (e) {
         if (e instanceof UnknownCustomerError) {
-            res.status(404).json({"status": "not found"})
+            res.status(404).json({ status: "not found" })
         } else {
-            res.status(500).json({"status": "internal error"})
+            res.status(500).json({ status: "internal error" })
         }
     }
 }
