@@ -17,7 +17,7 @@ export interface ICustomerInfo {
     jurisdiction: CountryCode
     polymeshDid: string | null
     toJSON(): CustomerJson
-    patch(extra: CustomerJson): void
+    patch(extra: Partial<CustomerJson>): void
 }
 
 const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
@@ -77,7 +77,7 @@ export class CustomerInfo implements ICustomerInfo {
             country: this.country,
             passport: this.passport,
             valid: this.valid,
-            jurisdiction: this.jurisdiction,
+            jurisdiction: this.jurisdiction.toString(),
             polymeshDid: this.polymeshDid
         }
     }
@@ -135,13 +135,13 @@ export class WrongTypeError extends CustomerInfoError {
 }
 
 export class InvalidCountryCodeError extends CustomerInfoError {
-    constructor (public countryCode: string, message?: string) {
+    constructor(public countryCode: string, message?: string) {
         super(message)
     }
 }
 
 export class InvalidPolymeshDidError extends CustomerInfoError {
-    constructor (public polymeshDid: string, message?: string) {
+    constructor(public polymeshDid: string, message?: string) {
         super(message)
     }
 }

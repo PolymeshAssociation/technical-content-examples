@@ -63,14 +63,14 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
                 const resultSet: ClaimsAddedResult = await setCustomerInfo(req)
                 res.status(200).json({
                     status: "ok",
-                    result: resultSet
+                    result: resultSet,
                 })
                 break
             case "PATCH":
                 const resultPatch: ClaimsAddedResult = await updateCustomerInfo(req)
                 res.status(200).json({
                     status: "ok",
-                    result: resultPatch
+                    result: resultPatch,
                 })
                 break
             default:

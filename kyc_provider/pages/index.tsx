@@ -15,7 +15,6 @@ import {
 import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
 import { CountryInfo, getCountryList } from "../src/types"
 import { CustomerJson } from "../src/customerInfo"
-import {  } from "@polymathnetwork/polymesh-sdk/middleware/types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -113,7 +112,7 @@ export default function Home() {
       const body: CustomerJson = await response.json()
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        info: body
+        info: body,
       }))
     } else {
       const body = await response.json()
@@ -130,12 +129,12 @@ export default function Home() {
   async function sendMyInfo(): Promise<void> {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
-      modified: false
+      modified: false,
     }))
     setStatus("Submitting info...")
     const response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
       method: "PUT",
-      body: JSON.stringify(myInfo.info)
+      body: JSON.stringify(myInfo.info),
     })
     const body = await response.json()
     if (response.status == 200) {
@@ -144,7 +143,7 @@ export default function Home() {
       setStatus(`Something went wrong: ${body.status}`)
       setMyInfo((prevInfo) => ({
         ...prevInfo,
-        modified: true
+        modified: true,
       }))
     }
   }
@@ -179,7 +178,7 @@ export default function Home() {
         ...prevInfo.info,
         [target["name"]]: countryCode.value,
       },
-      "modified": true,
+      modified: true,
     }))
   }
 

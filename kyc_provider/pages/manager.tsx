@@ -90,7 +90,7 @@ export default function Home() {
 
       <main className={styles.main}>
         <h1 className={styles.title}>
-        EzKyc Management Tool
+          EzKyc Management Tool
         </h1>
 
         <h2>Pick the customer to manage</h2>
