@@ -121,7 +121,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-country">Their country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} isDisabled={true}/>
+              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} isDisabled={true} />
             </div>
 
             <div>
@@ -131,7 +131,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
-              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true}/>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true} />
             </div>
 
             <div>
