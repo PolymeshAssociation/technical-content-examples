@@ -197,7 +197,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-id" className={styles.hasTitle} title="Given to you when you registered. As of now, just pick one.">Your id</label>
-              <input name="id" id="customer-id" type="number" placeholder="1" value={myInfo.id} onChange={onMyIdChanged}></input>
+              <input name="id" id="customer-id" type="number" placeholder="1" defaultValue={myInfo.id} onChange={onMyIdChanged}></input>
             </div>
 
             <div className="submit">
@@ -215,22 +215,22 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-name">Your name</label>
-              <input name="name" id="customer-name" type="text" placeholder="John Doe" value={myInfo.info.name} onChange={onMyInfoChanged} disabled={myInfo.id === "" || myInfo.info.valid}></input>
+              <input name="name" id="customer-name" type="text" placeholder="John Doe" defaultValue={myInfo.info.name} onChange={onMyInfoChanged} disabled={myInfo.id === "" || myInfo.info.valid}></input>
             </div>
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
+              <Select name="country" id="customer-country" instanceId="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.country)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div>
               <label htmlFor="customer-passport">Your passport number</label>
-              <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo.info.passport} onChange={onMyInfoChanged} disabled={myInfo.id === "" || myInfo.info.valid}></input>
+              <input name="passport" id="customer-passport" type="text" placeholder="12345" defaultValue={myInfo.info.passport} onChange={onMyInfoChanged} disabled={myInfo.id === "" || myInfo.info.valid}></input>
             </div>
 
             <div>
               <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
-              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
+              <Select name="jurisdiction" id="customer-jurisdiction" instanceId="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div className="submit">
