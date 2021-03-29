@@ -129,9 +129,9 @@ export default function Home() {
             </div>
 
             <div>
-               <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
-               <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true} />
-             </div>
+              <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true} />
+            </div>
 
           </fieldset>
 
