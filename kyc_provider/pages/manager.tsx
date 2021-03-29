@@ -13,6 +13,7 @@ export default function Home() {
       country: "",
       passport: "",
       valid: false,
+      jurisdiction: "",
     } as CustomerJson,
   })
   const countryList: CountryInfo[] = getCountryList()
@@ -126,6 +127,11 @@ export default function Home() {
               <label htmlFor="customer-passport">Their passport number</label>
               <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo.info.passport} readOnly={true}></input>
             </div>
+
+            <div>
+               <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
+               <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true} />
+             </div>
 
           </fieldset>
 

@@ -13,6 +13,7 @@ export default function Home() {
       country: "",
       passport: "",
       valid: false,
+      jurisdiction: "",
     } as CustomerJson,
     modified: false,
   })
@@ -132,6 +133,10 @@ export default function Home() {
 
           </fieldset>
 
+          <div id="status" className={styles.status}>
+            Latest status will show here
+          </div>
+
           <fieldset className={styles.card}>
             <legend>What we need from you</legend>
 
@@ -148,6 +153,11 @@ export default function Home() {
             <div>
               <label htmlFor="customer-passport">Your passport number</label>
               <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo.info.passport} onChange={onMyInfoChanged} disabled={myInfo.id === "" || myInfo.info.valid}></input>
+            </div>
+
+            <div>
+              <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
+              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} onChange={onCountryChanged} isDisabled={myInfo.id === "" || myInfo.info.valid} />
             </div>
 
             <div className="submit">
@@ -170,9 +180,6 @@ export default function Home() {
 
         </form>
 
-        <div id="status" className={styles.status}>
-          Latest status will show here
-        </div>
       </main>
 
       <footer className={styles.footer}>

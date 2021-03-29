@@ -47,6 +47,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 country: "Gb",
                 passport: "12345",
                 valid: false,
+                jurisdiction: "Ie",
             }
             const customerInfo: ICustomerInfo = new CustomerInfo(bareInfo)
             await customerDb.setCustomerInfo("3", customerInfo)
@@ -73,6 +74,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 country: "Gb",
                 passport: "12345",
                 valid: false,
+                jurisdiction: "Ie",
             }
             const { req, res } = createMocks({
                 method: "PUT",
@@ -96,6 +98,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 name: "John Doe",
                 country: "Gb",
                 passport: "12345",
+                jurisdiction: "Ie",
             }
             const { req, res } = createMocks({
                 method: "PUT",
@@ -145,6 +148,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
                 country: "Gb",
                 passport: "12345",
                 valid: true,
+                jurisdiction: "Ie",
             }
             const customerInfo: ICustomerInfo = new CustomerInfo(bareInfo)
             await customerDb.setCustomerInfo("3", customerInfo)

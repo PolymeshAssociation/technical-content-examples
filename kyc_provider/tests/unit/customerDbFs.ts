@@ -30,6 +30,7 @@ describe("CustomerDbFs Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -42,6 +43,7 @@ describe("CustomerDbFs Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
@@ -51,6 +53,7 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved.country).to.equal("Gb")
         expect(retrieved.passport).to.equal("12345")
         expect(retrieved.valid).to.be.true
+        expect(retrieved.jurisdiction).to.equal("Ie")
     })
 
     it("can save and get 2 saved customer infos", async() => {
@@ -60,6 +63,7 @@ describe("CustomerDbFs Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info1 = new CustomerInfo(bareInfo1)
         const bareInfo2: CustomerJson = {
@@ -67,6 +71,7 @@ describe("CustomerDbFs Unit Tests", () => {
             country: "Gb",
             passport: "12346",
             valid: false,
+            jurisdiction: "Fr",
         }
         const info2 = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)

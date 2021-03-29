@@ -10,6 +10,7 @@ describe("CustomerInfo Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -17,6 +18,7 @@ describe("CustomerInfo Unit Tests", () => {
         expect(info.country).to.equal("Gb")
         expect(info.passport).to.equal("12345")
         expect(info.valid).to.be.true
+        expect(info.jurisdiction).to.equal("Ie")
     })
 
     it("can construct from incomplete JSON", () => {
@@ -24,6 +26,7 @@ describe("CustomerInfo Unit Tests", () => {
             name: "John Doe",
             country: "Gb",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -31,6 +34,7 @@ describe("CustomerInfo Unit Tests", () => {
         expect(info.country).to.equal("Gb")
         expect(info.passport).to.be.undefined
         expect(info.valid).to.be.true
+        expect(info.jurisdiction).to.equal("Ie")
     })
 
     it("can convert to JSON", () => {
@@ -39,6 +43,7 @@ describe("CustomerInfo Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -51,6 +56,7 @@ describe("CustomerInfo Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 
@@ -70,6 +76,7 @@ describe("CustomerInfo Unit Tests", () => {
             country: "Gb",
             passport: "12345",
             valid: true,
+            jurisdiction: "Ie",
         }
         const info = new CustomerInfo(bareInfo)
 

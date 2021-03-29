@@ -3,6 +3,7 @@ export interface CustomerJson {
     country: string
     passport: string
     valid: boolean
+    jurisdiction: string
 }
 
 export interface ICustomerInfo {
@@ -10,6 +11,7 @@ export interface ICustomerInfo {
     country: string
     passport: string
     valid: boolean
+    jurisdiction: string
     toJSON(): CustomerJson
     patch(extra: Partial<CustomerJson>): void
 }
@@ -19,16 +21,20 @@ export class CustomerInfo implements ICustomerInfo {
     country: string
     passport: string
     valid: boolean
+    jurisdiction: string
 
     constructor(info: CustomerJson) {
         this.name = info.name
         if (info.country === "") {
             throw new IncompleteInfoError("country")
-        } else {
-            this.country = info.country
         }
+        this.country = info.country
         this.passport = info.passport
         this.valid = typeof info.valid === "undefined" ? false : info.valid
+        if (info.jurisdiction === "") {
+            throw new IncompleteInfoError("jurisdiction")
+        }
+        this.jurisdiction = info.jurisdiction
     }
 
     toJSON(): CustomerJson {
@@ -37,6 +43,7 @@ export class CustomerInfo implements ICustomerInfo {
             country: this.country,
             passport: this.passport,
             valid: this.valid,
+            jurisdiction: this.jurisdiction,
         }
     }
 
@@ -45,6 +52,7 @@ export class CustomerInfo implements ICustomerInfo {
         this.country = typeof extra.country !== "undefined" ? extra.country : this.country
         this.passport = typeof extra.passport !== "undefined" ? extra.passport : this.passport
         this.valid = typeof extra.valid !== "undefined" ? extra.valid : this.valid
+        this.jurisdiction = typeof extra.jurisdiction !== "undefined" ? extra.jurisdiction : this.jurisdiction
     }
 
 }
