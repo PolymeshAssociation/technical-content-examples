@@ -47,9 +47,8 @@ export class CustomerInfo implements ICustomerInfo {
             throw new IncompleteInfoError("country")
         } else if (!Object.values(CountryCode).includes(info.country as CountryCode)) {
             throw new InvalidCountryCodeError(info.country)
-        } else {
-            this.country = CountryCode[info.country]
         }
+        this.country = CountryCode[info.country]
         requireDesiredType(info.passport, "passport", "string")
         this.passport = info.passport
         this.valid = typeof info.valid === "undefined" ? false : info.valid
@@ -77,7 +76,7 @@ export class CustomerInfo implements ICustomerInfo {
             country: this.country,
             passport: this.passport,
             valid: this.valid,
-            jurisdiction: this.jurisdiction.toString(),
+            jurisdiction: this.jurisdiction,
             polymeshDid: this.polymeshDid
         }
     }
