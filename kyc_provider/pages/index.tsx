@@ -50,6 +50,7 @@ export default function Home() {
   }
 
   async function getMyInfo(): Promise<Response> {
+    setStatus("Fetching your information")
     const response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
@@ -167,6 +168,7 @@ export default function Home() {
       start: 0,
       size: 20
     })
+    setStatus("Fetched your jurisdiction claims from EzKyc")
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       myAttestations: issuedClaims.data,

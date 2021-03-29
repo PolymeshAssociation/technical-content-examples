@@ -66,10 +66,10 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             throw new NonExistentCustomerPolymeshIdError(customer)
         }
 
-        const myId: CurrentIdentity = await this.api.getCurrentIdentity() // TODO
+        const myId: CurrentIdentity = await this.api.getCurrentIdentity()
         const issuedClaims: ResultSet<IdentityWithClaims> = await this.api.claims.getIdentitiesWithClaims({
             targets: [customer.polymeshDid],
-            trustedClaimIssuers: [await this.api.getCurrentIdentity()],
+            trustedClaimIssuers: [myId],
             claimTypes: [ClaimType.Jurisdiction],
             includeExpired: false,
             start: 0,
@@ -146,7 +146,6 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         })
         await revokeQueue.run()
         // revokeQueue.transactions.map(tx => tx.txHash) // TODO
-
 
         return {
             status: true,
