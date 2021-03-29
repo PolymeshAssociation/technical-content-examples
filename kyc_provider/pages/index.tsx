@@ -256,7 +256,7 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-polymeshDid">Your Polymesh did</label>
-              <input name="polymeshDid" id="customer-polymeshDid" type="text" placeholder="0x12345" value={myInfo.info.polymeshDid} onChange={onMyInfoChanged} disabled={myInfo.id === ""}></input>
+              <input name="polymeshDid" id="customer-polymeshDid" type="text" placeholder="0x12345" defaultValue={myInfo.info.polymeshDid} onChange={onMyInfoChanged} disabled={myInfo.id === ""}></input>
               &nbsp;
               <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo.id === ""}>Pick it from PolyWallet</button>
             </div>
