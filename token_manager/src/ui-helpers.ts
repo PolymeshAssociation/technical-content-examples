@@ -1,6 +1,5 @@
 import getConfig from "next/config"
 import { Keyring, Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
 import { HasFetchTimer } from "./types"
 
 export async function getBasicPolyWalletApi(setStatus: (content: string) => void): Promise<Polymesh> {
@@ -84,7 +83,7 @@ export function returnUpdated(previous: object, path: (string | number)[], value
     ]
     return {
         ...previous,
-        [path[0]]: returnUpdated(previous[path[0]], path.slice(1), value),
+        [path[0]]: returnUpdated(previous ? previous[path[0]] : previous, path.slice(1), value),
     }
 }
 

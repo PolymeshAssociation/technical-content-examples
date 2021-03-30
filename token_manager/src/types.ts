@@ -14,6 +14,7 @@ import {
     EventIdentifier,
     IdentityCondition,
     InvestorUniquenessClaim,
+    KnownTokenType,
     NumberedPortfolio,
     PrimaryIssuanceAgentCondition,
     Requirement,
@@ -112,6 +113,7 @@ export type PortfolioInfoJson = {
     owner: string,
     id: string | null,
     custodian: string,
+    newCustodian: string,
 }
 
 export type AttestationsInfoJson = {
@@ -149,6 +151,17 @@ export type CheckpointScheduleInfoJson = {
     exists: boolean,
 }
 
+export function getEmptyTokenDetails(): SecurityTokenDetails {
+    return {
+        assetType: KnownTokenType.EquityCommon,
+        isDivisible: false,
+        name: "",
+        owner: null,
+        totalSupply: new BigNumber("0"),
+        primaryIssuanceAgent: null,
+    }
+}
+
 export function getEmptyMyInfo(): MyInfoJson {
     return {
         ticker: "" as string,
@@ -162,7 +175,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         } as ReservationInfoJson,
         token: {
             current: null as SecurityToken,
-            details: null as SecurityTokenDetails,
+            details: getEmptyTokenDetails() as SecurityTokenDetails,
             piaBalance: {
                 locked: "" as string,
                 total: "" as string,

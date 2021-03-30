@@ -42,6 +42,7 @@ import {
   CountryInfo,
   getCountryList,
   getEmptyMyInfo,
+  getEmptyTokenDetails,
   isCddClaim,
   isCheckpointWithCreationDate,
   isClaimData,
@@ -153,13 +154,13 @@ export default function Home() {
     if (reservation === null) {
       setMyInfo(returnUpdatedCreator(["reservation"], {
         current: null,
-        details: null,
+        details: getEmptyTokenDetails(),
       }))
       setToken(null)
     } else {
       setMyInfo(returnUpdatedCreator(["reservation"], {
         current: reservation,
-        details: await reservation.details()
+        details: (await reservation.details()) || getEmptyTokenDetails(),
       }))
       await loadToken(reservation.ticker)
     }
@@ -834,13 +835,14 @@ export default function Home() {
           owner: portfolio.owner.did,
           id: portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null",
           custodian: custodian.did,
+          newCustodian: custodian.did,
         }))))
     setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
   }
 
   async function setCustodian(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void>{
     setStatus("Setting custodian")
-    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.custodian })).run()
+    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.newCustodian })).run()
     setStatus("Custodian set")
     await loadMyPortfolios()
   }
@@ -856,12 +858,12 @@ export default function Home() {
     const isCustodied: boolean = portfolio.owner !== portfolio.custodian
     const isMine: boolean = portfolio.owner === myInfo.myDid
     const canSetCustody: boolean = canManipulate && isMine && !isCustodied
-    const canRelinquish: boolean = canManipulate && isCustodied
+    const canRelinquish: boolean = canManipulate && isCustodied && portfolio.custodian === myInfo.myDid
     return <ul>
       <li key="owner">Owner:&nbsp;{portfolio.owner === myInfo.myDid ? "me" : presentLongHex(portfolio.owner)}</li>
       <li key="id">Id:&nbsp;{portfolio.id}</li>
       <li key="custodian">Custodian:&nbsp;
-        <input defaultValue={portfolio.custodian} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "custodian"])} disabled={!canSetCustody}/>
+        <input defaultValue={portfolio.custodian} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "newCustodian"])} disabled={!canSetCustody}/>
         &nbsp;
         <button className="submit set-custodian" onClick={() => setCustodian(portfolio, location)} disabled={!canSetCustody}>Set</button>
         &nbsp;
@@ -871,7 +873,7 @@ export default function Home() {
   }
 
   function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
-    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return <div>"There are no portfolios"</div>
+    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return <div>There are no portfolios</div>
     return <ul>{
       portfolios
         .map((portfolio: PortfolioInfoJson, portfolioIndex: number) => presentPorfolioJson(portfolio, [...location, portfolioIndex], canManipulate))
@@ -917,8 +919,8 @@ export default function Home() {
     return checkpoint
   }
 
-  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: (string | number)[]): Promise<BigNumber> {
-    const balance: BigNumber = await checkpoint.checkpoint.balance({ identity: whoseBalance })
+  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: (string | number)[]): Promise<string> {
+    const balance: string = (await checkpoint.checkpoint.balance({ identity: whoseBalance })).toString(10)
     setMyInfo(returnUpdatedCreator([...location, "balance"], balance))
     return balance
   }
@@ -972,7 +974,7 @@ export default function Home() {
   }
 
   function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
-    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return <div>"There are no checkpoints"</div>
+    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return <div>There are no checkpoints</div>
     return <ul>{
       checkpoints
         .map((checkpoint: CheckpointInfoJson, checkpointIndex: number) => presentCheckpoint(checkpoint, [...location, checkpointIndex], canManipulate))
@@ -992,7 +994,7 @@ export default function Home() {
   }
 
   function presentCheckpointSchedules(schedules: CheckpointScheduleInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
-    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>"There are no checkpoint schedules"</div>
+    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>There are no checkpoint schedules</div>
     return <ul>{
       schedules
         .map((schedule: CheckpointScheduleInfoJson, scheduleIndex: number) => presentCheckpointSchedule(schedule, [...location, scheduleIndex], canManipulate))
@@ -1072,21 +1074,21 @@ export default function Home() {
                     <label htmlFor="token-name">
                       <span className={styles.hasTitle} title="Long name of your security token">Name</span>
                     </label>
-                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.details?.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "name"])} />
+                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.details?.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "name"])} />
                   </div>
                   <div>
                     <label htmlFor="token-divisible">
                       <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
                     </label>
-                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "divisible"], checkboxProcessor)} />
+                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "divisible"], checkboxProcessor)} />
                   </div>
                   <div>
                     <label htmlFor="token-assetType">
                       <span className={styles.hasTitle} title="Pick one from the list or type what you want">Asset Type</span>
                     </label>
-                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])} />
+                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "assetType"])} />
                     &nbsp;
-                    <select name="known-assetTypes" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "detailsJson", "assetType"])}>
+                    <select name="known-assetTypes" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "assetType"])}>
                       {presentEnumOptions(KnownTokenType)}
                     </select>
                   </div>
