@@ -932,13 +932,13 @@ export default function Home() {
   }
 
   async function createScheduledCheckpoint(): Promise<CheckpointSchedule> {
-    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.createSchedule(myInfo.checkpoints.scheduledToAdd)).run()
+    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.schedules.create(myInfo.checkpoints.scheduledToAdd)).run()
     await loadCheckpointSchedules(myInfo.token.current)
     return schedule
   }
 
   async function loadCheckpointSchedules(token: SecurityToken): Promise<ScheduleWithDetails[]> {
-    const schedules: ScheduleWithDetails[] = await token.checkpoints.getSchedules()
+    const schedules: ScheduleWithDetails[] = await token.checkpoints.schedules.get()
     await setCheckpointSchedules(schedules)
     return schedules
   }
@@ -992,7 +992,7 @@ export default function Home() {
 
   function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
     return <ul>
-      <li key="exists">Exists:&nbsp;{scheduleInfo.exists}</li>
+      <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>
       <li key="remainingCheckpoints">Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}</li>
       <li key="nextCheckpointDate">Next checkpoint date:&nbsp;{scheduleInfo.nextCheckpointDate.toISOString()}</li>
       <li key="createdCheckpoints">Created checkpoints:&nbsp;{presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>
