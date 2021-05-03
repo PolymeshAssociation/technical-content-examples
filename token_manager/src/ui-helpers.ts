@@ -68,9 +68,9 @@ export async function checkboxProcessor(e): Promise<boolean> {
     return Promise.resolve(e.target.checked)
 }
 
-export function returnUpdated(previous: object, path: (string | number)[], value: any) {
+export function returnUpdated(previous: object, path: (string | number)[], value: any, deep: boolean = false) {
     if (path.length === 0) {
-        if (typeof value === "object" && !Array.isArray(value)) return {
+        if (deep && typeof value === "object" && !Array.isArray(value)) return {
             ...previous,
             ...value,
         }
@@ -78,29 +78,29 @@ export function returnUpdated(previous: object, path: (string | number)[], value
     }
     if (typeof path[0] === "number" && Array.isArray(previous)) return [
         ...previous.slice(0, path[0]),
-        returnUpdated(previous[path[0]], path.slice(1), value),
+        returnUpdated(previous[path[0]], path.slice(1), value, deep),
         ...previous.slice(path[0] + 1),
     ]
     return {
         ...previous,
-        [path[0]]: returnUpdated(previous ? previous[path[0]] : previous, path.slice(1), value),
+        [path[0]]: returnUpdated(previous ? previous[path[0]] : previous, path.slice(1), value, deep),
     }
 }
 
-export function returnUpdatedCreator(path: (string | number)[], value: any) {
-    return (previous: object) => returnUpdated(previous, path, value)
+export function returnUpdatedCreator(path: (string | number)[], value: any, deep: boolean = false) {
+    return (previous: object) => returnUpdated(previous, path, value, deep)
 }
 
 export function findValue(where: object, path: (string | number)[]): any {
     return path.reduce((whereLeft: object, pathBit: string | number) => whereLeft[pathBit], where)
 }
 
-export function returnAddedArrayCreator(containerLocation: (string | number)[], dummy: any) {
+export function returnAddedArrayCreator(containerLocation: (string | number)[], dummy: any, deep: boolean = false) {
     return (prevInfo) => {
         const container = findValue(prevInfo, containerLocation) || []
         if (!Array.isArray(container)) throw new Error("Only works with arrays")
         const updatedContainer = [...container, dummy]
-        return returnUpdated(prevInfo, containerLocation, updatedContainer)
+        return returnUpdated(prevInfo, containerLocation, updatedContainer, deep)
     }
 }
 

@@ -113,10 +113,10 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function onValueChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>) {
+  function onValueChangedCreator(path: (string | number)[], deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
-      setMyInfo(returnUpdatedCreator(path, value))
+      setMyInfo(returnUpdatedCreator(path, value, deep))
       if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => await loadReservation(value))
     }
   }
@@ -210,7 +210,7 @@ export default function Home() {
           toIssue: 0,
           toRedeem: 0,
         },
-      }))
+      }, true))
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
@@ -226,7 +226,7 @@ export default function Home() {
           toIssue: 0,
           toRedeem: 0,
         },
-      }))
+      }, true))
       await loadComplianceRequirements(token)
     }
   }
@@ -302,10 +302,10 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: (string | number)[], valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
+  function onRequirementChangedCreator(path: (string | number)[], deep: boolean = false, valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
     return async function (e): Promise<void> {
-      await onValueChangedCreator(path, valueProcessor)(e)
-      setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
+      await onValueChangedCreator(path, deep, valueProcessor)(e)
+      setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
     }
   }
 
@@ -323,6 +323,7 @@ export default function Home() {
       <li key="identity">Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
         onChange={onRequirementChangedCreator(
           [...location, "identity"],
+          false,
           async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))}
         disabled={!canManipulate}
       />
@@ -459,6 +460,7 @@ export default function Home() {
         <input defaultValue={condition.identity?.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "identity"],
+            false,
             async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))} />
       </li>)
     } else if (isPrimaryIssuanceAgentCondition(condition)) { // Nothing to do
@@ -511,12 +513,12 @@ export default function Home() {
 
   function addToMyRequirementArray(containerLocation: (string | number)[], dummy: any): void {
     setMyInfo(returnAddedArrayCreator(containerLocation, dummy))
-    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
+    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
   }
 
   function removeFromMyRequirementArray(containerLocation: (string | number)[]): void {
     setMyInfo(returnRemovedArrayCreator(containerLocation))
-    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }))
+    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
   }
 
   async function saveRequirements(): Promise<SecurityToken> {
@@ -699,12 +701,14 @@ export default function Home() {
         <input defaultValue={claimData.target.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "target"],
+            false,
             async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
       </li>
       <li key="issuer">Issuer:&nbsp;
         <input defaultValue={claimData.issuer.did} placeholder="0x123" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "issuer"],
+            false,
             async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
       </li>
       <li key="issuedAt">Issued at: {claimData.issuedAt.toISOString()}</li>
@@ -712,6 +716,7 @@ export default function Home() {
         <input defaultValue={claimData.expiry?.toISOString() || ""} placeholder="2020-12-01" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "expiry"],
+            false,
             async (e) => Promise.resolve(new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
@@ -732,6 +737,7 @@ export default function Home() {
         <input defaultValue={claimTarget.expiry?.toISOString() || null} placeholder="2020-12-01" disabled={!canManipulate}
           onChange={onRequirementChangedCreator(
             [...location, "expiry"],
+            false,
             async (e) => Promise.resolve(e.target.value === "" ? null : new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
@@ -1005,7 +1011,7 @@ export default function Home() {
   }
 
   function onRequirementChangedDateCreator(path: (string | number)[]) {
-    return onRequirementChangedCreator(path, (e) => {
+    return onRequirementChangedCreator(path, false, (e) => {
       const newDate: Date = new Date(e.target.value)
       if (newDate.toDateString() === "Invalid Date") return Promise.resolve(findValue(myInfo, path))
       return Promise.resolve(newDate)
@@ -1080,7 +1086,7 @@ export default function Home() {
                     <label htmlFor="token-divisible">
                       <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
                     </label>
-                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "divisible"], checkboxProcessor)} />
+                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "divisible"], false, checkboxProcessor)} />
                   </div>
                   <div>
                     <label htmlFor="token-assetType">
@@ -1152,7 +1158,7 @@ export default function Home() {
                   <br/>
                   Request expiry:&nbsp;
                   <input name="token-pia-expiry" type="text" placeholder="2020-12-31" defaultValue={myInfo.token.piaChangeInfo.requestExpiry?.toISOString()} disabled={!canManipulate}
-                    onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"], (e) => Promise.resolve(new Date(e.target.value)))}/>
+                    onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"], false, (e) => Promise.resolve(new Date(e.target.value)))}/>
                   &nbsp;
                   <button className="submit change-token-pia" onClick={changeTokenPia} disabled={!canManipulate}>Change PIA</button>
                   <br/>
@@ -1222,12 +1228,12 @@ export default function Home() {
             <div>From:&nbsp;
               <input defaultValue={myInfo.requirements.settleSimulation.sender} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "sender"])} />
               &nbsp;
-              <button className="submit pick-me-for-sender" onClick={onValueChangedCreator(["requirements", "settleSimulation", "sender"], getMyDid)}>Pick mine</button>
+              <button className="submit pick-me-for-sender" onClick={onValueChangedCreator(["requirements", "settleSimulation", "sender"], false, getMyDid)}>Pick mine</button>
             </div>
             <div>To:&nbsp;
               <input defaultValue={myInfo.requirements.settleSimulation.recipient} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "recipient"])} />
               &nbsp;
-              <button className="submit pick-me-for-recipient" onClick={onValueChangedCreator(["requirements", "settleSimulation", "recipient"], getMyDid)}>Pick mine</button>
+              <button className="submit pick-me-for-recipient" onClick={onValueChangedCreator(["requirements", "settleSimulation", "recipient"], false, getMyDid)}>Pick mine</button>
             </div>
             <div className="submit">
               <button className="submit simulate-compliance" onClick={simulateCompliance} disabled={myInfo.token.current === null}>Try</button>
@@ -1238,7 +1244,7 @@ export default function Home() {
         </fieldset>
 
         <fieldset className={styles.card}>
-          <legend>My authorisations</legend>
+          <legend>My authorisation requests</legend>
 
           <div className="submit">
             <button className="submit load-authorisations" onClick={loadAuthorisations}>Load authorisations</button>
@@ -1330,7 +1336,7 @@ export default function Home() {
                   <li key="periodValue">
                     Period value:&nbsp;
                     <input defaultValue={myInfo.checkpoints.scheduledToAdd.period?.amount?.toString(10)} placeholder="5" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "amount"], (e) => Promise.resolve(parseInt(e.target.value)))}/>
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "amount"], false, (e) => Promise.resolve(parseInt(e.target.value)))}/>
                   </li>
                   <li key="periodUnit">
                     Period unit:&nbsp;
@@ -1342,7 +1348,7 @@ export default function Home() {
                   <li key="repetitions">
                     Repetitions:&nbsp;
                     <input defaultValue={myInfo.checkpoints.scheduledToAdd.repetitions.toString(10)} placeholder="0" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "repetitions"], (e) => Promise.resolve(parseInt(e.target.value)))}/>
+                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "repetitions"], false, (e) => Promise.resolve(parseInt(e.target.value)))}/>
                   </li>
                 </ul>
 
