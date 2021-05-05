@@ -11,6 +11,8 @@ import {
     ConditionType,
     CountryCode,
     DefaultPortfolio,
+    DistributionParticipant,
+    DividendDistributionDetails,
     EventIdentifier,
     IdentityCondition,
     InvestorUniquenessClaim,
@@ -31,7 +33,9 @@ import {
     AuthorizationRequest,
     Checkpoint,
     CheckpointSchedule,
+    CorporateAction,
     CreateCheckpointScheduleParams,
+    DividendDistribution,
     Identity,
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
@@ -64,6 +68,7 @@ export type MyInfoJson = {
     portfolios: PortfoliosInfoJson,
     attestations: AttestationsInfoJson,
     checkpoints: CheckpointsInfoJson,
+    corporateActions: CorporateActionsInfoJson,
 }
 
 export type ReservationInfoJson = {
@@ -145,10 +150,35 @@ export type CheckpointInfoJson = {
 
 export type CheckpointScheduleInfoJson = {
     schedule: CheckpointSchedule,
-    remainingCheckpoints: number,
-    nextCheckpointDate: Date,
     createdCheckpoints: CheckpointInfoJson[],
     exists: boolean,
+}
+
+export type CheckpointScheduleDetailsInfoJson = CheckpointScheduleInfoJson & {
+    remainingCheckpoints: number,
+    nextCheckpointDate: Date,
+}
+
+export type CorporateActionsInfoJson = {
+    distributions: DistributionsInfoJson,
+}
+
+export type DistributionsInfoJson = {
+    dividends: DividendDistributionInfoJson[]
+}
+
+export type CorporateActionInfoJson = {
+    current: CorporateAction,
+    exists: boolean,
+    checkpoint: CheckpointInfoJson | null,
+    checkpointSchedule: CheckpointScheduleInfoJson | null,
+}
+
+export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "current"> & {
+    current: DividendDistribution,
+    origin: PortfolioInfoJson,
+    details: DividendDistributionDetails,
+    participants: DistributionParticipant[],
 }
 
 export function getEmptyTokenDetails(): SecurityTokenDetails {
@@ -256,4 +286,5 @@ export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUnique
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
 export const isCheckpointWithCreationDate = (checkpointInfo: CheckpointWithCreationDate | Checkpoint): checkpointInfo is CheckpointWithCreationDate => typeof (checkpointInfo as CheckpointWithCreationDate).createdAt !== "undefined"
+export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
 
