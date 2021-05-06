@@ -33,10 +33,12 @@ import {
     AuthorizationRequest,
     Checkpoint,
     CheckpointSchedule,
+    ConfigureDividendDistributionParams,
     CorporateAction,
     CreateCheckpointScheduleParams,
     DividendDistribution,
     Identity,
+    ModifyCorporateActionsAgentParams,
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
@@ -137,7 +139,7 @@ export type CheckpointsInfoJson = {
     details: CheckpointInfoJson[],
     scheduledToAdd: CreateCheckpointScheduleParams,
     currentSchedules: CheckpointSchedule[],
-    scheduleDetails: CheckpointScheduleInfoJson[],
+    scheduleDetails: CheckpointScheduleDetailsInfoJson[],
 }
 
 export type CheckpointInfoJson = {
@@ -161,10 +163,13 @@ export type CheckpointScheduleDetailsInfoJson = CheckpointScheduleInfoJson & {
 
 export type CorporateActionsInfoJson = {
     distributions: DistributionsInfoJson,
+    agent: Identity,
+    newAgent: ModifyCorporateActionsAgentParams,
 }
 
 export type DistributionsInfoJson = {
-    dividends: DividendDistributionInfoJson[]
+    dividends: DividendDistributionInfoJson[],
+    newDividend: ConfigureDividendDistributionParams,
 }
 
 export type CorporateActionInfoJson = {
@@ -270,7 +275,31 @@ export function getEmptyMyInfo(): MyInfoJson {
                 repetitions: 0,
             },
             currentSchedules: [] as CheckpointSchedule[],
-            scheduleDetails: [] as CheckpointScheduleInfoJson[],
+            scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
+        },
+        corporateActions: {
+            distributions: {
+                dividends: [] as DividendDistributionInfoJson[],
+                newDividend: {
+                    declarationDate: new Date(),
+                    checkpoint: null as Checkpoint,
+                    description: "" as string,
+                    targets: null,
+                    defaultTaxWithholding: null,
+                    taxWithholdings: [],
+                    originPortfolio: null,
+                    currency: "",
+                    perShare: new BigNumber(0),
+                    maxAmount: new BigNumber(0),
+                    paymentDate: new Date,
+                    expiryDate: null,
+                },
+            },
+            agent: null as Identity,
+            newAgent: {
+                target: "" as string | Identity,
+                requestExpiry: null as Date | null,
+            } as ModifyCorporateActionsAgentParams
         },
     }
 }
@@ -279,6 +308,7 @@ export interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
 }
 
+export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfolio): portfolio is NumberedPortfolio => typeof (portfolio as NumberedPortfolio).id !== "undefined"
 export const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
 export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
 export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
