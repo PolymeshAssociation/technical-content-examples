@@ -119,7 +119,9 @@ export function returnRemovedArrayCreator(location: (string | number)[]) {
     }
 }
 
-export function presentLongHex(hex: string): string {
+export function presentLongHex(hex?: string): string {
+    if (typeof hex === "undefined") return "undefined"
+    if (hex === null) return "null"
     const first: string = hex.slice(0, 8)
     const last: string = hex.slice(-6)
     return `${first}...${last}`

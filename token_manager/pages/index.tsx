@@ -48,6 +48,7 @@ import {
   DividendDistributionInfoJson,
   getCountryList,
   getEmptyMyInfo,
+  getEmptyRequirements,
   getEmptyTokenDetails,
   isCddClaim,
   isCheckpointSchedule,
@@ -81,11 +82,9 @@ import {
   returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
-import { CorporateActions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/CorporateActions"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
-  const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string): void {
     const element = document.getElementById("status") as HTMLElement
@@ -109,8 +108,11 @@ export default function Home() {
 
   async function loadYourTickers(): Promise<string[]> {
     const api: Polymesh = await getPolyWalletApi()
+    setStatus("Getting your current identity")
     const me: CurrentIdentity = await api.getCurrentIdentity()
+    setStatus("Fetching your security tokens")
     const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: me })
+    setStatus("Fetching your token reservations")
     const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: me });
     const myTickers: string[] = [...myTokens, ...myReservations]
       .map((element: SecurityToken | TickerReservation) => element.ticker)
@@ -287,18 +289,14 @@ export default function Home() {
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
     await setComplianceRequirements(token, requirements, arePaused)
+    await loadMyPortfolios()
     await loadCheckpoints(token)
     return requirements
   }
 
   async function setComplianceRequirements(token: SecurityToken | null, requirements: Requirement[] | null, arePaused: boolean) {
     if (token === null || requirements === null) {
-      setMyInfo(returnUpdatedCreator(["requirements"], {
-        current: [],
-        arePaused: false,
-        canManipulate: false,
-        modified: false,
-      }))
+      setMyInfo(returnUpdatedCreator(["requirements"], getEmptyRequirements()))
     } else {
       setMyInfo((prevInfo) => ({
         ...prevInfo,
@@ -813,21 +811,27 @@ export default function Home() {
     await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
+  async function createPortfolio(): Promise<NumberedPortfolio> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const newPortfolio = await (await me.portfolios.create({ name: myInfo.portfolios.newPortfolioName })).run()
+    await loadMyPortfolios()
+    return newPortfolio
+  }
+
+  async function deletePortfolio(portfolio: BigNumber | NumberedPortfolio): Promise<void> {
+    const api: Polymesh = await getPolyWalletApi()
+    const me: CurrentIdentity = await api.getCurrentIdentity()
+    await (await me.portfolios.delete({ portfolio })).run()
+    await loadMyPortfolios()
+  }
+
   async function loadMyPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
     const api: Polymesh = await getPolyWalletApi()
     const me: CurrentIdentity = await api.getCurrentIdentity()
-    return await loadPortfolios(me.did)
-  }
-
-  async function getNumberedPortfolio(id: string): Promise<NumberedPortfolio> {
-    if (typeof id === "undefined" || id === "" || id === null) return Promise.resolve(null)
-    setStatus(`Get portfolio id ${id}`)
-    const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
-    const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await me.portfolios.getPortfolios()
-    return portfolios
-      .filter(isNumberedPortfolio)
-      .find((portfolio: NumberedPortfolio) => portfolio.id?.toString(10) === id)
+    const mine = await loadPortfolios(me.did)
+    setMyInfo(returnUpdatedCreator(["portfolios", "mine"], mine))
+    return mine
   }
 
   async function loadOtherPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
@@ -860,6 +864,7 @@ export default function Home() {
       original: portfolio,
       owner: portfolio.owner.did,
       id: portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null",
+      name: portfolio instanceof NumberedPortfolio ? await portfolio.getName() : "null",
       custodian: custodian.did,
       newCustodian: custodian.did,
     }
@@ -895,7 +900,13 @@ export default function Home() {
     const canRelinquish: boolean = canManipulate && isCustodied && portfolio.custodian === myInfo.myDid
     return <ul>
       <li key="owner">Owner:&nbsp;{portfolio.owner === myInfo.myDid ? "me" : presentLongHex(portfolio.owner)}</li>
-      <li key="id">Id:&nbsp;{portfolio.id}</li>
+      <li key="id">
+        Id:&nbsp;{portfolio.id}&nbsp;{(function () {
+          if (portfolio.id === "null") return ""
+          return <button className="submit delete-portfolio" onClick={() => deletePortfolio(new BigNumber(portfolio.id))} disabled={!canManipulate}>Delete</button>
+        })()}
+      </li>
+      <li key="name">Name:&nbsp;{portfolio.name}</li>
       <li key="custodian">Custodian:&nbsp;
         <input defaultValue={portfolio.custodian} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "newCustodian"])} disabled={!canSetCustody} />
         &nbsp;
@@ -929,14 +940,8 @@ export default function Home() {
     const details: CheckpointInfoJson[] = await Promise.all(current
       .map((checkpointWith: CheckpointWithCreationDate) => getCheckpointInfo(checkpointWith)))
     setMyInfo(returnUpdatedCreator(["checkpoints", "details"], details))
+    if (details.length > 0) setMyInfo(returnUpdatedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], details[0].checkpoint))
     return details
-  }
-
-  async function getCheckpoint(id: string): Promise<Checkpoint> {
-    const allCheckpoints: CheckpointWithCreationDate[] = await myInfo.token.current.checkpoints.get()
-    return allCheckpoints
-      .map((checkpointWith: CheckpointWithCreationDate) => checkpointWith.checkpoint)
-      .find((checkpoint: Checkpoint) => checkpoint.id.toString(10) === id)
   }
 
   async function getCheckpointInfo(checkpointWith: CheckpointWithCreationDate | Checkpoint): Promise<CheckpointInfoJson> {
@@ -1501,6 +1506,17 @@ export default function Home() {
           {presentPorfoliosJson(myInfo.portfolios.details, ["portfolios", "details"], true)}
 
           <div>See in the authorisations box above<br />for the pending custody authorisation</div>
+
+          <div className={styles.card}>
+            <div>Numbered portfolio to create:</div>
+            <div className="submit">
+              <input defaultValue={myInfo.portfolios.newPortfolioName} placeholder="Trading portfolio" disabled={false}
+                onChange={onRequirementChangedCreator(["portfolios", "newPortfolioName"])} />
+              &nbsp;
+              <button className="submit create-portfolio" onClick={createPortfolio}>Create</button>
+            </div>
+          </div>
+
         </fieldset>
 
         <fieldset className={styles.card}>
@@ -1571,7 +1587,7 @@ export default function Home() {
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li key="caa">
-                  With agent: {caa === myInfo.myDid ? "me" : presentLongHex(caa)}
+                  With agent: {typeof caa === "undefined" || caa === null ? "" : caa === myInfo.myDid ? "me" : presentLongHex(caa)}
                   &nbsp;
                   <button className="submit remove-token-caa" onClick={removeCorporateActionsAgent} disabled={owner !== myInfo.myDid || owner === caa}>Remove</button>
                 </li>
@@ -1618,6 +1634,8 @@ export default function Home() {
           <div className={styles.card}>{
             (() => {
               const canManipulate: boolean = myInfo.token?.current !== null && (myInfo.token?.details?.owner?.did === myInfo.myDid || myInfo.corporateActions?.agent?.did === myInfo.myDid)
+              const currentCheckpointIndex = myInfo.checkpoints.current
+                .findIndex((checkpointWith: CheckpointWithCreationDate) => checkpointWith.checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
               return <div>
                 Create new (no tax handling):
                 <ul>
@@ -1628,33 +1646,49 @@ export default function Home() {
                   </li>
                   <li key="checkpoint" title="a choice was made to only use checkpoint">
                     Checkpoint:&nbsp;
-                    <input defaultValue={(myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10)} placeholder="5" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], false, (e) => getCheckpoint(e.target.value))} />
+                    <select defaultValue={currentCheckpointIndex} disabled={!canManipulate}
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], false, (e) => {
+                        console.log(e);
+                        return Promise.resolve(myInfo.checkpoints.current[parseInt(e.target.value)])
+                      })}>{
+                        [
+                          <option key="menu" disabled={true}>Pick a checkpoint</option>,
+                          ...myInfo.checkpoints.current
+                            .map((checkpointWith: CheckpointWithCreationDate, index: number) => <option key={index} value={index}>
+                              {checkpointWith.checkpoint.id.toString(10)}&nbsp;-&nbsp;{checkpointWith.createdAt.toISOString()}
+                            </option>)
+                        ]
+                      }</select>
                   </li>
                   <li key="description">
                     Description:&nbsp;
                     <input defaultValue={myInfo.corporateActions.distributions.newDividend.description} placeholder="Quarterly dividend" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "description"])} />
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "description"])} />
                   </li>
                   <li key="originPortfolio">
                     Origin portfolio:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.originPortfolio?.id?.toString(10)} placeholder="" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "originPortfolio"], false, (e) => getNumberedPortfolio(e.target.value))} />
+                    <select defaultValue={myInfo.corporateActions.distributions.newDividend.originPortfolio?.id?.toString(10)} disabled={!canManipulate}
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "originPortfolio"], false, (e) => Promise.resolve(myInfo.portfolios.mine[e.target.value]))}>{
+                        myInfo.portfolios.mine
+                          .map((portfolio: NumberedPortfolio, index: number) => <option key={index} value={index}>
+                            {isNumberedPortfolio(portfolio) ? portfolio.id.toString(10) : "Default"}
+                          </option>)
+                      }</select>
                   </li>
                   <li key="currency">
                     Currency:&nbsp;
                     <input defaultValue={myInfo.corporateActions.distributions.newDividend.currency} placeholder="USD" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "currency"])} />
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "currency"])} />
                   </li>
                   <li key="perShare">
                     Per share:&nbsp;
                     <input defaultValue={myInfo.corporateActions.distributions.newDividend.perShare.toString(10)} placeholder="1" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "perShare"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "perShare"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
                   </li>
                   <li key="maxAmount">
                     Max amount:&nbsp;
                     <input defaultValue={myInfo.corporateActions.distributions.newDividend.maxAmount.toString(10)} placeholder="1" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["corporateActions", "distributions", "newDividend", "maxAmount"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "maxAmount"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
                   </li>
                   <li key="paymentDate">
                     Payment date:&nbsp;

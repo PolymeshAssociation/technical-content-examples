@@ -111,14 +111,18 @@ export type AuthorisationInfoJson = {
 
 export type PortfoliosInfoJson = {
     current: [DefaultPortfolio, ...NumberedPortfolio[]] | null,
+    mine: [DefaultPortfolio, ...NumberedPortfolio[]],
     otherOwner: string,
     details: PortfolioInfoJson[],
+    myDetails: PortfolioInfoJson[],
+    newPortfolioName: string,
 }
 
 export type PortfolioInfoJson = {
     original: DefaultPortfolio | NumberedPortfolio,
     owner: string,
     id: string | null,
+    name: string,
     custodian: string,
     newCustodian: string,
 }
@@ -197,6 +201,20 @@ export function getEmptyTokenDetails(): SecurityTokenDetails {
     }
 }
 
+export function getEmptyRequirements(): RequirementsInfoJson {
+    return {
+        current: [] as Requirement[],
+        arePaused: true as boolean,
+        canManipulate: false as boolean,
+        modified: false as boolean,
+        settleSimulation: {
+            sender: "" as string,
+            recipient: "" as string,
+            works: null as boolean | null,
+        },
+    }
+}
+
 export function getEmptyMyInfo(): MyInfoJson {
     return {
         ticker: "" as string,
@@ -223,17 +241,7 @@ export function getEmptyMyInfo(): MyInfoJson {
                 requestExpiry: null as Date | null,
             } as ModifyPrimaryIssuanceAgentParams,
         } as TokenInfoJson,
-        requirements: {
-            current: [] as Requirement[],
-            arePaused: true as boolean,
-            canManipulate: false as boolean,
-            modified: false as boolean,
-            settleSimulation: {
-                sender: "" as string,
-                recipient: "" as string,
-                works: null as boolean | null,
-            },
-        } as RequirementsInfoJson,
+        requirements: getEmptyRequirements() as RequirementsInfoJson,
         authorisations: {
             current: [] as AuthorizationRequest[],
         } as AuthorisationInfoJson,
@@ -260,8 +268,11 @@ export function getEmptyMyInfo(): MyInfoJson {
         } as AttestationsInfoJson,
         portfolios: {
             current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
+            mine: [] as [DefaultPortfolio, ...NumberedPortfolio[]],
             otherOwner: "" as string,
             details: [] as PortfolioInfoJson[],
+            myDetails: [] as PortfolioInfoJson[],
+            newPortfolioName: "",
         },
         checkpoints: {
             current: [] as CheckpointWithCreationDate[],
@@ -284,8 +295,6 @@ export function getEmptyMyInfo(): MyInfoJson {
                     declarationDate: new Date(),
                     checkpoint: null as Checkpoint,
                     description: "" as string,
-                    targets: null,
-                    defaultTaxWithholding: null,
                     taxWithholdings: [],
                     originPortfolio: null,
                     currency: "",
