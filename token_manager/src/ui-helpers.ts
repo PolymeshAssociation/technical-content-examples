@@ -1,6 +1,6 @@
 import getConfig from "next/config"
 import { Keyring, Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { HasFetchTimer } from "./types"
+import { HasFetchTimer, MyInfoPath } from "./types"
 
 export async function getBasicPolyWalletApi(setStatus: (content: string) => void): Promise<Polymesh> {
     setStatus("Getting your Polymesh Wallet")
@@ -68,7 +68,7 @@ export async function checkboxProcessor(e): Promise<boolean> {
     return Promise.resolve(e.target.checked)
 }
 
-export function returnUpdated(previous: object, path: (string | number)[], value: any, deep: boolean = false) {
+export function returnUpdated(previous: object, path: MyInfoPath, value: any, deep: boolean = false) {
     if (path.length === 0) {
         if (deep && typeof value === "object" && !Array.isArray(value)) return {
             ...previous,
@@ -87,15 +87,15 @@ export function returnUpdated(previous: object, path: (string | number)[], value
     }
 }
 
-export function returnUpdatedCreator(path: (string | number)[], value: any, deep: boolean = false) {
+export function returnUpdatedCreator(path: MyInfoPath, value: any, deep: boolean = false) {
     return (previous: object) => returnUpdated(previous, path, value, deep)
 }
 
-export function findValue(where: object, path: (string | number)[]): any {
+export function findValue(where: object, path: MyInfoPath): any {
     return path.reduce((whereLeft: object, pathBit: string | number) => whereLeft[pathBit], where)
 }
 
-export function returnAddedArrayCreator(containerLocation: (string | number)[], dummy: any, deep: boolean = false) {
+export function returnAddedArrayCreator(containerLocation: MyInfoPath, dummy: any, deep: boolean = false) {
     return (prevInfo) => {
         const container = findValue(prevInfo, containerLocation) || []
         if (!Array.isArray(container)) throw new Error("Only works with arrays")
@@ -104,7 +104,7 @@ export function returnAddedArrayCreator(containerLocation: (string | number)[], 
     }
 }
 
-export function returnRemovedArrayCreator(location: (string | number)[]) {
+export function returnRemovedArrayCreator(location: MyInfoPath) {
     return (prevInfo) => {
         const containerPath = location.slice(0, -1)
         const container = findValue(prevInfo, containerPath)

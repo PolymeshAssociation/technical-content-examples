@@ -58,6 +58,8 @@ export function getCountryList(): CountryInfo[] {
     })
 }
 
+export type MyInfoPath = (string | number)[]
+
 export type MyInfoJson = {
     ticker: string,
     myDid: string,

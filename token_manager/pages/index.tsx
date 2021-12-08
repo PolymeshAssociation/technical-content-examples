@@ -57,6 +57,7 @@ import {
   isIdentityCondition,
   isNumberedPortfolio,
   isPrimaryIssuanceAgentCondition,
+  MyInfoPath,
   PortfolioInfoJson,
 } from "../src/types"
 import {
@@ -126,7 +127,7 @@ export default function Home() {
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
 
-  function onValueChangedCreator(path: (string | number)[], deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
+  function onValueChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
       setMyInfo(returnUpdatedCreator(path, value, deep))
@@ -311,14 +312,14 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: (string | number)[], deep: boolean = false, valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
+  function onRequirementChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
     return async function (e): Promise<void> {
       await onValueChangedCreator(path, deep, valueProcessor)(e)
       setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
     }
   }
 
-  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const trustedFor: JSX.Element = trustedIssuer.trustedFor
       ? <ul>{
         trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li key={claimTypeIndex}>
@@ -344,7 +345,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0) return <div>No trusted issuers</div>
     return <ul>{
       trustedIssuers
@@ -357,7 +358,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentScope(scope: Scope, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentScope(scope: Scope, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof scope === "undefined" || scope === null) {
       const defaultScope: Scope = { type: ScopeType.Custom, value: "" }
       setMyInfo(returnUpdatedCreator([...location], defaultScope as Scope))
@@ -375,7 +376,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentClaim(claim: Claim, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentClaim(claim: Claim, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const elements: JSX.Element[] = [
       <li key="type">Type: &nbsp;
         <select defaultValue={claim.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
@@ -419,7 +420,7 @@ export default function Home() {
     return <ul>{elements}</ul>
   }
 
-  function presentClaims(claims: Claim[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentClaims(claims: Claim[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof claims === "undefined" || claims === null || claims.length === 0) return <div>No claims</div>
     return <ul>{
       claims
@@ -428,7 +429,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>
       <li key="cddId">CDD id:&nbsp;
@@ -442,7 +443,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentCondition(condition: Condition, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCondition(condition: Condition, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const dummyTrustedClaimIssuer: TrustedClaimIssuer = { identity: null, trustedFor: [] }
     const elements: JSX.Element[] = [
       <li key="target">Target:
@@ -479,7 +480,7 @@ export default function Home() {
     return <ul>{elements}</ul>
   }
 
-  function presentConditions(conditions: Condition[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentConditions(conditions: Condition[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (conditions === null || conditions.length === 0) return <div>No conditions</div>
     return <ul>{
       conditions
@@ -491,7 +492,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentRequirement(requirement: Requirement, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentRequirement(requirement: Requirement, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const dummyCondition: Condition = {
       target: null,
       type: ConditionType.IsPresent,
@@ -508,7 +509,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentRequirements(requirements: Requirement[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentRequirements(requirements: Requirement[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof requirements === "undefined" || requirements === null || requirements.length === 0) return <div>No requirements</div>
     return <ul>{
       requirements
@@ -520,12 +521,12 @@ export default function Home() {
     }</ul>
   }
 
-  function addToMyRequirementArray(containerLocation: (string | number)[], dummy: any): void {
+  function addToMyRequirementArray(containerLocation: MyInfoPath, dummy: any): void {
     setMyInfo(returnAddedArrayCreator(containerLocation, dummy))
     setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
   }
 
-  function removeFromMyRequirementArray(containerLocation: (string | number)[]): void {
+  function removeFromMyRequirementArray(containerLocation: MyInfoPath): void {
     setMyInfo(returnRemovedArrayCreator(containerLocation))
     setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
   }
@@ -574,7 +575,7 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["authorisations", "current"], authorisations))
   }
 
-  function presentPermissions(permissions: Permissions, location: (string | number)[]): JSX.Element {
+  function presentPermissions(permissions: Permissions, location: MyInfoPath): JSX.Element {
     return <ul>
       <li key="portfolios">Portfolios:&nbsp;{presentPorfolios(permissions.portfolios, [...location, "portfolios"])}</li>
       <li key="tokens">Tokens:&nbsp;{
@@ -587,14 +588,14 @@ export default function Home() {
     </ul>
   }
 
-  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: (string | number)[]): JSX.Element {
+  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: MyInfoPath): JSX.Element {
     return <ul>
       <li key="owner">Owner:&nbsp;{portfolio.owner.did === myInfo.myDid ? "me" : presentLongHex(portfolio.owner.did)}</li>
       <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null"}</li>
     </ul>
   }
 
-  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: (string | number)[]): JSX.Element {
+  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: MyInfoPath): JSX.Element {
     if (portfolios === null) return <div>"There are no portfolios"</div>
     return <ul>{
       portfolios
@@ -605,7 +606,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentAuthorisation(authorisation: Authorization, location: (string | number)[]): JSX.Element {
+  function presentAuthorisation(authorisation: Authorization, location: MyInfoPath): JSX.Element {
     const elements: JSX.Element[] = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
     if (authorisation.type === AuthorizationType.NoData) { // Add nothing
     } else if (authorisation.type === AuthorizationType.PortfolioCustody) {
@@ -618,7 +619,7 @@ export default function Home() {
     return <ul>{elements}</ul>
   }
 
-  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: (string | number)[]): JSX.Element {
+  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: MyInfoPath): JSX.Element {
     const amIssuer: boolean = authorisationRequest.issuer.did === myInfo.myDid
     const target: string = authorisationRequest.target instanceof Identity ? authorisationRequest.target.did : authorisationRequest.target.address
     const amTarget: boolean = target === myInfo.myDid || target === myInfo.myAddress
@@ -637,7 +638,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: (string | number)[]): JSX.Element {
+  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: MyInfoPath): JSX.Element {
     if (typeof authorisationRequests === "undefined" || authorisationRequests === null || authorisationRequests.length === 0) return <div>No authorisations</div>
     return <ul>{
       authorisationRequests
@@ -648,7 +649,7 @@ export default function Home() {
     }</ul>
   }
 
-  async function acceptRequest(location: (string | number)[]): Promise<void> {
+  async function acceptRequest(location: MyInfoPath): Promise<void> {
     const request: AuthorizationRequest = findValue(myInfo, location)
     setStatus(`Accepting request ${request.authId}`)
     await (await request.accept()).run()
@@ -656,7 +657,7 @@ export default function Home() {
     await loadAuthorisations()
   }
 
-  async function rejectRequest(location: (string | number)[]): Promise<void> {
+  async function rejectRequest(location: MyInfoPath): Promise<void> {
     const request: AuthorizationRequest = findValue(myInfo, location)
     setStatus(`Rejecting request ${request.authId}`)
     await (await request.remove()).run()
@@ -685,12 +686,12 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["attestations", "current"], myClaims))
   }
 
-  async function fetchMyCddId(location: (string | number)[]): Promise<void> {
+  async function fetchMyCddId(location: MyInfoPath): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
     return fetchCddId(location, await api.getCurrentIdentity())
   }
 
-  async function fetchCddId(location: (string | number)[], target: string | Identity): Promise<void> {
+  async function fetchCddId(location: MyInfoPath, target: string | Identity): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
     const targetDid: string = typeof target === "string" ? target : target.did
     if (typeof targetDid === "undefined" || targetDid === null || targetDid === "") throw new Error(`You need to put a valid target first, not ${targetDid}`)
@@ -703,7 +704,7 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
   }
 
-  function presentClaimData(claimData: ClaimData<Claim>, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentClaimData(claimData: ClaimData<Claim>, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     canManipulate = claimData.issuer.did === myInfo.myDid
     return <ul>
       <li key="target">Target:&nbsp;
@@ -734,7 +735,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentClaimTarget(claimTarget: ClaimTarget, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentClaimTarget(claimTarget: ClaimTarget, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="target">Target:&nbsp;
         <input defaultValue={typeof claimTarget.target === "string" ? claimTarget.target : claimTarget.target.did} placeholder="0x123"
@@ -755,7 +756,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentClaimDatas(claimDatas: ClaimData<Claim>[] | null, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentClaimDatas(claimDatas: ClaimData<Claim>[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof claimDatas === "undefined" || claimDatas === null || claimDatas.length === 0) return <div>No attestations</div>
     return <ul>{
       claimDatas
@@ -770,7 +771,7 @@ export default function Home() {
     }</ul>
   }
 
-  async function revokeAttestation(location: (string | number)[]): Promise<void> {
+  async function revokeAttestation(location: MyInfoPath): Promise<void> {
     const toRevoke = findValue(myInfo, location)
     const api: Polymesh = await getPolyWalletApi()
     await (await api.claims.revokeClaims({
@@ -778,7 +779,7 @@ export default function Home() {
     })).run()
   }
 
-  async function addAttestation(location: (string | number)[]): Promise<void> {
+  async function addAttestation(location: MyInfoPath): Promise<void> {
     const toAdd: ClaimTarget = findValue(myInfo, location)
     const api: Polymesh = await getPolyWalletApi()
     setStatus("Adding attestation")
@@ -786,7 +787,7 @@ export default function Home() {
     setStatus("Attestation added")
   }
 
-  async function addUniquenessAttestation(location: (string | number)[]): Promise<void> {
+  async function addUniquenessAttestation(location: MyInfoPath): Promise<void> {
     const toAdd: AddInvestorUniquenessClaimParams = Object.assign({}, findValue(myInfo, location))
     const api: Polymesh = await getPolyWalletApi()
     const currentIdentity: CurrentIdentity = await api.getCurrentIdentity()
@@ -879,21 +880,21 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
   }
 
-  async function setCustodian(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void> {
+  async function setCustodian(portfolio: PortfolioInfoJson, location: MyInfoPath): Promise<void> {
     setStatus("Setting custodian")
     await (await portfolio.original.setCustodian({ targetIdentity: portfolio.newCustodian })).run()
     setStatus("Custodian set")
     await loadMyPortfolios()
   }
 
-  async function relinquishCustody(portfolio: PortfolioInfoJson, location: (string | number)[]): Promise<void> {
+  async function relinquishCustody(portfolio: PortfolioInfoJson, location: MyInfoPath): Promise<void> {
     setStatus("Relinquishing custody")
     await (await portfolio.original.setCustodian({ targetIdentity: portfolio.owner })).run()
     setStatus("Custody relinquished")
     await loadPortfolios(portfolio.owner)
   }
 
-  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const isCustodied: boolean = portfolio.owner !== portfolio.custodian
     const isMine: boolean = portfolio.owner === myInfo.myDid
     const canSetCustody: boolean = canManipulate && isMine && !isCustodied
@@ -917,7 +918,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return <div>There are no portfolios</div>
     return <ul>{
       portfolios
@@ -965,7 +966,7 @@ export default function Home() {
     return checkpoint
   }
 
-  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: (string | number)[]): Promise<string> {
+  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: MyInfoPath): Promise<string> {
     const balance: string = (await checkpoint.checkpoint.balance({ identity: whoseBalance })).toString(10)
     setMyInfo(returnUpdatedCreator([...location, "balance"], balance))
     return balance
@@ -1010,7 +1011,7 @@ export default function Home() {
     }
   }
 
-  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="id">Id:&nbsp;{checkpointInfo.checkpoint.id.toString(10)}</li>
       <li key="ticker">Ticker:&nbsp;{checkpointInfo.checkpoint.ticker}</li>
@@ -1026,7 +1027,7 @@ export default function Home() {
     </ul>
   }
 
-  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return <div>There are no checkpoints</div>
     return <ul>{
       checkpoints
@@ -1037,22 +1038,22 @@ export default function Home() {
     }</ul>
   }
 
-  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{presentCheckpointScheduleInner(scheduleInfo, location, canManipulate)}</ul>
   }
 
-  function presentCheckpointScheduleInner(scheduleInfo: CheckpointScheduleInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element[] {
+  function presentCheckpointScheduleInner(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
       <li key="createdCheckpoints">Created checkpoints:&nbsp;{presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>,
     ]
   }
 
-  function presentCheckpointScheduleDetail(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCheckpointScheduleDetail(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{presentCheckpointScheduleDetailInner(scheduleInfo, location, canManipulate)}</ul>
   }
 
-  function presentCheckpointScheduleDetailInner(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element[] {
+  function presentCheckpointScheduleDetailInner(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       ...presentCheckpointScheduleInner(scheduleInfo, location, canManipulate),
       <li key="remainingCheckpoints">Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}</li>,
@@ -1060,7 +1061,7 @@ export default function Home() {
     ]
   }
 
-  function presentCheckpointSchedules(schedules: CheckpointScheduleDetailsInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCheckpointSchedules(schedules: CheckpointScheduleDetailsInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>There are no checkpoint schedules</div>
     return <ul>{
       schedules
@@ -1071,7 +1072,7 @@ export default function Home() {
     }</ul>
   }
 
-  function onRequirementChangedDateCreator(path: (string | number)[]) {
+  function onRequirementChangedDateCreator(path: MyInfoPath) {
     return onRequirementChangedCreator(path, false, (e) => {
       const newDate: Date = new Date(e.target.value)
       if (newDate.toDateString() === "Invalid Date") return Promise.resolve(findValue(myInfo, path))
@@ -1141,11 +1142,11 @@ export default function Home() {
     }
   }
 
-  function presentCorporateAction(action: CorporateActionInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCorporateAction(action: CorporateActionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{presentCorporateActionInner(action, location, canManipulate)}</ul>
   }
 
-  function presentCorporateActionInner(action: CorporateActionInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element[] {
+  function presentCorporateActionInner(action: CorporateActionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       <li key="id">Id:&nbsp;{action.current.id.toString(10)}</li>,
       <li key="ticker">Ticker:&nbsp;{action.current.ticker}</li>,
@@ -1159,7 +1160,7 @@ export default function Home() {
     ]
   }
 
-  function presentDividendDistributions(actions: DividendDistributionInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentDividendDistributions(actions: DividendDistributionInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{
       actions
         .map((action: DividendDistributionInfoJson, actionIndex: number) => presentDividendDistribution(action, [...location, actionIndex], canManipulate))
@@ -1169,11 +1170,11 @@ export default function Home() {
     }</ul>
   }
 
-  function presentDividendDistribution(action: DividendDistributionInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentDividendDistribution(action: DividendDistributionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{presentDividendDistributionInner(action, location, canManipulate)}</ul>
   }
 
-  function presentDividendDistributionInner(action: DividendDistributionInfoJson, location: (string | number)[], canManipulate: boolean): JSX.Element[] {
+  function presentDividendDistributionInner(action: DividendDistributionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       ...presentCorporateActionInner(action, location, canManipulate),
       <li key="origin">Origin:&nbsp;{presentPorfolioJson(action.origin, [...location, "origin"], canManipulate)}</li>,
@@ -1182,14 +1183,14 @@ export default function Home() {
     ]
   }
 
-  function presentDividendDistributionDetails(details: DividendDistributionDetails, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentDividendDistributionDetails(details: DividendDistributionDetails, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="remainingFunds">Remaining funds:&nbsp;{details.remainingFunds.toString(10)}</li>
       <li key="fundsReclaimed">Funds reclaimed:&nbsp;{details.fundsReclaimed ? "true" : "false"}</li>
     </ul>
   }
 
-  function presentCorporateActions(actions: CorporateActionInfoJson[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentCorporateActions(actions: CorporateActionInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     if (typeof actions === "undefined" || actions === null || actions.length === 0) return <div>There are no corporate actions</div>
     return <ul>{
       actions
@@ -1200,7 +1201,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentParticipants(participants: DistributionParticipant[], location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentParticipants(participants: DistributionParticipant[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{
       participants
         .map((participant: DistributionParticipant, participantIndex: number) => presentParticipant(participant, [...location, participantIndex], canManipulate))
@@ -1210,7 +1211,7 @@ export default function Home() {
     }</ul>
   }
 
-  function presentParticipant(participant: DistributionParticipant, location: (string | number)[], canManipulate: boolean): JSX.Element {
+  function presentParticipant(participant: DistributionParticipant, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="identity">Identity:&nbsp;{participant.identity.did}</li>
       <li key="amount">Identity:&nbsp;{participant.amount.toString(10)}</li>
