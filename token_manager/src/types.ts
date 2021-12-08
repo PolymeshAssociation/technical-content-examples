@@ -60,6 +60,8 @@ export function getCountryList(): CountryInfo[] {
 
 export type MyInfoPath = (string | number)[]
 
+export type OnRequirementChangedCreator = (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>
+
 export type MyInfoJson = {
     ticker: string,
     myDid: string,

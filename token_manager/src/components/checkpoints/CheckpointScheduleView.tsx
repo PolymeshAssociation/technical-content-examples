@@ -1,6 +1,11 @@
 import React, { Component } from "react";
-import { CheckpointInfoJson, CheckpointScheduleDetailsInfoJson, CheckpointScheduleInfoJson, MyInfoPath } from "../../types";
-import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
+import {
+    CheckpointScheduleDetailsInfoJson,
+    CheckpointScheduleInfoJson,
+    MyInfoPath,
+    OnRequirementChangedCreator
+} from "../../types";
+import { BasicCheckpointViewProps, CheckpointsView, LoadBalanceAtCheckpoint } from "./CheckpointView";
 
 export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps {
     scheduleInfo: CheckpointScheduleInfoJson
@@ -10,8 +15,8 @@ function presentCheckpointScheduleInner(
     scheduleInfo: CheckpointScheduleInfoJson,
     location: MyInfoPath,
     canManipulate: boolean,
-    onRequirementChangedCreator: (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>,
-    loadBalanceAtCheckpoint: (checkpoint: CheckpointInfoJson, whoseBalance: string, location: MyInfoPath) => Promise<string>): JSX.Element[] {
+    onRequirementChangedCreator: OnRequirementChangedCreator,
+    loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
         <li key="createdCheckpoints">Created checkpoints:&nbsp;<CheckpointsView
@@ -29,8 +34,8 @@ function presentCheckpointScheduleDetailInner(
     scheduleInfo: CheckpointScheduleDetailsInfoJson,
     location: MyInfoPath,
     canManipulate: boolean,
-    onRequirementChangedCreator: (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>,
-    loadBalanceAtCheckpoint: (checkpoint: CheckpointInfoJson, whoseBalance: string, location: MyInfoPath) => Promise<string>): JSX.Element[] {
+    onRequirementChangedCreator: OnRequirementChangedCreator,
+    loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         ...presentCheckpointScheduleInner(
             scheduleInfo,
@@ -102,7 +107,8 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
             onRequirementChangedCreator,
             loadBalanceAtCheckpoint
         } = this.props
-        if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>There are no checkpoint schedules</div>
+        if (typeof schedules === "undefined" || schedules === null || schedules.length === 0)
+            return <div>There are no checkpoint schedules</div>
         return <ul>{
             schedules
                 .map((schedule: CheckpointScheduleDetailsInfoJson, scheduleIndex: number) => <CheckpointScheduleDetailView
