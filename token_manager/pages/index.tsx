@@ -5,7 +5,6 @@ import {
   ClaimType,
   Compliance,
   Condition,
-  CurrentIdentity,
   isMultiClaimCondition,
   isSingleClaimCondition,
   KnownTokenType,
@@ -94,12 +93,12 @@ export default function Home() {
 
   async function getPolyWalletApi(): Promise<Polymesh> {
     const api: Polymesh = await getBasicPolyWalletApi(setStatus)
-    const myIdentity: CurrentIdentity = await api.getCurrentIdentity()
+    const myIdentity: Identity = await api.getCurrentIdentity()
     setMyInfo(returnUpdatedCreator(["myDid"], myIdentity.did))
     return api
   }
 
-  async function getMyIdentity(): Promise<CurrentIdentity> {
+  async function getMyIdentity(): Promise<Identity> {
     return (await getPolyWalletApi()).getCurrentIdentity()
   }
 
@@ -110,7 +109,7 @@ export default function Home() {
   async function loadYourTickers(): Promise<string[]> {
     const api: Polymesh = await getPolyWalletApi()
     setStatus("Getting your current identity")
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     setStatus("Fetching your security tokens")
     const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: me })
     setStatus("Fetching your token reservations")
@@ -667,7 +666,7 @@ export default function Home() {
 
   async function loadAttestationsReceived(): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     setStatus("Fetching attestations I received")
     setMyInfo(returnUpdatedCreator(["myDid"], me.did))
     await setAttestations((await api.claims.getIssuedClaims({ target: me.did })).data)
@@ -790,7 +789,7 @@ export default function Home() {
   async function addUniquenessAttestation(location: MyInfoPath): Promise<void> {
     const toAdd: AddInvestorUniquenessClaimParams = Object.assign({}, findValue(myInfo, location))
     const api: Polymesh = await getPolyWalletApi()
-    const currentIdentity: CurrentIdentity = await api.getCurrentIdentity()
+    const currentIdentity: Identity = await api.getCurrentIdentity()
     const polyWallet = (window || {})["polyWallet"]
     const network = await polyWallet.network.get()
     const crypto = await import('@polymathnetwork/confidential-identity')
@@ -814,7 +813,7 @@ export default function Home() {
 
   async function createPortfolio(): Promise<NumberedPortfolio> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     const newPortfolio = await (await me.portfolios.create({ name: myInfo.portfolios.newPortfolioName })).run()
     await loadMyPortfolios()
     return newPortfolio
@@ -822,14 +821,14 @@ export default function Home() {
 
   async function deletePortfolio(portfolio: BigNumber | NumberedPortfolio): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     await (await me.portfolios.delete({ portfolio })).run()
     await loadMyPortfolios()
   }
 
   async function loadMyPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     const mine = await loadPortfolios(me.did)
     setMyInfo(returnUpdatedCreator(["portfolios", "mine"], mine))
     return mine
@@ -841,7 +840,7 @@ export default function Home() {
 
   async function loadPortfolios(whose: string): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
     const api: Polymesh = await getPolyWalletApi()
-    const who: Identity = api.getIdentity({ did: whose })
+    const who: Identity = await api.getIdentity({ did: whose })
     setStatus(`Loading portfolios of ${presentLongHex(whose)}`)
     const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
     setStatus(`Portfolios of ${presentLongHex(whose)} retrieved`)
@@ -851,7 +850,7 @@ export default function Home() {
 
   async function loadMyCustodiedPortfolios(): Promise<(DefaultPortfolio | NumberedPortfolio)[]> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     setStatus("Loading my custodied portfolios")
     const result: ResultSet<DefaultPortfolio | NumberedPortfolio> = await me.portfolios.getCustodiedPortfolios()
     setStatus("My custodied portfolios loaded")
