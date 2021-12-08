@@ -5,9 +5,11 @@ import {
     MyInfoPath,
     OnRequirementChangedCreator
 } from "../../types";
-import { BasicCheckpointViewProps, CheckpointsView, LoadBalanceAtCheckpoint } from "./CheckpointView";
+import { BasicProps } from "../BasicProps";
+import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
+import { LoadBalanceAtCheckpoint } from "./types";
 
-export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps, BasicProps {
     scheduleInfo: CheckpointScheduleInfoJson
 }
 
@@ -71,7 +73,7 @@ export class CheckpointScheduleView extends Component<CheckpointScheduleViewProp
     }
 }
 
-export interface CheckpointScheduleDetailViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleDetailViewProps extends BasicCheckpointViewProps, BasicProps {
     scheduleDetailInfo: CheckpointScheduleDetailsInfoJson
 }
 
@@ -94,7 +96,7 @@ export class CheckpointScheduleDetailView extends Component<CheckpointScheduleDe
     }
 }
 
-export interface CheckpointScheduleDetailsViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleDetailsViewProps extends BasicCheckpointViewProps, BasicProps {
     schedules: CheckpointScheduleDetailsInfoJson[]
 }
 

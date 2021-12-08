@@ -84,6 +84,8 @@ import {
 } from "../src/ui-helpers"
 import { CheckpointsView, CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleDetailsView, CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
+import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
+import { presentEnumOptions } from "../src/components/EnumView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -134,12 +136,6 @@ export default function Home() {
       setMyInfo(returnUpdatedCreator(path, value, deep))
       if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => await loadReservation(value))
     }
-  }
-
-  function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
-    const selects: JSX.Element[] = []
-    for (const element in theEnum) selects.push(<option value={element} key={element}>{element}</option>)
-    return selects
   }
 
   async function reserveTicker(): Promise<TickerReservation> {
@@ -1013,7 +1009,7 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedDateCreator(path: MyInfoPath) {
+  function onRequirementChangedDateCreator(path: MyInfoPath): (e) => Promise<void> {
     return onRequirementChangedCreator(path, false, (e) => {
       const newDate: Date = new Date(e.target.value)
       if (newDate.toDateString() === "Invalid Date") return Promise.resolve(findValue(myInfo, path))
@@ -1477,79 +1473,15 @@ export default function Home() {
 
         </fieldset>
 
-        <fieldset className={styles.card}>
-          <legend>Checkpoints for: {myInfo.token.current?.ticker}</legend>
-
-          <div className="submit">{
-            (() => {
-              const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
-              return <div className="submit">
-                <button className="submit create-checkpoint" onClick={createCheckpoint} disabled={!canManipulate}>Create 1 now</button>
-              </div>
-            })()
-          }</div>
-
-          <div>
-            <CheckpointsView
-              checkpoints={myInfo.checkpoints?.details}
-              location={["checkpoints", "details"]}
-              canManipulate={true}
-              onRequirementChangedCreator={onRequirementChangedCreator}
-              loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-            />
-          </div>
-
-          <div className={styles.card}>{
-            (() => {
-              const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
-              return <div>
-                Create new:
-                <ul>
-                  <li key="start">
-                    Start at:&nbsp;
-                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.start?.toISOString()} placeholder="2021-12-31T06:00:00Z" disabled={!canManipulate}
-                      onChange={onRequirementChangedDateCreator(["checkpoints", "scheduledToAdd", "start"])} />
-                  </li>
-                  <li key="periodValue">
-                    Period value:&nbsp;
-                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.period?.amount?.toString(10)} placeholder="5" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "amount"], false, (e) => Promise.resolve(parseInt(e.target.value)))} />
-                  </li>
-                  <li key="periodUnit">
-                    Period unit:&nbsp;
-                    <select defaultValue={myInfo.checkpoints.scheduledToAdd.period?.unit} disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "period", "unit"])}>
-                      {presentEnumOptions(CalendarUnit)}
-                    </select>
-                  </li>
-                  <li key="repetitions">
-                    Repetitions:&nbsp;
-                    <input defaultValue={myInfo.checkpoints.scheduledToAdd.repetitions.toString(10)} placeholder="0" disabled={!canManipulate}
-                      onChange={onRequirementChangedCreator(["checkpoints", "scheduledToAdd", "repetitions"], false, (e) => Promise.resolve(parseInt(e.target.value)))} />
-                  </li>
-                </ul>
-
-                <div className="submit">
-                  <div className="submit">
-                    <button className="submit create-scheduled-checkpoint" onClick={createScheduledCheckpoint} disabled={!canManipulate}>Create scheduled</button>
-                  </div>
-                </div>
-
-              </div>
-            })()
-          }</div>
-
-          <div>
-            <CheckpointScheduleDetailsView
-              schedules={myInfo.checkpoints.scheduleDetails}
-              location={["checkpoints", "scheduleDetails"]}
-              canManipulate={true}
-              onRequirementChangedCreator={onRequirementChangedCreator}
-              loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-            />
-          </div>
-
-        </fieldset>
+        <CheckpointManagerView
+          myInfo={myInfo}
+          cardStyle={styles.card}
+          createCheckpoint={createCheckpoint}
+          onRequirementChangedDateCreator={onRequirementChangedDateCreator}
+          createScheduledCheckpoint={createScheduledCheckpoint}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+        />
 
         <fieldset className={styles.card}>
           <legend>Corporate actions for: {myInfo.token.current?.ticker}</legend>
