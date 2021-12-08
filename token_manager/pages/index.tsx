@@ -82,6 +82,7 @@ import {
   returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
+import { CheckpointsView, CheckpointView } from "../src/components/checkpoints/CheckpointView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -1010,33 +1011,6 @@ export default function Home() {
     }
   }
 
-  function presentCheckpoint(checkpointInfo: CheckpointInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>
-      <li key="id">Id:&nbsp;{checkpointInfo.checkpoint.id.toString(10)}</li>
-      <li key="ticker">Ticker:&nbsp;{checkpointInfo.checkpoint.ticker}</li>
-      <li key="totalSupply">Total supply:&nbsp;{checkpointInfo.totalSupply.toString(10)}</li>
-      <li key="createdAt">Created at:&nbsp;{checkpointInfo.createdAt.toISOString()}</li>
-      <li key="balanceOf">Balance of:&nbsp;
-        <input defaultValue={checkpointInfo.whoseBalance} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "whoseBalance"])} />
-        &nbsp;
-        <button className="submit get-balanceOf" onClick={() => loadBalanceAtCheckpoint(checkpointInfo, checkpointInfo.whoseBalance, location)}>Fetch</button>
-        <br />
-        Is&nbsp;{`${checkpointInfo.balance.toString(10)} ${checkpointInfo.checkpoint.ticker}`}
-      </li>
-    </ul>
-  }
-
-  function presentCheckpoints(checkpoints: CheckpointInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0) return <div>There are no checkpoints</div>
-    return <ul>{
-      checkpoints
-        .map((checkpoint: CheckpointInfoJson, checkpointIndex: number) => presentCheckpoint(checkpoint, [...location, checkpointIndex], canManipulate))
-        .map((presented: JSX.Element, checkpointIndex: number) => <li key={checkpointIndex}>
-          Checkpoint {checkpointIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
   function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>{presentCheckpointScheduleInner(scheduleInfo, location, canManipulate)}</ul>
   }
@@ -1044,7 +1018,14 @@ export default function Home() {
   function presentCheckpointScheduleInner(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
-      <li key="createdCheckpoints">Created checkpoints:&nbsp;{presentCheckpoints(scheduleInfo.createdCheckpoints, [...location, "createdCheckpoints"], canManipulate)}</li>,
+      <li key="createdCheckpoints">Created checkpoints:&nbsp;<CheckpointsView
+        checkpoints={scheduleInfo.createdCheckpoints}
+        location={[...location, "createdCheckpoints"]}
+        canManipulate={canManipulate}
+        onRequirementChangedCreator={onRequirementChangedCreator}
+        loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+      />
+      </li>,
     ]
   }
 
@@ -1152,7 +1133,16 @@ export default function Home() {
       <li key="declarationDate">Declaration date:&nbsp;{action.current.declarationDate.toISOString()}</li>,
       <li key="description">Description:&nbsp;{action.current.description}</li>,
       (function () {
-        if (action.checkpoint !== null) return <li key="checkpoint">Checkpoint:&nbsp;{presentCheckpoint(action.checkpoint, location, canManipulate)}</li>
+        if (action.checkpoint !== null) return <li key="checkpoint">
+          Checkpoint:&nbsp;
+          <CheckpointView
+            checkpointInfo={action.checkpoint}
+            location={location}
+            canManipulate={canManipulate}
+            onRequirementChangedCreator={onRequirementChangedCreator}
+            loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+          />
+        </li>
         if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;{presentCheckpointSchedule(action.checkpointSchedule, location, canManipulate)}</li>
         return <li key="checkpoint">No checkpoint or checkpoint schedule</li>
       })(),
@@ -1531,7 +1521,15 @@ export default function Home() {
             })()
           }</div>
 
-          <div>{presentCheckpoints(myInfo.checkpoints?.details, ["checkpoints", "details"], true)}</div>
+          <div>
+            <CheckpointsView
+              checkpoints={myInfo.checkpoints?.details}
+              location={["checkpoints", "details"]}
+              canManipulate={true}
+              onRequirementChangedCreator={onRequirementChangedCreator}
+              loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+            />
+          </div>
 
           <div className={styles.card}>{
             (() => {
