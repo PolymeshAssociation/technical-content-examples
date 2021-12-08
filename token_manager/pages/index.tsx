@@ -83,6 +83,7 @@ import {
   returnUpdatedCreator,
 } from "../src/ui-helpers"
 import { CheckpointsView, CheckpointView } from "../src/components/checkpoints/CheckpointView"
+import { CheckpointScheduleDetailsView, CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -1011,47 +1012,6 @@ export default function Home() {
     }
   }
 
-  function presentCheckpointSchedule(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{presentCheckpointScheduleInner(scheduleInfo, location, canManipulate)}</ul>
-  }
-
-  function presentCheckpointScheduleInner(scheduleInfo: CheckpointScheduleInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
-    return [
-      <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
-      <li key="createdCheckpoints">Created checkpoints:&nbsp;<CheckpointsView
-        checkpoints={scheduleInfo.createdCheckpoints}
-        location={[...location, "createdCheckpoints"]}
-        canManipulate={canManipulate}
-        onRequirementChangedCreator={onRequirementChangedCreator}
-        loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-      />
-      </li>,
-    ]
-  }
-
-  function presentCheckpointScheduleDetail(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{presentCheckpointScheduleDetailInner(scheduleInfo, location, canManipulate)}</ul>
-  }
-
-  function presentCheckpointScheduleDetailInner(scheduleInfo: CheckpointScheduleDetailsInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
-    return [
-      ...presentCheckpointScheduleInner(scheduleInfo, location, canManipulate),
-      <li key="remainingCheckpoints">Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}</li>,
-      <li key="nextCheckpointDate">Next checkpoint date:&nbsp;{scheduleInfo.nextCheckpointDate.toISOString()}</li>,
-    ]
-  }
-
-  function presentCheckpointSchedules(schedules: CheckpointScheduleDetailsInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof schedules === "undefined" || schedules === null || schedules.length === 0) return <div>There are no checkpoint schedules</div>
-    return <ul>{
-      schedules
-        .map((schedule: CheckpointScheduleDetailsInfoJson, scheduleIndex: number) => presentCheckpointSchedule(schedule, [...location, scheduleIndex], canManipulate))
-        .map((presented: JSX.Element, scheduleIndex: number) => <li key={scheduleIndex}>
-          Checkpoint schedule&nbsp;{scheduleIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
   function onRequirementChangedDateCreator(path: MyInfoPath) {
     return onRequirementChangedCreator(path, false, (e) => {
       const newDate: Date = new Date(e.target.value)
@@ -1143,7 +1103,14 @@ export default function Home() {
             loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
           />
         </li>
-        if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;{presentCheckpointSchedule(action.checkpointSchedule, location, canManipulate)}</li>
+        if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;<CheckpointScheduleView
+          scheduleInfo={action.checkpointSchedule}
+          location={location}
+          canManipulate={canManipulate}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+        />
+        </li>
         return <li key="checkpoint">No checkpoint or checkpoint schedule</li>
       })(),
     ]
@@ -1571,7 +1538,15 @@ export default function Home() {
             })()
           }</div>
 
-          <div>{presentCheckpointSchedules(myInfo.checkpoints.scheduleDetails, ["checkpoints", "scheduleDetails"], true)}</div>
+          <div>
+            <CheckpointScheduleDetailsView
+              schedules={myInfo.checkpoints.scheduleDetails}
+              location={["checkpoints", "scheduleDetails"]}
+              canManipulate={true}
+              onRequirementChangedCreator={onRequirementChangedCreator}
+              loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+            />
+          </div>
 
         </fieldset>
 
