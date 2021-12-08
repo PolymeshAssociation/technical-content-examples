@@ -2,6 +2,7 @@ import Head from "next/head"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
+  CheckpointWithData,
   ClaimType,
   Compliance,
   Condition,
@@ -29,7 +30,6 @@ import {
   AuthorizationType,
   Permissions,
   PortfolioBalance,
-  CheckpointWithCreationDate,
   CalendarUnit,
   ScheduleWithDetails,
   TickerReservationStatus,
@@ -51,7 +51,7 @@ import {
   getEmptyTokenDetails,
   isCddClaim,
   isCheckpointSchedule,
-  isCheckpointWithCreationDate,
+  isCheckpointWithData,
   isClaimData,
   isIdentityCondition,
   isNumberedPortfolio,
@@ -930,27 +930,28 @@ export default function Home() {
     }</ul>
   }
 
-  async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithCreationDate[]> {
-    const checkpoints: CheckpointWithCreationDate[] = await token.checkpoints.get()
+  async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithData[]> {
+    // TODO handle pagination
+    const checkpoints: CheckpointWithData[] = (await token.checkpoints.get()).data
     await setCheckpoints(checkpoints)
     await loadCheckpointSchedules(token)
     return checkpoints
   }
 
-  async function setCheckpoints(current: CheckpointWithCreationDate[]): Promise<CheckpointInfoJson[]> {
+  async function setCheckpoints(current: CheckpointWithData[]): Promise<CheckpointInfoJson[]> {
     setMyInfo(returnUpdatedCreator(["checkpoints", "current"], current))
     const details: CheckpointInfoJson[] = await Promise.all(current
-      .map((checkpointWith: CheckpointWithCreationDate) => getCheckpointInfo(checkpointWith)))
+      .map((checkpointWith: CheckpointWithData) => getCheckpointInfo(checkpointWith)))
     setMyInfo(returnUpdatedCreator(["checkpoints", "details"], details))
     if (details.length > 0) setMyInfo(returnUpdatedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], details[0].checkpoint))
     return details
   }
 
-  async function getCheckpointInfo(checkpointWith: CheckpointWithCreationDate | Checkpoint): Promise<CheckpointInfoJson> {
-    const checkpoint: Checkpoint = isCheckpointWithCreationDate(checkpointWith) ? checkpointWith.checkpoint : checkpointWith
+  async function getCheckpointInfo(checkpointWith: CheckpointWithData | Checkpoint): Promise<CheckpointInfoJson> {
+    const checkpoint: Checkpoint = isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith
     const [totalSupply, createdAt]: [BigNumber, Date] = await Promise.all([
       checkpoint.totalSupply(),
-      isCheckpointWithCreationDate(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt()
+      isCheckpointWithData(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt()
     ])
     return {
       checkpoint: checkpoint,

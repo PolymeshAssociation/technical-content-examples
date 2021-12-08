@@ -2,7 +2,7 @@ import countries from "i18n-iso-countries"
 import {
     CalendarUnit,
     CddClaim,
-    CheckpointWithCreationDate,
+    CheckpointWithData,
     Claim,
     ClaimData,
     ClaimTarget,
@@ -141,7 +141,7 @@ export type AttestationsInfoJson = {
 }
 
 export type CheckpointsInfoJson = {
-    current: CheckpointWithCreationDate[],
+    current: CheckpointWithData[],
     details: CheckpointInfoJson[],
     scheduledToAdd: CreateCheckpointScheduleParams,
     currentSchedules: CheckpointSchedule[],
@@ -277,7 +277,7 @@ export function getEmptyMyInfo(): MyInfoJson {
             newPortfolioName: "",
         },
         checkpoints: {
-            current: [] as CheckpointWithCreationDate[],
+            current: [] as CheckpointWithData[],
             details: [] as CheckpointInfoJson[],
             scheduledToAdd: {
                 start: new Date(),
@@ -326,6 +326,6 @@ export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddCl
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
-export const isCheckpointWithCreationDate = (checkpointInfo: CheckpointWithCreationDate | Checkpoint): checkpointInfo is CheckpointWithCreationDate => typeof (checkpointInfo as CheckpointWithCreationDate).createdAt !== "undefined"
+export const isCheckpointWithData = (checkpointInfo: CheckpointWithData | Checkpoint): checkpointInfo is CheckpointWithData => typeof (checkpointInfo as CheckpointWithData).createdAt !== "undefined"
 export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
 
