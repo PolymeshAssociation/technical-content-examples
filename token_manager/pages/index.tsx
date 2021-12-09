@@ -36,6 +36,7 @@ import {
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
+  PermissionGroupType,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -47,16 +48,22 @@ import {
   DividendDistributionInfoJson,
   getCountryList,
   getEmptyMyInfo,
+  getEmptyPermissionsInfoJson,
   getEmptyRequirements,
   getEmptyTokenDetails,
   isCddClaim,
   isCheckpointSchedule,
   isCheckpointWithData,
   isClaimData,
+  isCustomPermissionGroup,
   isIdentityCondition,
+  isKnownPermissionGroup,
   isNumberedPortfolio,
   isPrimaryIssuanceAgentCondition,
   MyInfoPath,
+  PermissionGroupsInfo,
+  PermissionGroupsInfoJson,
+  PermissionsInfoJson,
   PortfolioInfoJson,
 } from "../src/types"
 import {
@@ -65,9 +72,11 @@ import {
   Checkpoint,
   CheckpointSchedule,
   CorporateAction,
+  CustomPermissionGroup,
   DefaultPortfolio,
   DividendDistribution,
   Identity,
+  KnownPermissionGroup,
   NumberedPortfolio,
   PolymeshError,
   TickerReservation,
@@ -82,6 +91,7 @@ import {
   returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
+import { PermissionGroupsView } from "../src/components/permissions/PermissionGroupView"
 import { CheckpointsView, CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleDetailsView, CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
@@ -158,6 +168,7 @@ export default function Home() {
       }
     }
     await setReservation(reservation)
+    await loadToken(ticker)
     return reservation
   }
 
@@ -167,13 +178,11 @@ export default function Home() {
         current: null,
         details: getEmptyTokenDetails(),
       }))
-      setToken(null)
     } else {
       setMyInfo(returnUpdatedCreator(["reservation"], {
         current: reservation,
         details: (await reservation.details()) || getEmptyTokenDetails(),
       }))
-      await loadToken(reservation.ticker)
     }
   }
 
@@ -238,7 +247,7 @@ export default function Home() {
           toRedeem: 0,
         },
       }, true))
-      await loadComplianceRequirements(token)
+      await loadPermissions(token)
     }
   }
 
@@ -280,6 +289,36 @@ export default function Home() {
     await (await myInfo.token.current.redeem({ amount: new BigNumber(myInfo.token.piaBalance.toRedeem) })).run()
     setStatus("Tokens redeemed")
     await loadToken(myInfo.ticker)
+  }
+
+  async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
+    const groups = await loadPermissionGroups(token)
+    const agents = await loadPermissionAgents(token)
+    const permissions: PermissionsInfoJson = {
+      groups: groups,
+      agents: agents,
+    }
+    await setPermissions(token, permissions)
+    await loadIssuanceInfo(token, permissions)
+    return permissions
+  }
+
+  async function setPermissions(token: SecurityToken | null, permissions: PermissionsInfoJson | null) {
+    if (token === null || permissions === null) {
+      setMyInfo(returnUpdatedCreator(["permissions"], getEmptyPermissionsInfoJson()))
+    } else {
+      setMyInfo((prevInfo) => ({
+        ...prevInfo,
+        permissions: permissions,
+      }))
+    }
+  }
+
+  async function loadPermissionGroups(token: SecurityToken): Promise<PermissionGroupsInfoJson> {
+    const groups: PermissionGroupsInfo = await token.permissions.getGroups()
+    return {
+      current: groups
+    }
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -1274,7 +1313,7 @@ export default function Home() {
                 <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.details?.owner?.did)}</li>
                 <li key="assetType">As asset type: {myInfo.token.details?.assetType}</li>
                 <li key="divisible">{myInfo.token.details?.isDivisible ? "" : "not"} divisible</li>
-                <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate}</li>
+                <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate.toISOString()}</li>
                 <li key="pia">
                   With PIA: {pia === myInfo.myDid ? "me" : presentLongHex(pia)}
                   &nbsp;
@@ -1348,6 +1387,21 @@ export default function Home() {
               })()
             }
           </fieldset>
+
+        </fieldset>
+
+        <fieldset className={styles.card}>
+          <legend>Permissions For: {myInfo.token.current?.ticker}</legend>
+
+          <fieldset className={styles.card}>
+            <legend>Agent Groups</legend>
+
+            <div className="submit">
+              <PermissionGroupsView groups={myInfo.permissions.groups.current} location={["permissions", "groups", "current"]} canManipulate={true} />
+            </div>
+
+          </fieldset>
+
 
         </fieldset>
 
@@ -1541,7 +1595,7 @@ export default function Home() {
             (() => {
               const canManipulate: boolean = myInfo.token?.current !== null && (myInfo.token?.details?.owner?.did === myInfo.myDid || myInfo.corporateActions?.agent?.did === myInfo.myDid)
               const currentCheckpointIndex = myInfo.checkpoints.current
-                .findIndex((checkpointWith: CheckpointWithCreationDate) => checkpointWith.checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
+                .findIndex((checkpointWith: CheckpointWithData) => checkpointWith.checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
               return <div>
                 Create new (no tax handling):
                 <ul>
@@ -1560,7 +1614,7 @@ export default function Home() {
                         [
                           <option key="menu" disabled={true}>Pick a checkpoint</option>,
                           ...myInfo.checkpoints.current
-                            .map((checkpointWith: CheckpointWithCreationDate, index: number) => <option key={index} value={index}>
+                            .map((checkpointWith: CheckpointWithData, index: number) => <option key={index} value={index}>
                               {checkpointWith.checkpoint.id.toString(10)}&nbsp;-&nbsp;{checkpointWith.createdAt.toISOString()}
                             </option>)
                         ]

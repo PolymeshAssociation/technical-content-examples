@@ -36,8 +36,10 @@ import {
     ConfigureDividendDistributionParams,
     CorporateAction,
     CreateCheckpointScheduleParams,
+    CustomPermissionGroup,
     DividendDistribution,
     Identity,
+    KnownPermissionGroup,
     ModifyCorporateActionsAgentParams,
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
@@ -69,6 +71,7 @@ export type MyInfoJson = {
     myTickers: string[],
     reservation: ReservationInfoJson,
     token: TokenInfoJson,
+    permissions: PermissionsInfoJson,
     requirements: RequirementsInfoJson,
     authorisations: AuthorisationInfoJson,
     portfolios: PortfoliosInfoJson,
@@ -95,6 +98,19 @@ export type TokenInfoJson = {
     },
     ownershipTarget: string,
     piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
+}
+
+export type PermissionGroupsInfo = {
+    known: KnownPermissionGroup[];
+    custom: CustomPermissionGroup[];
+}
+
+export type PermissionGroupsInfoJson = {
+    current: PermissionGroupsInfo,
+}
+
+export type PermissionsInfoJson = {
+    groups: PermissionGroupsInfoJson,
 }
 
 export type RequirementsInfoJson = {
@@ -201,7 +217,26 @@ export function getEmptyTokenDetails(): SecurityTokenDetails {
         name: "",
         owner: null,
         totalSupply: new BigNumber("0"),
-        primaryIssuanceAgent: null,
+        primaryIssuanceAgents: [],
+        fullAgents: [],
+        requiresInvestorUniqueness: false,
+    }
+}
+
+export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
+    return {
+        current: {
+            known: [] as KnownPermissionGroup[],
+            custom: [] as CustomPermissionGroup[],
+        },
+    }
+}
+
+export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
+    return {
+        groups: getEmptyPermissionGroupsInfoJson() as PermissionGroupsInfoJson,
+    }
+}
     }
 }
 
@@ -245,6 +280,7 @@ export function getEmptyMyInfo(): MyInfoJson {
                 requestExpiry: null as Date | null,
             } as ModifyPrimaryIssuanceAgentParams,
         } as TokenInfoJson,
+        permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
         requirements: getEmptyRequirements() as RequirementsInfoJson,
         authorisations: {
             current: [] as AuthorizationRequest[],
@@ -321,6 +357,8 @@ export interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
 }
 
+export const isKnownPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is KnownPermissionGroup => typeof (group as KnownPermissionGroup).type !== "undefined"
+export const isCustomPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is CustomPermissionGroup => typeof (group as CustomPermissionGroup).id !== "undefined"
 export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfolio): portfolio is NumberedPortfolio => typeof (portfolio as NumberedPortfolio).id !== "undefined"
 export const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
 export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
