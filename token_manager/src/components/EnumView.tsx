@@ -16,7 +16,7 @@ export interface EnumSelectViewProps<EnumType> extends BasicProps {
 
 export class EnumSelectView<EnumType> extends Component<EnumSelectViewProps<EnumType>> {
     render() {
-        const { theEnum, defaultValue, onChange, location, canManipulate } = this.props
+        const { theEnum, defaultValue, onChange, canManipulate } = this.props
         return <select
             defaultValue={defaultValue.toString()}
             onChange={onChange}

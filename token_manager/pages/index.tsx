@@ -14,15 +14,10 @@ import {
   SecurityTokenDetails,
   TrustedClaimIssuer,
   Claim,
-  isScopedClaim,
   ConditionType,
   ConditionTarget,
-  ScopeType,
-  CountryCode,
   ResultSet,
   ClaimData,
-  isInvestorUniquenessClaim,
-  Scope,
   ClaimTarget,
   IdentityWithClaims,
   CddClaim,
@@ -48,7 +43,6 @@ import {
   CheckpointScheduleDetailsInfoJson,
   CheckpointScheduleInfoJson,
   CorporateActionInfoJson,
-  CountryInfo,
   CustomPermissionGroupInfoJson,
   DividendDistributionInfoJson,
   getCountryList,
@@ -56,10 +50,8 @@ import {
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
   getEmptyTokenDetails,
-  isCddClaim,
   isCheckpointSchedule,
   isCheckpointWithData,
-  isClaimData,
   isCustomPermissionGroup,
   isIdentityCondition,
   isKnownPermissionGroup,
@@ -102,6 +94,12 @@ import { CheckpointScheduleView } from "../src/components/checkpoints/Checkpoint
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { presentEnumOptions } from "../src/components/EnumView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionView"
+import {
+  AddInvestorUniquenessClaimView,
+  ClaimsView,
+  ClaimView,
+  TrustedClaimIssuersView
+} from "../src/components/compliance/ClaimView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -411,128 +409,11 @@ export default function Home() {
     }
   }
 
-  function presentTrustedClaimIssuer(trustedIssuer: TrustedClaimIssuer, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    const trustedFor: JSX.Element = trustedIssuer.trustedFor
-      ? <ul>{
-        trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li key={claimTypeIndex}>
-          <select defaultValue={claimType} onChange={onRequirementChangedCreator([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>
-            {presentEnumOptions(ClaimType)}
-          </select>&nbsp;<button className="submit remove-trusted-for" onClick={() => removeFromMyRequirementArray([...location, "trustedFor", claimTypeIndex])} disabled={!canManipulate}>Remove {claimTypeIndex}</button>
-        </li>)
-      }</ul>
-      : <div>Not trusted for anything</div>
-    return <ul>
-      <li key="identity">Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
-        onChange={onRequirementChangedCreator(
-          [...location, "identity"],
-          false,
-          async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))}
-        disabled={!canManipulate}
-      />
-      </li>
-      <li key="trustedFor">Trusted for:&nbsp;
-        <button className="submit add-trusted-for" onClick={() => addToMyRequirementArray([...location, "trustedFor"], ClaimType.Accredited)} disabled={!canManipulate}>Add trusted for</button>
-        {trustedFor}
-      </li>
-    </ul>
-  }
-
-  function presentTrustedClaimIssuers(trustedIssuers: TrustedClaimIssuer[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0) return <div>No trusted issuers</div>
-    return <ul>{
-      trustedIssuers
-        .map((trustedIssuer: TrustedClaimIssuer, issuerIndex: number) => presentTrustedClaimIssuer(trustedIssuer, [...location, issuerIndex], canManipulate))
-        .map((presented: JSX.Element, issuerIndex: number) => <li key={issuerIndex}>
-          Issuer {issuerIndex}:&nbsp;
-          <button className="submit remove-trusted-claim-issuer" onClick={() => removeFromMyRequirementArray([...location, issuerIndex])} disabled={!canManipulate}>Remove {issuerIndex}</button>
-          {presented}
-        </li>)
-    }</ul>
-  }
-
-  function presentScope(scope: Scope, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof scope === "undefined" || scope === null) {
-      const defaultScope: Scope = { type: ScopeType.Custom, value: "" }
-      setMyInfo(returnUpdatedCreator([...location], defaultScope as Scope))
-      scope = defaultScope
-    }
-    return <ul>
-      <li key="type">Type: &nbsp;
-        <select defaultValue={scope.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
-          {presentEnumOptions(ScopeType)}
-        </select>
-      </li>
-      <li key="value">Value:&nbsp;
-        <input defaultValue={scope.value} placeholder="ACME" onChange={onRequirementChangedCreator([...location, "value"])} disabled={!canManipulate} />
-      </li>
-    </ul>
-  }
-
-  function presentClaim(claim: Claim, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    const elements: JSX.Element[] = [
-      <li key="type">Type: &nbsp;
-        <select defaultValue={claim.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
-          {presentEnumOptions(ClaimType)}
-        </select>
-      </li>
-    ]
-    if (isCddClaim(claim)) {
-      elements.push(<li key="id">Id:&nbsp;
-        <input defaultValue={claim.id} placeholder="123" onChange={onRequirementChangedCreator([...location, "id"])} disabled={!canManipulate} />
-      </li>)
-    }
-    if (isScopedClaim(claim)) {
-      elements.push(<li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>)
-    }
-    if (isInvestorUniquenessClaim(claim)) {
-      const claimData: ClaimData | ClaimTarget = findValue(myInfo, location.slice(0, -1))
-      const target: string | Identity = claimData?.target
-      const targetDid: string = typeof target === "string" ? target : target.did
-      const hasTarget: boolean = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
-      elements.push(<li key="cddId">CDD id:
-        <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />&nbsp;
-        {
-          (() => {
-            if (typeof target === "undefined" || isClaimData(claimData)) return ""
-            return <button className="submit load-cdd-id" onClick={() => fetchCddId([...location, "cddId"], target)} disabled={!canManipulate || !hasTarget}>Load it</button>
-          })()
-        }
-      </li>)
-      elements.push(<li key="scopeId">Scope id:&nbsp;
-        <input defaultValue={claim.scopeId} placeholder="123" onChange={onRequirementChangedCreator([...location, "scopeId"])} disabled={!canManipulate} />
-      </li>)
-    }
-    if (claim.type === ClaimType.Jurisdiction) {
-      elements.push(<li key="countryCode">Country code:&nbsp;
-        <select defaultValue={claim.code} onChange={onRequirementChangedCreator([...location, "code"])} disabled={!canManipulate}>
-          {presentEnumOptions(CountryCode)}
-        </select>
-      </li>)
-    }
-    return <ul>{elements}</ul>
-  }
-
-  function presentClaims(claims: Claim[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof claims === "undefined" || claims === null || claims.length === 0) return <div>No claims</div>
-    return <ul>{
-      claims
-        .map((claim: Claim, claimIndex: number) => presentClaim(claim, [...location, claimIndex], canManipulate))
-        .map((presented, claimIndex: number) => <li key={claimIndex}>Claim {claimIndex}:{presented}</li>)
-    }</ul>
-  }
-
-  function presentAddInvestorUniquenessClaimParams(claim: AddInvestorUniquenessClaimParams, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>
-      <li key="scope">Scope:&nbsp;{presentScope(claim.scope, [...location, "scope"], canManipulate)}</li>
-      <li key="cddId">CDD id:&nbsp;
-        <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"])} disabled={!canManipulate} />
-        &nbsp;
-        <button className="submit load-cdd-id" onClick={() => fetchMyCddId([...location, "cddId"])} disabled={!canManipulate}>Load it</button>
-      </li>
-      <li key="proof">Proof:&nbsp;<input defaultValue={claim.proof} placeholder="123" disabled={true} /></li>
-      <li key="scopeId">Scope id:&nbsp;<input defaultValue={claim.scopeId} placeholder="123" disabled={true} /></li>
-      <li key="expiry">Expiry:&nbsp;<input defaultValue={claim.expiry?.toISOString()} placeholder="2020-12-31" disabled={!canManipulate} /></li>
-    </ul>
+  function onRequirementChangedIdentityCreator(path: MyInfoPath): (e) => Promise<void> {
+    return onRequirementChangedCreator(
+      path,
+      false,
+      async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))
   }
 
   function presentCondition(condition: Condition, location: MyInfoPath, canManipulate: boolean): JSX.Element {
@@ -545,7 +426,15 @@ export default function Home() {
       </li>,
       <li key="trustedClaimIssuers">Trusted claim issuers:&nbsp;
         <button className="submit add-trusted-claim-issuer" onClick={() => addToMyRequirementArray([...location, "trustedClaimIssuers"], dummyTrustedClaimIssuer)} disabled={!canManipulate}>Add trusted claim issuer</button>
-        {presentTrustedClaimIssuers(condition.trustedClaimIssuers, [...location, "trustedClaimIssuers"], canManipulate)}
+        <TrustedClaimIssuersView
+          trustedIssuers={condition.trustedClaimIssuers}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          removeFromMyRequirementArray={removeFromMyRequirementArray}
+          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
+          addToMyRequirementArray={addToMyRequirementArray}
+          location={[...location, "trustedClaimIssuers"]}
+          canManipulate={canManipulate}
+        />
       </li>,
       <li key="type">Type:
         <select defaultValue={condition.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
@@ -554,9 +443,30 @@ export default function Home() {
       </li>,
     ]
     if (isSingleClaimCondition(condition)) {
-      elements.push(<li key="claim">Claim: {presentClaim(condition.claim, [...location, "claim"], canManipulate)}</li>)
+      elements.push(<li key="claim">
+        Claim:
+        <ClaimView
+          claim={condition.claim}
+          myInfo={myInfo}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          fetchAndAddToPath={fetchCddId}
+          location={[...location, "claim"]}
+          canManipulate={canManipulate}
+        />
+      </li>)
     } else if (isMultiClaimCondition(condition)) {
-      elements.push(<li key="claims">Claims: {presentClaims(condition.claims, [...location, "claims"], canManipulate)}</li>)
+      elements.push(<li key="claims">Claims:
+        <ClaimsView
+          claims={condition.claims}
+          myInfo={myInfo}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          fetchAndAddToPath={fetchCddId}
+          location={[...location, "claims"]}
+          canManipulate={canManipulate}
+        />
+      </li>)
     } else if (isIdentityCondition(condition)) {
       elements.push(<li key="identity">Identity:&nbsp;
         <input defaultValue={condition.identity?.did} placeholder="0x123" disabled={!canManipulate}
@@ -822,7 +732,15 @@ export default function Home() {
             async (e) => Promise.resolve(new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
-        {presentClaim(claimData.claim, [...location, "claim"], canManipulate)}
+        <ClaimView
+          claim={claimData.claim}
+          myInfo={myInfo}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          fetchAndAddToPath={fetchCddId}
+          location={[...location, "claim"]}
+          canManipulate={canManipulate}
+        />
       </li>
     </ul>
   }
@@ -843,7 +761,15 @@ export default function Home() {
             async (e) => Promise.resolve(e.target.value === "" ? null : new Date(e.target.value)))} />
       </li>
       <li key="claim">Claim:&nbsp;
-        {presentClaim(claimTarget.claim, [...location, "claim"], canManipulate)}
+        <ClaimView
+          claim={claimTarget.claim}
+          myInfo={myInfo}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          fetchAndAddToPath={fetchCddId}
+          location={[...location, "claim"]}
+          canManipulate={canManipulate}
+        />
       </li>
     </ul>
   }
@@ -1453,9 +1379,6 @@ export default function Home() {
           canManipulate={true}
         />
 
-
-        </fieldset>
-
         <fieldset className={styles.card}>
           <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
 
@@ -1539,7 +1462,16 @@ export default function Home() {
           <div className={styles.card}>
             <div>Investor uniqueness to add to yourself:</div>
 
-            <div>{presentAddInvestorUniquenessClaimParams(myInfo.attestations.uniquenessToAdd, ["attestations", "uniquenessToAdd"], true)}</div>
+            <div>
+              <AddInvestorUniquenessClaimView
+                claim={myInfo.attestations.uniquenessToAdd}
+                addToPath={(location, value) => setMyInfo(returnUpdatedCreator([...location, "scope"], value))}
+                onRequirementChangedCreator={onRequirementChangedCreator}
+                fetchAndAddToPath={fetchMyCddId}
+                location={["attestations", "uniquenessToAdd"]}
+                canManipulate={true}
+              />
+            </div>
 
             <div className="submit">
               <button className="submit add-unique-attestation" onClick={() => addUniquenessAttestation(["attestations", "uniquenessToAdd"])}>Add uniqueness attestation</button>

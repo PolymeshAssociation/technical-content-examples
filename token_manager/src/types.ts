@@ -46,6 +46,7 @@ import {
     ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -65,6 +66,11 @@ export function getCountryList(): CountryInfo[] {
 export type MyInfoPath = (string | number)[]
 export type OnRequirementChangedCreator = (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>
 export type OnRequirementChangedDateCreator = (path: MyInfoPath) => (e) => Promise<void>
+export type OnRequirementChangedIdentityCreator = (path: MyInfoPath) => (e) => Promise<void>
+export type FetchAndAddToPath<Type> = (path: MyInfoPath, additionKey: Type) => Promise<void>
+export type FetchDefaultAndAddToPath = (path: MyInfoPath) => Promise<void>
+export type AddToPath<Type> = (path: MyInfoPath, addition: Type) => void
+export type RemoveFromPath = (path: MyInfoPath) => void
 
 export type MyInfoJson = {
     ticker: string,
@@ -393,6 +399,7 @@ export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfo
 export const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
 export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
 export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
+export const isScopeClaimProof = (claim: string | ScopeClaimProof): claim is ScopeClaimProof => typeof (claim as ScopeClaimProof).proofScopeIdCddIdMatch !== "undefined"
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
