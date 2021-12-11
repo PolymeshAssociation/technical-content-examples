@@ -96,12 +96,11 @@ import {
   returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
-import { PermissionGroupsInfoView } from "../src/components/permissions/PermissionGroupView"
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { presentEnumOptions } from "../src/components/EnumView"
-import { PermissionAgentsView } from "../src/components/permissions/PermissionAgentView"
+import { PermissionManagerView } from "../src/components/permissions/PermissionView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -1434,28 +1433,12 @@ export default function Home() {
 
         </fieldset>
 
-        <fieldset className={styles.card}>
-          <legend>Permissions For: {myInfo.token.current?.ticker}</legend>
-
-          <fieldset className={styles.card}>
-            <legend>Agent Groups</legend>
-
-            <div className="submit">
-              <PermissionGroupsInfoView groups={myInfo.permissions.groups} location={["permissions", "groups", "current"]} canManipulate={true} />
-            </div>
-
-          </fieldset>
-
-          <fieldset className={styles.card}>
-            <legend>External Agents</legend>
-
-            <div className="submit">
-              <PermissionAgentsView agents={myInfo.permissions.agents.current} location={["permissions", "agents", "current"]} canManipulate={true} />
-            </div>
-
-          </fieldset>
-
-        </fieldset>
+        <PermissionManagerView
+          myInfo={myInfo}
+          cardStyle={styles.card}
+          location={[]}
+          canManipulate={true}
+        />
 
 
         </fieldset>
