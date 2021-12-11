@@ -1,11 +1,13 @@
 import { CustomPermissionGroup, KnownPermissionGroup } from "@polymathnetwork/polymesh-sdk/internal";
-import { Component } from "react";
+import { PermissionGroupType } from "@polymathnetwork/polymesh-sdk/types";
+import React, { Component } from "react";
 import {
     CustomPermissionGroupInfoJson,
     KnownPermissionGroupInfoJson,
     PermissionGroupsInfoJson
 } from "../../types";
 import { BasicProps } from "../BasicProps";
+import { EnumSelectView } from "../EnumView";
 
 export interface KnownPermissionGroupViewProps extends BasicProps {
     group: KnownPermissionGroup
@@ -13,9 +15,15 @@ export interface KnownPermissionGroupViewProps extends BasicProps {
 
 export class KnownPermissionGroupView extends Component<KnownPermissionGroupViewProps> {
     render() {
-        const { group } = this.props
+        const { group, location, canManipulate } = this.props
         return <ul>
-            <li>Type: {group.type}</li>
+            <li><EnumSelectView<PermissionGroupType>
+                theEnum={PermissionGroupType}
+                defaultValue={group.type}
+                onChangeCreator={undefined}
+                location={[...location, "type"]}
+                canManipulate={false}
+            /></li>
             <li>Ticker: {group.ticker}</li>
             <li>Uuid: {group.uuid}</li>
         </ul>
