@@ -37,6 +37,7 @@ import {
   DistributionParticipant,
   DistributionWithDetails,
   PermissionGroupType,
+  GroupPermissions,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -91,9 +92,9 @@ import {
   returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
-import { PermissionGroupsView } from "../src/components/permissions/PermissionGroupView"
-import { CheckpointsView, CheckpointView } from "../src/components/checkpoints/CheckpointView"
-import { CheckpointScheduleDetailsView, CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
+import { PermissionGroupsInfoView } from "../src/components/permissions/PermissionGroupView"
+import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
+import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { presentEnumOptions } from "../src/components/EnumView"
 
@@ -317,7 +318,26 @@ export default function Home() {
   async function loadPermissionGroups(token: SecurityToken): Promise<PermissionGroupsInfoJson> {
     const groups: PermissionGroupsInfo = await token.permissions.getGroups()
     return {
-      current: groups
+      known: await Promise.all(
+        groups.known.map(
+          (group: KnownPermissionGroup) => Promise.all([group.getPermissions(), group.exists()])
+            .then((results: [GroupPermissions, boolean]) => ({
+              current: group,
+              permissions: results[0],
+              exists: results[1]
+            }))
+        )
+      ),
+      custom: await Promise.all(
+        groups.custom.map(
+          (group: CustomPermissionGroup) => Promise.all([group.getPermissions(), group.exists()])
+            .then((results: [GroupPermissions, boolean]) => ({
+              current: group,
+              permissions: results[0],
+              exists: results[1]
+            }))
+        )
+      ),
     }
   }
 
@@ -1397,7 +1417,7 @@ export default function Home() {
             <legend>Agent Groups</legend>
 
             <div className="submit">
-              <PermissionGroupsView groups={myInfo.permissions.groups.current} location={["permissions", "groups", "current"]} canManipulate={true} />
+              <PermissionGroupsInfoView groups={myInfo.permissions.groups} location={["permissions", "groups", "current"]} canManipulate={true} />
             </div>
 
           </fieldset>

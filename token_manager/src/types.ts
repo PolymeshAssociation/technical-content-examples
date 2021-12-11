@@ -14,6 +14,7 @@ import {
     DistributionParticipant,
     DividendDistributionDetails,
     EventIdentifier,
+    GroupPermissions,
     IdentityCondition,
     InvestorUniquenessClaim,
     KnownTokenType,
@@ -100,13 +101,26 @@ export type TokenInfoJson = {
     piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
 }
 
+export type KnownPermissionGroupInfoJson = {
+    current: KnownPermissionGroup,
+    permissions: GroupPermissions,
+    exists: boolean,
+}
+
+export type CustomPermissionGroupInfoJson = {
+    current: CustomPermissionGroup,
+    permissions: GroupPermissions,
+    exists: boolean,
+}
+
 export type PermissionGroupsInfo = {
-    known: KnownPermissionGroup[];
-    custom: CustomPermissionGroup[];
+    known: KnownPermissionGroup[],
+    custom: CustomPermissionGroup[],
 }
 
 export type PermissionGroupsInfoJson = {
-    current: PermissionGroupsInfo,
+    known: KnownPermissionGroupInfoJson[],
+    custom: CustomPermissionGroupInfoJson[],
 }
 
 export type PermissionsInfoJson = {
@@ -225,10 +239,8 @@ export function getEmptyTokenDetails(): SecurityTokenDetails {
 
 export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
     return {
-        current: {
-            known: [] as KnownPermissionGroup[],
-            custom: [] as CustomPermissionGroup[],
-        },
+        known: [] as KnownPermissionGroupInfoJson[],
+        custom: [] as CustomPermissionGroupInfoJson[],
     }
 }
 

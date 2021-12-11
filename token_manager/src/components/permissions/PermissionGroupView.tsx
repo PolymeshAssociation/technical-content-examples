@@ -1,6 +1,10 @@
 import { CustomPermissionGroup, KnownPermissionGroup } from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
-import { PermissionGroupsInfo } from "../../types";
+import {
+    CustomPermissionGroupInfoJson,
+    KnownPermissionGroupInfoJson,
+    PermissionGroupsInfoJson
+} from "../../types";
 import { BasicProps } from "../BasicProps";
 
 export interface KnownPermissionGroupViewProps extends BasicProps {
@@ -18,17 +22,37 @@ export class KnownPermissionGroupView extends Component<KnownPermissionGroupView
     }
 }
 
-export interface KnownPermissionGroupsViewProps extends BasicProps {
-    groups: KnownPermissionGroup[]
+export interface KnownPermissionGroupInfoViewProps extends BasicProps {
+    group: KnownPermissionGroupInfoJson
 }
 
-export class KnownPermissionGroupsView extends Component<KnownPermissionGroupsViewProps> {
+export class KnownPermissionGroupInfoView extends Component<KnownPermissionGroupInfoViewProps> {
+    render() {
+        const { group, location, canManipulate } = this.props
+        return <ul>
+            <li>
+                Group: <KnownPermissionGroupView
+                    group={group.current}
+                    location={[...location, "current"]}
+                    canManipulate={canManipulate}
+                />
+            </li>
+            <li>Exists: {group.exists ? "true" : "false"}</li>
+        </ul>
+    }
+}
+
+export interface KnownPermissionGroupInfosViewProps extends BasicProps {
+    groups: KnownPermissionGroupInfoJson[]
+}
+
+export class KnownPermissionGroupInfosView extends Component<KnownPermissionGroupInfosViewProps> {
     render() {
         const { groups, location, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
         else return <ol>{
             groups
-                .map((group: KnownPermissionGroup, groupIndex: number) => <KnownPermissionGroupView
+                .map((group: KnownPermissionGroupInfoJson, groupIndex: number) => <KnownPermissionGroupInfoView
                     group={group}
                     location={[...location, groupIndex]}
                     canManipulate={canManipulate} />)
@@ -54,17 +78,41 @@ export class CustomPermissionGroupView extends Component<CustomPermissionGroupVi
     }
 }
 
-export interface CustomPermissionGroupsViewProps extends BasicProps {
-    groups: CustomPermissionGroup[]
+export interface CustomPermissionGroupInfoViewProps extends BasicProps {
+    group: CustomPermissionGroupInfoJson
 }
 
-export class CustomPermissionGroupsView extends Component<CustomPermissionGroupsViewProps> {
+export class CustomPermissionGroupInfoView extends Component<CustomPermissionGroupInfoViewProps> {
+    render() {
+        const { group, location, canManipulate } = this.props
+        return <ul>
+            <li>
+                Group: <CustomPermissionGroupView
+                    group={group.current}
+                    location={[...location, "current"]}
+                    canManipulate={canManipulate}
+                />
+            </li>
+            <li>Exists: {group.exists ? "true" : "false"}</li>
+            <li>
+                Permissions:
+
+            </li>
+        </ul>
+    }
+}
+
+export interface CustomPermissionGroupInfosViewProps extends BasicProps {
+    groups: CustomPermissionGroupInfoJson[]
+}
+
+export class CustomPermissionGroupInfosView extends Component<CustomPermissionGroupInfosViewProps> {
     render() {
         const { groups, location, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
         else return <ol>{
             groups
-                .map((group: CustomPermissionGroup, groupIndex: number) => <CustomPermissionGroupView
+                .map((group: CustomPermissionGroupInfoJson, groupIndex: number) => <CustomPermissionGroupInfoView
                     group={group}
                     location={[...location, groupIndex]}
                     canManipulate={canManipulate} />)
@@ -75,25 +123,25 @@ export class CustomPermissionGroupsView extends Component<CustomPermissionGroups
     }
 }
 
-export interface PermissionGroupsViewProps extends BasicProps {
-    groups: PermissionGroupsInfo
+export interface PermissionGroupsInfoViewProps extends BasicProps {
+    groups: PermissionGroupsInfoJson
 }
 
-export class PermissionGroupsView extends Component<PermissionGroupsViewProps> {
+export class PermissionGroupsInfoView extends Component<PermissionGroupsInfoViewProps> {
     render() {
         const { groups, location, canManipulate } = this.props
         if (typeof groups === "undefined" || groups === null) return <div>No permission groups</div>
         return <div>
             <div>
                 Known:
-                <KnownPermissionGroupsView
+                <KnownPermissionGroupInfosView
                     groups={groups.known}
                     location={[...location, "known"]}
                     canManipulate={canManipulate} />
             </div>
             <div>
                 Custom:
-                <CustomPermissionGroupsView
+                <CustomPermissionGroupInfosView
                     groups={groups.custom}
                     location={[...location, "custom"]}
                     canManipulate={canManipulate} />
