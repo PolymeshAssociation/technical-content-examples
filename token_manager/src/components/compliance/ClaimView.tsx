@@ -174,7 +174,7 @@ export interface ClaimViewProps extends BasicProps {
     myInfo: MyInfoJson
     addToPath: AddToPath<Scope>
     onRequirementChangedCreator: OnRequirementChangedCreator
-    fetchAndAddToPath: FetchAndAddToPath<string | Identity>
+    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimView extends Component<ClaimViewProps> {
@@ -184,7 +184,7 @@ export class ClaimView extends Component<ClaimViewProps> {
             myInfo,
             addToPath,
             onRequirementChangedCreator,
-            fetchAndAddToPath,
+            fetchCddId,
             location,
             canManipulate
         } = this.props
@@ -233,7 +233,7 @@ export class ClaimView extends Component<ClaimViewProps> {
                         if (typeof target === "undefined" || isClaimData(claimData)) return ""
                         return <button
                             className="submit load-cdd-id"
-                            onClick={() => fetchAndAddToPath([...location, "cddId"], target)}
+                            onClick={() => fetchCddId([...location, "cddId"], target)}
                             disabled={!canManipulate || !hasTarget}>
                             Load it
                         </button>
@@ -294,7 +294,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
                             myInfo={myInfo}
                             addToPath={addToPath}
                             onRequirementChangedCreator={onRequirementChangedCreator}
-                            fetchAndAddToPath={fetchAndAddToPath}
+                            fetchCddId={fetchAndAddToPath}
                             location={[...location, claimIndex]}
                             canManipulate={canManipulate}
                         />
@@ -308,7 +308,7 @@ export interface AddInvestorUniquenessClaimViewProps extends BasicProps {
     claim: AddInvestorUniquenessClaimParams
     addToPath: AddToPath<Scope>
     onRequirementChangedCreator: OnRequirementChangedCreator
-    fetchAndAddToPath: FetchDefaultAndAddToPath
+    fetchMyCddId: FetchDefaultAndAddToPath
 }
 
 export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquenessClaimViewProps> {
@@ -317,7 +317,7 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
             claim,
             addToPath,
             onRequirementChangedCreator,
-            fetchAndAddToPath,
+            fetchMyCddId,
             location,
             canManipulate
         } = this.props
@@ -346,7 +346,7 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
                 &nbsp;
                 <button
                     className="submit load-cdd-id"
-                    onClick={() => fetchAndAddToPath([...location, "cddId"])}
+                    onClick={() => fetchMyCddId([...location, "cddId"])}
                     disabled={!canManipulate}>
                     Load it
                 </button>

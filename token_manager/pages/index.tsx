@@ -1467,7 +1467,7 @@ export default function Home() {
                 claim={myInfo.attestations.uniquenessToAdd}
                 addToPath={(location, value) => setMyInfo(returnUpdatedCreator([...location, "scope"], value))}
                 onRequirementChangedCreator={onRequirementChangedCreator}
-                fetchAndAddToPath={fetchMyCddId}
+                fetchMyCddId={fetchMyCddId}
                 location={["attestations", "uniquenessToAdd"]}
                 canManipulate={true}
               />
