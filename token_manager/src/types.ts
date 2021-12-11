@@ -124,8 +124,13 @@ export type PermissionGroupsInfoJson = {
     custom: CustomPermissionGroupInfoJson[],
 }
 
+export type AgentInfoJson = {
+    current: Identity,
+    group: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
+}
+
 export type AgentsInfoJson = {
-    current: AgentWithGroup[],
+    current: AgentInfoJson[],
 }
 
 export type PermissionsInfoJson = {
@@ -252,7 +257,7 @@ export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
 
 export function getEmptyAgentsInfo(): AgentsInfoJson {
     return {
-        current: [] as AgentWithGroup[],
+        current: [] as AgentInfoJson[],
     }
 }
 

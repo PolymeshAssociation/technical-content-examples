@@ -42,6 +42,7 @@ import {
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
+  AgentInfoJson,
   AgentsInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleDetailsInfoJson,
@@ -335,6 +336,12 @@ export default function Home() {
       }))
   }
 
+  async function loadPermissionGroupInfo(group: KnownPermissionGroup | CustomPermissionGroup): Promise<KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson> {
+    if (isKnownPermissionGroup(group)) return loadKnownPermissionGroup(group)
+    if (isCustomPermissionGroup(group)) return loadCustomPermissionGroup(group)
+    throw new Error("Permission group is neither custom nor known: " + group)
+  }
+
   async function loadPermissionGroups(token: SecurityToken): Promise<PermissionGroupsInfoJson> {
     const groups: PermissionGroupsInfo = await token.permissions.getGroups()
     return {
@@ -345,9 +352,15 @@ export default function Home() {
 
   async function loadPermissionAgents(token: SecurityToken): Promise<AgentsInfoJson> {
     setStatus("Loading permission groups")
-    const agents: AgentWithGroup[] = await token.permissions.getAgents()
+    const agentWithGroups: AgentWithGroup[] = await token.permissions.getAgents()
     return {
-      current: agents
+      current: await Promise.all(agentWithGroups.map(async (agentWithGroup: AgentWithGroup) => {
+        const groupInfo = await loadPermissionGroupInfo(agentWithGroup.group)
+        return {
+          current: agentWithGroup.agent,
+          group: groupInfo,
+        }
+      }))
     }
   }
 
