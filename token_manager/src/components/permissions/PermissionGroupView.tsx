@@ -30,7 +30,7 @@ export class TransactionGroupsView extends Component<TransactionGroupsViewProps>
                 <EnumSelectView<TxGroup>
                     theEnum={TxGroup}
                     defaultValue={transactionGroup}
-                    onChangeCreator={undefined}
+                    onChange={undefined}
                     location={[...location, index]}
                     canManipulate={canManipulate}
                 />
@@ -57,7 +57,7 @@ export class TransactionPermissionsView extends Component<TransactionPermissions
                 Type: <EnumSelectView<PermissionType>
                     theEnum={PermissionType}
                     defaultValue={transactions.type}
-                    onChangeCreator={undefined}
+                    onChange={undefined}
                     location={[...location, "type"]}
                     canManipulate={canManipulate}
                 />
@@ -111,7 +111,7 @@ export class KnownPermissionGroupView extends Component<KnownPermissionGroupView
             <li key="type"><EnumSelectView<PermissionGroupType>
                 theEnum={PermissionGroupType}
                 defaultValue={group.type}
-                onChangeCreator={undefined}
+                onChange={undefined}
                 location={[...location, "type"]}
                 canManipulate={false}
             /></li>

@@ -9,17 +9,17 @@ export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
 }
 
 export interface EnumSelectViewProps<EnumType> extends BasicProps {
-    theEnum: any,
-    defaultValue: EnumType,
-    onChangeCreator: OnRequirementChangedCreator | undefined,
+    theEnum: any
+    defaultValue: EnumType
+    onChange: ((e) => Promise<void>) | undefined
 }
 
 export class EnumSelectView<EnumType> extends Component<EnumSelectViewProps<EnumType>> {
     render() {
-        const { theEnum, defaultValue, onChangeCreator, location, canManipulate } = this.props
+        const { theEnum, defaultValue, onChange, location, canManipulate } = this.props
         return <select
             defaultValue={defaultValue.toString()}
-            onChange={typeof onChangeCreator === "undefined" ? undefined : onChangeCreator(location, false)}
+            onChange={onChange}
             disabled={!canManipulate}>
             {presentEnumOptions(theEnum)}
         </select>
