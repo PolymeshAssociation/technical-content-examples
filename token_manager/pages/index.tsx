@@ -232,6 +232,7 @@ export default function Home() {
           toRedeem: 0,
         },
       }, true))
+      setPermissions(null, null)
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
@@ -308,36 +309,33 @@ export default function Home() {
     if (token === null || permissions === null) {
       setMyInfo(returnUpdatedCreator(["permissions"], getEmptyPermissionsInfoJson()))
     } else {
-      setMyInfo((prevInfo) => ({
-        ...prevInfo,
-        permissions: permissions,
-      }))
+      setMyInfo(returnUpdatedCreator(["permissions"], permissions))
     }
+  }
+
+  async function loadKnownPermissionGroup(group: KnownPermissionGroup): Promise<KnownPermissionGroupInfoJson> {
+    return Promise.all([group.getPermissions(), group.exists()])
+      .then((results: [GroupPermissions, boolean]) => ({
+        current: group,
+        permissions: results[0],
+        exists: results[1]
+      }))
+  }
+
+  async function loadCustomPermissionGroup(group: CustomPermissionGroup): Promise<CustomPermissionGroupInfoJson> {
+    return Promise.all([group.getPermissions(), group.exists()])
+      .then((results: [GroupPermissions, boolean]) => ({
+        current: group,
+        permissions: results[0],
+        exists: results[1]
+      }))
   }
 
   async function loadPermissionGroups(token: SecurityToken): Promise<PermissionGroupsInfoJson> {
     const groups: PermissionGroupsInfo = await token.permissions.getGroups()
     return {
-      known: await Promise.all(
-        groups.known.map(
-          (group: KnownPermissionGroup) => Promise.all([group.getPermissions(), group.exists()])
-            .then((results: [GroupPermissions, boolean]) => ({
-              current: group,
-              permissions: results[0],
-              exists: results[1]
-            }))
-        )
-      ),
-      custom: await Promise.all(
-        groups.custom.map(
-          (group: CustomPermissionGroup) => Promise.all([group.getPermissions(), group.exists()])
-            .then((results: [GroupPermissions, boolean]) => ({
-              current: group,
-              permissions: results[0],
-              exists: results[1]
-            }))
-        )
-      ),
+      known: await Promise.all(groups.known.map(loadKnownPermissionGroup)),
+      custom: await Promise.all(groups.custom.map(loadCustomPermissionGroup)),
     }
   }
 
