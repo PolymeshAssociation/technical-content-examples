@@ -36,16 +36,19 @@ import {
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
+  AgentWithGroup,
   PermissionGroupType,
   GroupPermissions,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
+  AgentsInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleDetailsInfoJson,
   CheckpointScheduleInfoJson,
   CorporateActionInfoJson,
   CountryInfo,
+  CustomPermissionGroupInfoJson,
   DividendDistributionInfoJson,
   getCountryList,
   getEmptyMyInfo,
@@ -61,6 +64,7 @@ import {
   isKnownPermissionGroup,
   isNumberedPortfolio,
   isPrimaryIssuanceAgentCondition,
+  KnownPermissionGroupInfoJson,
   MyInfoPath,
   PermissionGroupsInfo,
   PermissionGroupsInfoJson,
@@ -97,6 +101,7 @@ import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { presentEnumOptions } from "../src/components/EnumView"
+import { PermissionAgentsView } from "../src/components/permissions/PermissionAgentView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -337,6 +342,27 @@ export default function Home() {
       known: await Promise.all(groups.known.map(loadKnownPermissionGroup)),
       custom: await Promise.all(groups.custom.map(loadCustomPermissionGroup)),
     }
+  }
+
+  async function loadPermissionAgents(token: SecurityToken): Promise<AgentsInfoJson> {
+    setStatus("Loading permission groups")
+    const agents: AgentWithGroup[] = await token.permissions.getAgents()
+    return {
+      current: agents
+    }
+  }
+
+  async function loadIssuanceInfo(token: SecurityToken, permissions: PermissionsInfoJson): Promise<IssuanceInfoJson> {
+    const pias = permissions.agents.current
+      .filter((agentWithGroup: AgentWithGroup) => {
+        if (isCustomPermissionGroup(agentWithGroup.group)) return false
+        if (isKnownPermissionGroup(agentWithGroup.group)) return agentWithGroup.group.type === PermissionGroupType.PolymeshV1Pia || agentWithGroup.group.type === PermissionGroupType.Full
+        throw new Error("Permission group is neither custom nor known: " + agentWithGroup.group)
+      })
+    const issuance: IssuanceInfoJson = {}
+    await setIssuanceInfo(token, issuance)
+    await loadComplianceRequirements(token)
+    return issuance
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -1419,6 +1445,17 @@ export default function Home() {
             </div>
 
           </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>External Agents</legend>
+
+            <div className="submit">
+              <PermissionAgentsView agents={myInfo.permissions.agents.current} location={["permissions", "agents", "current"]} canManipulate={true} />
+            </div>
+
+          </fieldset>
+
+        </fieldset>
 
 
         </fieldset>

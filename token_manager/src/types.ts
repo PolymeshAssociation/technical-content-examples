@@ -1,5 +1,6 @@
 import countries from "i18n-iso-countries"
 import {
+    AgentWithGroup,
     CalendarUnit,
     CddClaim,
     CheckpointWithData,
@@ -123,8 +124,13 @@ export type PermissionGroupsInfoJson = {
     custom: CustomPermissionGroupInfoJson[],
 }
 
+export type AgentsInfoJson = {
+    current: AgentWithGroup[],
+}
+
 export type PermissionsInfoJson = {
     groups: PermissionGroupsInfoJson,
+    agents: AgentsInfoJson,
 }
 
 export type RequirementsInfoJson = {
@@ -244,9 +250,16 @@ export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
     }
 }
 
+export function getEmptyAgentsInfo(): AgentsInfoJson {
+    return {
+        current: [] as AgentWithGroup[],
+    }
+}
+
 export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
     return {
         groups: getEmptyPermissionGroupsInfoJson() as PermissionGroupsInfoJson,
+        agents: getEmptyAgentsInfo() as AgentsInfoJson,
     }
 }
     }
