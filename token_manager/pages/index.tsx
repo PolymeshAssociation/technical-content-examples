@@ -102,6 +102,7 @@ import {
 } from "../src/components/compliance/ClaimView"
 import { ConditionsView, ConditionView } from "../src/components/compliance/ConditionView"
 import { RequirementsView, RequirementView } from "../src/components/compliance/RequirementView"
+import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -1274,66 +1275,28 @@ export default function Home() {
           canManipulate={true}
         />
 
-        <fieldset className={styles.card}>
-          <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
-
-          <div className="submit">
-            <button className="submit add-requirement" onClick={() => addToMyRequirementArray(["requirements", "current"], { id: Math.round(Math.random() * 1000), conditions: [] })} disabled={!myInfo.requirements.canManipulate}>Add requirement</button>
-          </div>
-
-          <div>
-            <RequirementsView
-              requirements={myInfo.requirements.current}
-              myInfo={myInfo}
-              onRequirementChangedCreator={onRequirementChangedCreator}
-              removeFromMyRequirementArray={removeFromMyRequirementArray}
-              onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-              addConditionToMyRequirementArray={addToMyRequirementArray}
-              addClaimToMyRequirementArray={addToMyRequirementArray}
-              addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
-              addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-              fetchCddId={fetchCddId}
-              location={["requirements", "current"]}
-              canManipulate={myInfo.requirements.canManipulate}
-            />
-          </div>
-
-          <div>{
-            (() => {
-              const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid && myInfo.requirements.modified
-              return <div className="submit">
-                <button className="submit save-requirements" onClick={saveRequirements} disabled={!canManipulate}>Save the whole list of requirements</button>
-              </div>
-            })()
-          }</div>
-
-          <div>{
-            <div className="submit">
-              <button className="submit pause-compliance" onClick={pauseCompliance} disabled={!myInfo.requirements.canManipulate || myInfo.requirements.arePaused}>Pause compliance</button>
-              &nbsp;
-              <button className="submit resume-compliance" onClick={resumeCompliance} disabled={!myInfo.requirements.canManipulate || !myInfo.requirements.arePaused}>Resume compliance</button>
-            </div>
-          }</div>
-
-          <div className={styles.card}>
-            <div>Would a transfer of {myInfo.token.current?.ticker} work</div>
-            <div>From:&nbsp;
-              <input defaultValue={myInfo.requirements.settleSimulation.sender} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "sender"])} />
-              &nbsp;
-              <button className="submit pick-me-for-sender" onClick={onValueChangedCreator(["requirements", "settleSimulation", "sender"], false, getMyDid)}>Pick mine</button>
-            </div>
-            <div>To:&nbsp;
-              <input defaultValue={myInfo.requirements.settleSimulation.recipient} placeholder="0x123" onChange={onValueChangedCreator(["requirements", "settleSimulation", "recipient"])} />
-              &nbsp;
-              <button className="submit pick-me-for-recipient" onClick={onValueChangedCreator(["requirements", "settleSimulation", "recipient"], false, getMyDid)}>Pick mine</button>
-            </div>
-            <div className="submit">
-              <button className="submit simulate-compliance" onClick={simulateCompliance} disabled={myInfo.token.current === null}>Try</button>
-            </div>
-            <div>Result: {myInfo.requirements.settleSimulation.works === null ? "No info" : myInfo.requirements.settleSimulation.works ? "Aye" : "Nay"}</div>
-          </div>
-
-        </fieldset>
+        <ComplianceManagerView
+          requirements={myInfo.requirements}
+          cardStyle={styles.card}
+          myInfo={myInfo}
+          onValueChangedCreator={onValueChangedCreator}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          removeFromMyRequirementArray={removeFromMyRequirementArray}
+          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
+          addRequirementToMyRequirementArray={addToMyRequirementArray}
+          addConditionToMyRequirementArray={addToMyRequirementArray}
+          addClaimToMyRequirementArray={addToMyRequirementArray}
+          addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          saveRequirements={saveRequirements}
+          pauseCompliance={pauseCompliance}
+          resumeCompliance={resumeCompliance}
+          simulateCompliance={simulateCompliance}
+          fetchCddId={fetchCddId}
+          getMyDid={getMyDid}
+          location={["requirements"]}
+          canManipulate={myInfo.requirements.canManipulate}
+        />
 
         <fieldset className={styles.card}>
           <legend>My authorisation requests</legend>

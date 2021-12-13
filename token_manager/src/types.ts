@@ -69,8 +69,10 @@ export type OnRequirementChangedDateCreator = (path: MyInfoPath) => (e) => Promi
 export type OnRequirementChangedIdentityCreator = (path: MyInfoPath) => (e) => Promise<void>
 export type FetchAndAddToPath<Type> = (path: MyInfoPath, additionKey: Type) => Promise<void>
 export type FetchDefaultAndAddToPath = (path: MyInfoPath) => Promise<void>
+export type SimpleAction = () => Promise<void>
 export type AddToPath<Type> = (path: MyInfoPath, addition: Type) => void
 export type RemoveFromPath = (path: MyInfoPath) => void
+export type Getter<ReturnType> = () => Promise<ReturnType>
 
 export type MyInfoJson = {
     ticker: string,
