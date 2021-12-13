@@ -83,7 +83,6 @@ import {
   checkboxProcessor,
   findValue,
   getBasicPolyWalletApi,
-  presentLongHex,
   replaceFetchTimer,
   returnAddedArrayCreator,
   returnRemovedArrayCreator,
@@ -103,6 +102,7 @@ import {
 import { ConditionsView, ConditionView } from "../src/components/compliance/ConditionView"
 import { RequirementsView, RequirementView } from "../src/components/compliance/RequirementView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
+import { LongHexView } from "../src/components/LongHexView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -488,7 +488,9 @@ export default function Home() {
 
   function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: MyInfoPath): JSX.Element {
     return <ul>
-      <li key="owner">Owner:&nbsp;{portfolio.owner.did === myInfo.myDid ? "me" : presentLongHex(portfolio.owner.did)}</li>
+      <li key="owner">
+        Owner:&nbsp;<LongHexView value={portfolio.owner.did} lut={{ [myInfo.myDid]: "me" }} />
+      </li>
       <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null"}</li>
     </ul>
   }
@@ -529,8 +531,12 @@ export default function Home() {
         &nbsp;
         <button className="submit reject-auth-request" onClick={() => rejectRequest(location)} disabled={!amIssuer && !amTarget}>Reject</button>
       </li>
-      <li key="issuer">Issuer:&nbsp;{amIssuer ? "me" : presentLongHex(authorisationRequest.issuer.did)}</li>
-      <li key="target">Target:&nbsp;{amTarget ? "me" : presentLongHex(target)}</li>
+      <li key="issuer">
+        Issuer:&nbsp;<LongHexView value={authorisationRequest.issuer.did} lut={{ [myInfo.myDid]: "me" }} />
+      </li>
+      <li key="target">
+        Target:&nbsp;<LongHexView value={target} lut={{ [myInfo.myDid]: "me", [myInfo.myAddress]: "me" }} />
+      </li>
       <li key="expiry">Expiry:&nbsp;{authorisationRequest.expiry?.toISOString()}</li>
       <li key="data">Data:&nbsp;{presentAuthorisation(authorisationRequest.data, [...location, "data"])}</li>
     </ul>
@@ -756,9 +762,9 @@ export default function Home() {
   async function loadPortfolios(whose: string): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
     const api: Polymesh = await getPolyWalletApi()
     const who: Identity = await api.getIdentity({ did: whose })
-    setStatus(`Loading portfolios of ${presentLongHex(whose)}`)
+    setStatus(`Loading portfolios of ${whose}`)
     const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
-    setStatus(`Portfolios of ${presentLongHex(whose)} retrieved`)
+    setStatus(`Portfolios of ${whose} retrieved`)
     await setPortfolios(portfolios)
     return portfolios
   }
@@ -814,7 +820,9 @@ export default function Home() {
     const canSetCustody: boolean = canManipulate && isMine && !isCustodied
     const canRelinquish: boolean = canManipulate && isCustodied && portfolio.custodian === myInfo.myDid
     return <ul>
-      <li key="owner">Owner:&nbsp;{portfolio.owner === myInfo.myDid ? "me" : presentLongHex(portfolio.owner)}</li>
+      <li key="owner">
+        Owner:&nbsp; <LongHexView value={portfolio.owner} lut={{ [myInfo.myDid]: "me" }} />
+      </li>
       <li key="id">
         Id:&nbsp;{portfolio.id}&nbsp;{(function () {
           if (portfolio.id === "null") return ""
@@ -1132,7 +1140,9 @@ export default function Home() {
             (() => {
               if (myInfo.reservation.current === null) return "There is no reservation"
               else return <ul>
-                <li key="owner">Owned by: {myInfo.reservation.details?.owner?.did === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.details?.owner?.did)}</li>
+                <li key="owner">
+                  Owned by: <LongHexView value={myInfo.reservation.details?.owner?.did} lut={{ [myInfo.myDid]: "me" }} />
+                </li>
                 <li key="status">With status: {myInfo.reservation.details?.status}</li>
                 <li key="expiry">Valid until: {myInfo.reservation.details?.expiryDate?.toISOString()}</li>
               </ul>
@@ -1188,12 +1198,14 @@ export default function Home() {
               const pia: string = myInfo.token.details?.primaryIssuanceAgent?.did
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
-                <li key="owner">Owned by: {owner === myInfo.myDid ? "me" : presentLongHex(myInfo.reservation.details?.owner?.did)}</li>
+                <li key="owner">
+                  Owned by: <LongHexView value={owner} lut={{ [myInfo.myDid]: "me" }} />
+                </li>
                 <li key="assetType">As asset type: {myInfo.token.details?.assetType}</li>
                 <li key="divisible">{myInfo.token.details?.isDivisible ? "" : "not"} divisible</li>
                 <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate.toISOString()}</li>
                 <li key="pia">
-                  With PIA: {pia === myInfo.myDid ? "me" : presentLongHex(pia)}
+                  With PIA: <LongHexView value={pia} lut={{ [myInfo.myDid]: "me" }} />
                   &nbsp;
                   <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={owner !== myInfo.myDid || owner === pia}>Remove</button>
                 </li>
@@ -1403,7 +1415,7 @@ export default function Home() {
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li key="caa">
-                  With agent: {typeof caa === "undefined" || caa === null ? "" : caa === myInfo.myDid ? "me" : presentLongHex(caa)}
+                  With agent: <LongHexView value={caa} lut={{ [myInfo.myDid]: caa }} />
                   &nbsp;
                   <button className="submit remove-token-caa" onClick={removeCorporateActionsAgent} disabled={owner !== myInfo.myDid || owner === caa}>Remove</button>
                 </li>
