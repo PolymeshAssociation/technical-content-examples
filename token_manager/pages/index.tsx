@@ -104,6 +104,7 @@ import { RequirementsView, RequirementView } from "../src/components/compliance/
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
+import { PortfolioJsonInfosView, PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -763,14 +764,10 @@ export default function Home() {
   }
 
   async function getPortfolioInfo(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
-    const custodian: Identity = await portfolio.getCustodian()
     return {
       original: portfolio,
-      owner: portfolio.owner.did,
-      id: portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null",
       name: portfolio instanceof NumberedPortfolio ? await portfolio.getName() : "null",
-      custodian: custodian.did,
-      newCustodian: custodian.did,
+      custodian: (await portfolio.getCustodian()).did,
     }
   }
 
@@ -783,55 +780,18 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
   }
 
-  async function setCustodian(portfolio: PortfolioInfoJson, location: MyInfoPath): Promise<void> {
+  async function setCustodian(portfolio: DefaultPortfolio | NumberedPortfolio, newCustodian: string): Promise<void> {
     setStatus("Setting custodian")
-    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.newCustodian })).run()
+    await (await portfolio.setCustodian({ targetIdentity: newCustodian })).run()
     setStatus("Custodian set")
     await loadMyPortfolios()
   }
 
-  async function relinquishCustody(portfolio: PortfolioInfoJson, location: MyInfoPath): Promise<void> {
+  async function relinquishCustody(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<void> {
     setStatus("Relinquishing custody")
-    await (await portfolio.original.setCustodian({ targetIdentity: portfolio.owner })).run()
+    await (await portfolio.setCustodian({ targetIdentity: portfolio.owner })).run()
     setStatus("Custody relinquished")
-    await loadPortfolios(portfolio.owner)
-  }
-
-  function presentPorfolioJson(portfolio: PortfolioInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    const isCustodied: boolean = portfolio.owner !== portfolio.custodian
-    const isMine: boolean = portfolio.owner === myInfo.myDid
-    const canSetCustody: boolean = canManipulate && isMine && !isCustodied
-    const canRelinquish: boolean = canManipulate && isCustodied && portfolio.custodian === myInfo.myDid
-    return <ul>
-      <li key="owner">
-        Owner:&nbsp; <LongHexView value={portfolio.owner} lut={{ [myInfo.myDid]: "me" }} />
-      </li>
-      <li key="id">
-        Id:&nbsp;{portfolio.id}&nbsp;{(function () {
-          if (portfolio.id === "null") return ""
-          return <button className="submit delete-portfolio" onClick={() => deletePortfolio(new BigNumber(portfolio.id))} disabled={!canManipulate}>Delete</button>
-        })()}
-      </li>
-      <li key="name">Name:&nbsp;{portfolio.name}</li>
-      <li key="custodian">Custodian:&nbsp;
-        <input defaultValue={portfolio.custodian} placeholder="0x123" onChange={onRequirementChangedCreator([...location, "newCustodian"])} disabled={!canSetCustody} />
-        &nbsp;
-        <button className="submit set-custodian" onClick={() => setCustodian(portfolio, location)} disabled={!canSetCustody}>Set</button>
-        &nbsp;
-        <button className="submit unset-custodian" onClick={() => relinquishCustody(portfolio, location)} disabled={!canRelinquish}>Unset</button>
-      </li>
-    </ul>
-  }
-
-  function presentPorfoliosJson(portfolios: PortfolioInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0) return <div>There are no portfolios</div>
-    return <ul>{
-      portfolios
-        .map((portfolio: PortfolioInfoJson, portfolioIndex: number) => presentPorfolioJson(portfolio, [...location, portfolioIndex], canManipulate))
-        .map((presented: JSX.Element, portfolioIndex: number) => <li key={portfolioIndex}>
-          Portfolio {portfolioIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
+    await loadPortfolios(portfolio.owner.did)
   }
 
   async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithData[]> {
@@ -1038,7 +998,18 @@ export default function Home() {
   function presentDividendDistributionInner(action: DividendDistributionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
     return [
       ...presentCorporateActionInner(action, location, canManipulate),
-      <li key="origin">Origin:&nbsp;{presentPorfolioJson(action.origin, [...location, "origin"], canManipulate)}</li>,
+      <li key="origin">
+        Origin:&nbsp;
+        <PortfolioInfoJsonView
+          portfolio={action.origin}
+          myDid={myInfo.myDid}
+          deletePortfolio={deletePortfolio}
+          setCustodian={setCustodian}
+          relinquishCustody={relinquishCustody}
+          location={[...location, "origin"]}
+          canManipulate={canManipulate}
+        />
+      </li>,
       <li key="details">Details:&nbsp;{presentDividendDistributionDetails(action.details, [...location, "details"], canManipulate)}</li>,
       <li key="participants">Participants:&nbsp;{presentParticipants(action.participants, [...location, "participants"], canManipulate)}</li>,
     ]
@@ -1362,7 +1333,15 @@ export default function Home() {
             <input defaultValue={myInfo.portfolios.otherOwner} placeholder="0x123" onChange={onRequirementChangedCreator(["portfolios", "otherOwner"])} />
           </div>
 
-          {presentPorfoliosJson(myInfo.portfolios.details, ["portfolios", "details"], true)}
+          <PortfolioJsonInfosView
+            portfolios={myInfo.portfolios.details}
+            deletePortfolio={deletePortfolio}
+            setCustodian={setCustodian}
+            relinquishCustody={relinquishCustody}
+            myDid={myInfo.myDid}
+            location={["portfolios", "details"]}
+            canManipulate={true}
+          />
 
           <div>See in the authorisations box above<br />for the pending custody authorisation</div>
 

@@ -173,11 +173,8 @@ export type PortfoliosInfoJson = {
 
 export type PortfolioInfoJson = {
     original: DefaultPortfolio | NumberedPortfolio,
-    owner: string,
-    id: string | null,
     name: string,
     custodian: string,
-    newCustodian: string,
 }
 
 export type AttestationsInfoJson = {
