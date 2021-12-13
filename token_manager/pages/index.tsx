@@ -91,6 +91,7 @@ import { ComplianceManagerView } from "../src/components/compliance/ComplianceVi
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioJsonInfosView, PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
+import { TickerManagerView } from "../src/components/token/TickerView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -129,8 +130,7 @@ export default function Home() {
     return myTickers
   }
 
-  async function onTickerChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const ticker: string = e.target.value
+  async function onTickerChanged(ticker: string): Promise<void> {
     setMyInfo(returnUpdatedCreator(["ticker"], ticker))
     replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
   }
@@ -143,10 +143,10 @@ export default function Home() {
     }
   }
 
-  async function reserveTicker(): Promise<TickerReservation> {
+  async function reserveTicker(ticker: string): Promise<TickerReservation> {
     const api: Polymesh = await getPolyWalletApi()
-    setStatus("Reserving ticker")
-    const reservation: TickerReservation = await (await api.reserveTicker({ ticker: myInfo.ticker })).run()
+    setStatus(`Reserving ticker ${ticker}`)
+    const reservation: TickerReservation = await (await api.reserveTicker({ ticker: ticker })).run()
     await setReservation(reservation)
     return reservation
   }
@@ -1044,25 +1044,14 @@ export default function Home() {
           Welcome to the Simple Token Manager
         </h1>
 
-        <fieldset className={styles.card}>
-          <legend>What ticker do you want to manage?</legend>
-
-          <div>
-            <input name="ticker" id="ticker" type="text" placeholder="ACME" defaultValue={myInfo.ticker} onChange={onTickerChanged} />
-          </div>
-          <div>
-            <select name="myTickers" defaultValue={myInfo.token.details?.assetType} onChange={onValueChangedCreator(["ticker"])}>
-              <option value="" key="Select 1" disabled={true}>Select 1</option>
-              {myInfo.myTickers.map((myTicker: string) => <option value={myTicker} key={myTicker}>{myTicker}</option>)}
-            </select>
-            &nbsp;
-            <button className="submit my-tickers" onClick={loadYourTickers}>Load my tickers</button>
-          </div>
-          <div className="submit">
-            <button className="submit reservation" onClick={reserveTicker} disabled={myInfo.reservation.current !== null}>Reserve</button>
-          </div>
-
-        </fieldset>
+        <TickerManagerView
+          myTickers={myInfo.myTickers}
+          reservation={myInfo.reservation}
+          cardStyle={styles.card}
+          loadMyTickers={async () => { await loadYourTickers() }}
+          loadTicker={onTickerChanged}
+          reserveTicker={async (ticker) => { await reserveTicker(ticker) }}
+        />
 
         <div id="status" className={styles.status}>
           Latest status will show here
