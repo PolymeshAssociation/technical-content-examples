@@ -55,7 +55,6 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
                         theEnum={ClaimType}
                         defaultValue={claimType}
                         onChange={onRequirementChangedCreator([...location, "trustedFor", claimTypeIndex], false)}
-                        location={[...location, "trustedFor", claimTypeIndex]}
                         canManipulate={canManipulate}
                     />
                     &nbsp;
@@ -163,7 +162,6 @@ export class ScopeView extends Component<ScopeViewProps> {
                     theEnum={ScopeType}
                     defaultValue={scope.type}
                     onChange={onRequirementChangedCreator([...location, "type"], false)}
-                    location={[...location, "type"]}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -204,7 +202,6 @@ export class ClaimView extends Component<ClaimViewProps> {
                     theEnum={ClaimType}
                     defaultValue={claim.type}
                     onChange={onRequirementChangedCreator([...location, "type"], false)}
-                    location={[...location, "type"]}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -270,7 +267,6 @@ export class ClaimView extends Component<ClaimViewProps> {
                     theEnum={CountryCode}
                     defaultValue={claim.code}
                     onChange={onRequirementChangedCreator([...location, "code"], false)}
-                    location={[...location, "code"]}
                     canManipulate={canManipulate}
                 />
             </li>)

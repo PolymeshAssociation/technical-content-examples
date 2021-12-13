@@ -1,6 +1,4 @@
 import { Component } from "react"
-import { OnValueChangedCreator } from "../types"
-import { BasicProps } from "./BasicProps"
 
 export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
     const selects: JSX.Element[] = []
@@ -8,10 +6,11 @@ export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
     return selects
 }
 
-export interface EnumSelectViewProps<EnumType> extends BasicProps {
+export interface EnumSelectViewProps<EnumType> {
     theEnum: any
     defaultValue: EnumType
     onChange: ((e) => Promise<void>) | undefined
+    canManipulate: boolean
 }
 
 export class EnumSelectView<EnumType> extends Component<EnumSelectViewProps<EnumType>> {

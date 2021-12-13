@@ -1,30 +1,27 @@
-import React, { Component } from "react";
+import { Component } from "react";
 import {
     CheckpointScheduleDetailsInfoJson,
     CheckpointScheduleInfoJson,
-    MyInfoPath,
 } from "../../types";
-import { BasicProps } from "../BasicProps";
 import {
     BasicCheckpointViewProps,
     CheckpointsView,
     LoadBalanceAtCheckpoint
 } from "./CheckpointView";
 
-export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps, BasicProps {
+export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps {
     scheduleInfo: CheckpointScheduleInfoJson
+    canManipulate: boolean
 }
 
 function presentCheckpointScheduleInner(
     scheduleInfo: CheckpointScheduleInfoJson,
-    location: MyInfoPath,
     canManipulate: boolean,
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
         <li key="createdCheckpoints">Created checkpoints:&nbsp;<CheckpointsView
             checkpoints={scheduleInfo.createdCheckpoints}
-            location={[...location, "createdCheckpoints"]}
             canManipulate={canManipulate}
             loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
         />
@@ -34,13 +31,11 @@ function presentCheckpointScheduleInner(
 
 function presentCheckpointScheduleDetailInner(
     scheduleInfo: CheckpointScheduleDetailsInfoJson,
-    location: MyInfoPath,
     canManipulate: boolean,
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         ...presentCheckpointScheduleInner(
             scheduleInfo,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint),
         <li key="remainingCheckpoints">
@@ -56,49 +51,46 @@ export class CheckpointScheduleView extends Component<CheckpointScheduleViewProp
     render() {
         const {
             scheduleInfo,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint
         } = this.props
         return <ul>{presentCheckpointScheduleInner(
             scheduleInfo,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint)
         }</ul>
     }
 }
 
-export interface CheckpointScheduleDetailViewProps extends BasicCheckpointViewProps, BasicProps {
+export interface CheckpointScheduleDetailViewProps extends BasicCheckpointViewProps {
     scheduleDetailInfo: CheckpointScheduleDetailsInfoJson
+    canManipulate: boolean
 }
 
 export class CheckpointScheduleDetailView extends Component<CheckpointScheduleDetailViewProps> {
     render() {
         const {
             scheduleDetailInfo: scheduleInfo,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint
         } = this.props
         return <ul>{presentCheckpointScheduleDetailInner(
             scheduleInfo,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint)
         }</ul>
     }
 }
 
-export interface CheckpointScheduleDetailsViewProps extends BasicCheckpointViewProps, BasicProps {
+export interface CheckpointScheduleDetailsViewProps extends BasicCheckpointViewProps {
     schedules: CheckpointScheduleDetailsInfoJson[]
+    canManipulate: boolean
 }
 
 export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleDetailsViewProps> {
     render() {
         const {
             schedules,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint
         } = this.props
@@ -109,7 +101,6 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
                 .map((schedule: CheckpointScheduleDetailsInfoJson, index: number) => <li key={index}>
                     Checkpoint schedule&nbsp;<CheckpointScheduleDetailView
                         scheduleDetailInfo={schedule}
-                        location={[...location, index]}
                         canManipulate={canManipulate}
                         loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                     /></li>)

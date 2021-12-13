@@ -59,6 +59,7 @@ import {
   Checkpoint,
   CheckpointSchedule,
   CorporateAction,
+  CreateCheckpointScheduleParams,
   CustomPermissionGroup,
   DefaultPortfolio,
   DividendDistribution,
@@ -806,8 +807,6 @@ export default function Home() {
       checkpoint: checkpoint,
       totalSupply: totalSupply,
       createdAt: createdAt,
-      whoseBalance: "",
-      balance: new BigNumber(0),
     }
   }
 

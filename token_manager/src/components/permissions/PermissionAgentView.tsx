@@ -26,8 +26,9 @@ function isIssuanceAgent(group: KnownPermissionGroupInfoJson | CustomPermissionG
         (isCustomPermissionGroup(group.current) && areIssuanceAgentPermissions(group.permissions))
 }
 
+const issuanceKey = "issuance"
 const patternAgentTags: { [key: string]: (TxTag | ModuleName)[] } = {
-    "issuance": [
+    [issuanceKey]: [
         AssetTx.ControllerTransfer,
         AssetTx.Issue,
         AssetTx.Redeem,

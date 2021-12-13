@@ -1,7 +1,6 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
 import { Component } from "react";
 import { CheckpointInfoJson } from "../../types";
-import { BasicProps } from "../BasicProps";
 
 export type LoadBalanceAtCheckpoint = (checkpoint: CheckpointInfoJson, whoseBalance: string) => Promise<BigNumber>
 
@@ -17,8 +16,9 @@ export interface BasicCheckpointViewProps {
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint
 }
 
-export interface CheckpointViewProps extends BasicCheckpointViewProps, BasicProps {
+export interface CheckpointViewProps extends BasicCheckpointViewProps {
     checkpointInfo: CheckpointInfoJson
+    canManipulate: boolean
 }
 
 export class CheckpointView extends Component<CheckpointViewProps, CheckpointViewState> {
@@ -70,15 +70,15 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
     }
 }
 
-export interface CheckpointsViewProps extends BasicCheckpointViewProps, BasicProps {
+export interface CheckpointsViewProps extends BasicCheckpointViewProps {
     checkpoints: CheckpointInfoJson[]
+    canManipulate: boolean
 }
 
 export class CheckpointsView extends Component<CheckpointsViewProps> {
     render() {
         const {
             checkpoints,
-            location,
             canManipulate,
             loadBalanceAtCheckpoint
         } = this.props
@@ -89,7 +89,6 @@ export class CheckpointsView extends Component<CheckpointsViewProps> {
                 .map((checkpoint: CheckpointInfoJson, index: number) => <li key={index}>
                     Checkpoint {index}:&nbsp;<CheckpointView
                         checkpointInfo={checkpoint}
-                        location={[...location, index]}
                         canManipulate={canManipulate}
                         loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                     />

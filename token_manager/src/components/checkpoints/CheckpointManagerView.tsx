@@ -1,6 +1,6 @@
 import { Checkpoint, CreateCheckpointScheduleParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { CalendarUnit, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/types";
-import React, { Component } from "react";
+import { Component } from "react";
 import { Getter, MyInfoJson } from "../../types";
 import { EnumSelectView } from "../EnumView";
 import { CheckpointScheduleDetailsView } from "./CheckpointScheduleView";
@@ -76,7 +76,6 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
             <div>
                 <CheckpointsView
                     checkpoints={myInfo.checkpoints?.details}
-                    location={["checkpoints", "details"]}
                     canManipulate={true}
                     loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                 />
@@ -108,7 +107,6 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                             theEnum={CalendarUnit}
                             defaultValue={this.state.periodUnit}
                             onChange={this.updatePeriodUnit}
-                            location={[]}
                             canManipulate={true}
                         />
                     </li>
@@ -138,7 +136,6 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
             <div>
                 <CheckpointScheduleDetailsView
                     schedules={myInfo.checkpoints.scheduleDetails}
-                    location={["checkpoints", "scheduleDetails"]}
                     canManipulate={canManipulate}
                     loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                 />
