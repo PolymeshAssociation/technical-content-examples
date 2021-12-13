@@ -1,17 +1,17 @@
-import { CalendarUnit } from "@polymathnetwork/polymesh-sdk/types";
+import { Checkpoint } from "@polymathnetwork/polymesh-sdk/internal";
+import { CalendarUnit, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
-import { MyInfoJson, OnRequirementChangedDateCreator } from "../../types";
+import { Getter, MyInfoJson, OnRequirementChangedDateCreator } from "../../types";
 import { presentEnumOptions } from "../EnumView";
 import { CheckpointScheduleDetailsView } from "./CheckpointScheduleView";
 import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
-import { CreateCheckpoint, CreateScheduledCheckpoint } from "./types";
 
 export interface CheckpointManagerViewProps extends BasicCheckpointViewProps {
     myInfo: MyInfoJson
     cardStyle: any
-    createCheckpoint: CreateCheckpoint
+    createCheckpoint: Getter<Checkpoint>
     onRequirementChangedDateCreator: OnRequirementChangedDateCreator
-    createScheduledCheckpoint: CreateScheduledCheckpoint
+    createScheduledCheckpoint: Getter<CheckpointSchedule>
 }
 
 export class CheckpointManagerView extends Component<CheckpointManagerViewProps> {
