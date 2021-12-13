@@ -100,6 +100,7 @@ import {
   ClaimView,
   TrustedClaimIssuersView
 } from "../src/components/compliance/ClaimView"
+import { ConditionsView, ConditionView } from "../src/components/compliance/ConditionView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -416,84 +417,6 @@ export default function Home() {
       async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))
   }
 
-  function presentCondition(condition: Condition, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    const dummyTrustedClaimIssuer: TrustedClaimIssuer = { identity: null, trustedFor: [] }
-    const elements: JSX.Element[] = [
-      <li key="target">Target:
-        <select defaultValue={condition.target} onChange={onRequirementChangedCreator([...location, "target"])} disabled={!canManipulate}>
-          {presentEnumOptions(ConditionTarget)}
-        </select>
-      </li>,
-      <li key="trustedClaimIssuers">Trusted claim issuers:&nbsp;
-        <button className="submit add-trusted-claim-issuer" onClick={() => addToMyRequirementArray([...location, "trustedClaimIssuers"], dummyTrustedClaimIssuer)} disabled={!canManipulate}>Add trusted claim issuer</button>
-        <TrustedClaimIssuersView
-          trustedIssuers={condition.trustedClaimIssuers}
-          onRequirementChangedCreator={onRequirementChangedCreator}
-          removeFromMyRequirementArray={removeFromMyRequirementArray}
-          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-          addToMyRequirementArray={addToMyRequirementArray}
-          location={[...location, "trustedClaimIssuers"]}
-          canManipulate={canManipulate}
-        />
-      </li>,
-      <li key="type">Type:
-        <select defaultValue={condition.type} onChange={onRequirementChangedCreator([...location, "type"])} disabled={!canManipulate}>
-          {presentEnumOptions(ConditionType)}
-        </select>
-      </li>,
-    ]
-    if (isSingleClaimCondition(condition)) {
-      elements.push(<li key="claim">
-        Claim:
-        <ClaimView
-          claim={condition.claim}
-          myInfo={myInfo}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          onRequirementChangedCreator={onRequirementChangedCreator}
-          fetchAndAddToPath={fetchCddId}
-          location={[...location, "claim"]}
-          canManipulate={canManipulate}
-        />
-      </li>)
-    } else if (isMultiClaimCondition(condition)) {
-      elements.push(<li key="claims">Claims:
-        <ClaimsView
-          claims={condition.claims}
-          myInfo={myInfo}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          onRequirementChangedCreator={onRequirementChangedCreator}
-          fetchAndAddToPath={fetchCddId}
-          location={[...location, "claims"]}
-          canManipulate={canManipulate}
-        />
-      </li>)
-    } else if (isIdentityCondition(condition)) {
-      elements.push(<li key="identity">Identity:&nbsp;
-        <input defaultValue={condition.identity?.did} placeholder="0x123" disabled={!canManipulate}
-          onChange={onRequirementChangedCreator(
-            [...location, "identity"],
-            false,
-            async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))} />
-      </li>)
-    } else if (isPrimaryIssuanceAgentCondition(condition)) { // Nothing to do
-    } else {
-      throw new Error(`Unknown condition type: ${condition}`)
-    }
-    return <ul>{elements}</ul>
-  }
-
-  function presentConditions(conditions: Condition[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (conditions === null || conditions.length === 0) return <div>No conditions</div>
-    return <ul>{
-      conditions
-        .map((condition: Condition, conditionIndex: number) => presentCondition(condition, [...location, conditionIndex], canManipulate))
-        .map((presented: JSX.Element, conditionIndex: number) => <li key={conditionIndex}>Condition {conditionIndex}:&nbsp;
-          <button className="submit remove-condition" onClick={() => removeFromMyRequirementArray([...location, conditionIndex])} disabled={!canManipulate}>Remove {conditionIndex}</button>
-          {presented}
-        </li>)
-    }</ul>
-  }
-
   function presentRequirement(requirement: Requirement, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     const dummyCondition: Condition = {
       target: null,
@@ -506,7 +429,19 @@ export default function Home() {
       <li key="id">Id: {requirement.id}</li>
       <li key="conditions">Conditions:&nbsp;
         <button className="submit add-condition" onClick={() => addToMyRequirementArray([...location, "conditions"], dummyCondition)} disabled={!canManipulate}>Add condition</button>
-        {presentConditions(requirement.conditions, [...location, "conditions"], canManipulate)}
+        <ConditionsView
+          conditions={requirement.conditions}
+          myInfo={myInfo}
+          onRequirementChangedCreator={onRequirementChangedCreator}
+          removeFromMyRequirementArray={removeFromMyRequirementArray}
+          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
+          addClaimToMyRequirementArray={addToMyRequirementArray}
+          addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
+          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+          fetchCddId={fetchCddId}
+          location={[...location, "conditions"]}
+          canManipulate={canManipulate}
+        />
       </li>
     </ul>
   }
@@ -737,7 +672,7 @@ export default function Home() {
           myInfo={myInfo}
           addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
           onRequirementChangedCreator={onRequirementChangedCreator}
-          fetchAndAddToPath={fetchCddId}
+          fetchCddId={fetchCddId}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
         />
@@ -766,7 +701,7 @@ export default function Home() {
           myInfo={myInfo}
           addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
           onRequirementChangedCreator={onRequirementChangedCreator}
-          fetchAndAddToPath={fetchCddId}
+          fetchCddId={fetchCddId}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
         />

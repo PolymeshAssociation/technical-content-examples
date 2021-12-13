@@ -87,7 +87,7 @@ export interface TrustedClaimIssuersViewProps extends BasicProps {
     onRequirementChangedCreator: OnRequirementChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
-    addToMyRequirementArray: AddToPath<ClaimType>
+    addClaimToMyRequirementArray: AddToPath<ClaimType>
 }
 
 export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewProps> {
@@ -97,7 +97,7 @@ export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewPr
             onRequirementChangedCreator,
             removeFromMyRequirementArray,
             onRequirementChangedIdentityCreator,
-            addToMyRequirementArray,
+            addClaimToMyRequirementArray,
             location,
             canManipulate
         } = this.props
@@ -118,7 +118,7 @@ export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewPr
                             onRequirementChangedCreator={onRequirementChangedCreator}
                             removeFromMyRequirementArray={removeFromMyRequirementArray}
                             onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-                            addToMyRequirementArray={addToMyRequirementArray}
+                            addToMyRequirementArray={addClaimToMyRequirementArray}
                             location={[...location, issuerIndex]}
                             canManipulate={canManipulate}
                         />
