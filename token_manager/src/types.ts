@@ -191,7 +191,6 @@ export type AttestationsInfoJson = {
 export type CheckpointsInfoJson = {
     current: CheckpointWithData[],
     details: CheckpointInfoJson[],
-    scheduledToAdd: CreateCheckpointScheduleParams,
     currentSchedules: CheckpointSchedule[],
     scheduleDetails: CheckpointScheduleDetailsInfoJson[],
 }
@@ -200,8 +199,6 @@ export type CheckpointInfoJson = {
     checkpoint: Checkpoint,
     totalSupply: BigNumber,
     createdAt: Date,
-    whoseBalance: string,
-    balance: BigNumber,
 }
 
 export type CheckpointScheduleInfoJson = {
@@ -352,14 +349,6 @@ export function getEmptyMyInfo(): MyInfoJson {
         checkpoints: {
             current: [] as CheckpointWithData[],
             details: [] as CheckpointInfoJson[],
-            scheduledToAdd: {
-                start: new Date(),
-                period: {
-                    amount: 3,
-                    unit: CalendarUnit.Month,
-                },
-                repetitions: 0,
-            },
             currentSchedules: [] as CheckpointSchedule[],
             scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
         },

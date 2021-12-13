@@ -1,11 +1,19 @@
-import { Checkpoint, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/internal";
+import { BigNumber } from "@polymathnetwork/polymesh-sdk";
 import { Component } from "react";
-import { CheckpointInfoJson, MyInfoPath, OnValueChangedCreator } from "../../types";
+import { CheckpointInfoJson } from "../../types";
 import { BasicProps } from "../BasicProps";
-import { LoadBalanceAtCheckpoint } from "./types";
+
+export type LoadBalanceAtCheckpoint = (checkpoint: CheckpointInfoJson, whoseBalance: string) => Promise<BigNumber>
+
+const whoseBalanceKey = "whoseBalance"
+const balanceKey = "balance"
+
+interface CheckpointViewState {
+    [whoseBalanceKey]: string
+    [balanceKey]: BigNumber
+}
 
 export interface BasicCheckpointViewProps {
-    onRequirementChangedCreator: OnValueChangedCreator
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint
 }
 
@@ -13,14 +21,30 @@ export interface CheckpointViewProps extends BasicCheckpointViewProps, BasicProp
     checkpointInfo: CheckpointInfoJson
 }
 
-export class CheckpointView extends Component<CheckpointViewProps> {
+export class CheckpointView extends Component<CheckpointViewProps, CheckpointViewState> {
+    constructor(props: CheckpointViewProps) {
+        super(props)
+        this.setState({
+            [whoseBalanceKey]: "",
+            [balanceKey]: new BigNumber("0"),
+        })
+    }
+
+    updateNewWhoseBalance = (e) => {
+        this.setState({
+            [whoseBalanceKey]: e.target.value,
+        })
+    }
+
+    updateBalanceAtCheckpoint = async (e) => {
+        this.setState({
+            [balanceKey]: await this.props.loadBalanceAtCheckpoint(this.props.checkpointInfo, this.state[whoseBalanceKey])
+        })
+    }
+
+
     render() {
-        const {
-            checkpointInfo,
-            location,
-            onRequirementChangedCreator,
-            loadBalanceAtCheckpoint
-        } = this.props
+        const { checkpointInfo } = this.props
         return <ul>
             <li key="id">Id:&nbsp;{checkpointInfo.checkpoint.id.toString(10)}</li>
             <li key="ticker">Ticker:&nbsp;{checkpointInfo.checkpoint.ticker}</li>
@@ -28,19 +52,19 @@ export class CheckpointView extends Component<CheckpointViewProps> {
             <li key="createdAt">Created at:&nbsp;{checkpointInfo.createdAt.toISOString()}</li>
             <li key="balanceOf">Balance of:&nbsp;
                 <input
-                    defaultValue={checkpointInfo.whoseBalance}
+                    defaultValue={this.state.whoseBalance}
                     placeholder="0x123"
-                    onChange={onRequirementChangedCreator([...location, "whoseBalance"], false)}
+                    onChange={this.updateNewWhoseBalance}
                 />
                 &nbsp;
                 <button
                     className="submit get-balanceOf"
-                    onClick={() => loadBalanceAtCheckpoint(checkpointInfo, checkpointInfo.whoseBalance, location)}
+                    onClick={this.updateBalanceAtCheckpoint}
                 >
                     Fetch
                 </button>
                 <br />
-                Is&nbsp;{`${checkpointInfo.balance.toString(10)} ${checkpointInfo.checkpoint.ticker}`}
+                Is&nbsp;{`${this.state.balance.toString(10)} ${checkpointInfo.checkpoint.ticker}`}
             </li>
         </ul>
     }
@@ -56,22 +80,19 @@ export class CheckpointsView extends Component<CheckpointsViewProps> {
             checkpoints,
             location,
             canManipulate,
-            onRequirementChangedCreator,
             loadBalanceAtCheckpoint
         } = this.props
         if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0)
             return <div>There are no checkpoints</div>
         return <ul>{
             checkpoints
-                .map((checkpoint: CheckpointInfoJson, checkpointIndex: number) => <CheckpointView
-                    checkpointInfo={checkpoint}
-                    location={[...location, checkpointIndex]}
-                    canManipulate={canManipulate}
-                    onRequirementChangedCreator={onRequirementChangedCreator}
-                    loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-                />)
-                .map((presented: JSX.Element, checkpointIndex: number) => <li key={checkpointIndex}>
-                    Checkpoint {checkpointIndex}:&nbsp;{presented}
+                .map((checkpoint: CheckpointInfoJson, index: number) => <li key={index}>
+                    Checkpoint {index}:&nbsp;<CheckpointView
+                        checkpointInfo={checkpoint}
+                        location={[...location, index]}
+                        canManipulate={canManipulate}
+                        loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+                    />
                 </li>)
         }</ul>
     }
