@@ -101,6 +101,7 @@ import {
   TrustedClaimIssuersView
 } from "../src/components/compliance/ClaimView"
 import { ConditionsView, ConditionView } from "../src/components/compliance/ConditionView"
+import { RequirementsView, RequirementView } from "../src/components/compliance/RequirementView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -415,47 +416,6 @@ export default function Home() {
       path,
       false,
       async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))
-  }
-
-  function presentRequirement(requirement: Requirement, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    const dummyCondition: Condition = {
-      target: null,
-      type: ConditionType.IsPresent,
-      claim: {
-        type: ClaimType.NoData,
-      },
-    }
-    return <ul>
-      <li key="id">Id: {requirement.id}</li>
-      <li key="conditions">Conditions:&nbsp;
-        <button className="submit add-condition" onClick={() => addToMyRequirementArray([...location, "conditions"], dummyCondition)} disabled={!canManipulate}>Add condition</button>
-        <ConditionsView
-          conditions={requirement.conditions}
-          myInfo={myInfo}
-          onRequirementChangedCreator={onRequirementChangedCreator}
-          removeFromMyRequirementArray={removeFromMyRequirementArray}
-          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-          addClaimToMyRequirementArray={addToMyRequirementArray}
-          addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          fetchCddId={fetchCddId}
-          location={[...location, "conditions"]}
-          canManipulate={canManipulate}
-        />
-      </li>
-    </ul>
-  }
-
-  function presentRequirements(requirements: Requirement[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof requirements === "undefined" || requirements === null || requirements.length === 0) return <div>No requirements</div>
-    return <ul>{
-      requirements
-        .map((requirement: Requirement, requirementIndex: number) => presentRequirement(requirement, [...location, requirementIndex], canManipulate))
-        .map((presented: JSX.Element, requirementIndex: number) => <li key={requirementIndex}>Requirement {requirementIndex}:&nbsp;
-          <button className="submit remove-requirement" onClick={() => removeFromMyRequirementArray([...location, requirementIndex])} disabled={!canManipulate}>Remove {requirementIndex}</button>
-          {presented}
-        </li>)
-    }</ul>
   }
 
   function addToMyRequirementArray(containerLocation: MyInfoPath, dummy: any): void {
@@ -1321,7 +1281,22 @@ export default function Home() {
             <button className="submit add-requirement" onClick={() => addToMyRequirementArray(["requirements", "current"], { id: Math.round(Math.random() * 1000), conditions: [] })} disabled={!myInfo.requirements.canManipulate}>Add requirement</button>
           </div>
 
-          <div>{presentRequirements(myInfo.requirements.current, ["requirements", "current"], myInfo.requirements.canManipulate)}</div>
+          <div>
+            <RequirementsView
+              requirements={myInfo.requirements.current}
+              myInfo={myInfo}
+              onRequirementChangedCreator={onRequirementChangedCreator}
+              removeFromMyRequirementArray={removeFromMyRequirementArray}
+              onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
+              addConditionToMyRequirementArray={addToMyRequirementArray}
+              addClaimToMyRequirementArray={addToMyRequirementArray}
+              addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
+              addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
+              fetchCddId={fetchCddId}
+              location={["requirements", "current"]}
+              canManipulate={myInfo.requirements.canManipulate}
+            />
+          </div>
 
           <div>{
             (() => {
