@@ -64,7 +64,7 @@ export function getCountryList(): CountryInfo[] {
 }
 
 export type MyInfoPath = (string | number)[]
-export type OnRequirementChangedCreator = (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>
+export type OnValueChangedCreator = (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>
 export type OnRequirementChangedDateCreator = (path: MyInfoPath) => (e) => Promise<void>
 export type OnRequirementChangedIdentityCreator = (path: MyInfoPath) => (e) => Promise<void>
 export type FetchAndAddToPath<Type> = (path: MyInfoPath, additionKey: Type) => Promise<void>

@@ -3,7 +3,7 @@ import {
     CheckpointScheduleDetailsInfoJson,
     CheckpointScheduleInfoJson,
     MyInfoPath,
-    OnRequirementChangedCreator
+    OnValueChangedCreator
 } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
@@ -17,7 +17,7 @@ function presentCheckpointScheduleInner(
     scheduleInfo: CheckpointScheduleInfoJson,
     location: MyInfoPath,
     canManipulate: boolean,
-    onRequirementChangedCreator: OnRequirementChangedCreator,
+    onRequirementChangedCreator: OnValueChangedCreator,
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
@@ -36,7 +36,7 @@ function presentCheckpointScheduleDetailInner(
     scheduleInfo: CheckpointScheduleDetailsInfoJson,
     location: MyInfoPath,
     canManipulate: boolean,
-    onRequirementChangedCreator: OnRequirementChangedCreator,
+    onRequirementChangedCreator: OnValueChangedCreator,
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         ...presentCheckpointScheduleInner(

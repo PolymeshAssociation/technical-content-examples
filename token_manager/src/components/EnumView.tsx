@@ -1,5 +1,5 @@
 import { Component } from "react"
-import { OnRequirementChangedCreator } from "../types"
+import { OnValueChangedCreator } from "../types"
 import { BasicProps } from "./BasicProps"
 
 export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {

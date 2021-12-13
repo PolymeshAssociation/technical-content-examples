@@ -13,7 +13,7 @@ import {
     FetchAndAddToPath,
     MyInfoJson,
     MyInfoPath,
-    OnRequirementChangedCreator,
+    OnValueChangedCreator,
     OnRequirementChangedIdentityCreator,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
@@ -22,7 +22,7 @@ import { ConditionsView } from "./ConditionView";
 export interface RequirementViewProps extends BasicProps {
     requirement: Requirement
     myInfo: MyInfoJson
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addConditionToMyRequirementArray: AddToPath<Condition>
@@ -85,7 +85,7 @@ export class RequirementView extends Component<RequirementViewProps> {
 export interface RequirementsViewProps extends BasicProps {
     requirements: Requirement[]
     myInfo: MyInfoJson
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addConditionToMyRequirementArray: AddToPath<Condition>

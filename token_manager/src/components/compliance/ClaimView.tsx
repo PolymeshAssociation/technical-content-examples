@@ -22,7 +22,7 @@ import {
     isScopeClaimProof,
     MyInfoJson,
     MyInfoPath,
-    OnRequirementChangedCreator,
+    OnValueChangedCreator,
     OnRequirementChangedIdentityCreator,
 } from "../../types";
 import { findValue } from "../../ui-helpers";
@@ -31,7 +31,7 @@ import { EnumSelectView } from "../EnumView";
 
 export interface TrustedClaimIssuerViewProps extends BasicProps {
     trustedIssuer: TrustedClaimIssuer
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addToMyRequirementArray: AddToPath<ClaimType>
@@ -84,7 +84,7 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
 
 export interface TrustedClaimIssuersViewProps extends BasicProps {
     trustedIssuers: TrustedClaimIssuer[] | null
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addClaimToMyRequirementArray: AddToPath<ClaimType>
@@ -130,7 +130,7 @@ export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewPr
 export interface ScopeViewProps extends BasicProps {
     scope: Scope
     addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
 }
 
 export class ScopeView extends Component<ScopeViewProps> {
@@ -173,7 +173,7 @@ export interface ClaimViewProps extends BasicProps {
     claim: Claim
     myInfo: MyInfoJson
     addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
@@ -268,7 +268,7 @@ export interface ClaimsViewProps extends BasicProps {
     claims: Claim[] | null
     myInfo: MyInfoJson
     addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     fetchAndAddToPath: FetchAndAddToPath<string | Identity>
 }
 
@@ -307,7 +307,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
 export interface AddInvestorUniquenessClaimViewProps extends BasicProps {
     claim: AddInvestorUniquenessClaimParams
     addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     fetchMyCddId: FetchDefaultAndAddToPath
 }
 

@@ -1,11 +1,11 @@
 import { Checkpoint, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
-import { CheckpointInfoJson, MyInfoPath, OnRequirementChangedCreator } from "../../types";
+import { CheckpointInfoJson, MyInfoPath, OnValueChangedCreator } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { LoadBalanceAtCheckpoint } from "./types";
 
 export interface BasicCheckpointViewProps {
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint
 }
 

@@ -17,7 +17,7 @@ import {
     isPrimaryIssuanceAgentCondition,
     MyInfoJson,
     MyInfoPath,
-    OnRequirementChangedCreator,
+    OnValueChangedCreator,
     OnRequirementChangedIdentityCreator,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
@@ -31,7 +31,7 @@ import {
 export interface ConditionViewProps extends BasicProps {
     condition: Condition
     myInfo: MyInfoJson
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addClaimToMyRequirementArray: AddToPath<ClaimType>
@@ -138,7 +138,7 @@ export class ConditionView extends Component<ConditionViewProps> {
 export interface ConditionsViewProps extends BasicProps {
     conditions: Condition[]
     myInfo: MyInfoJson
-    onRequirementChangedCreator: OnRequirementChangedCreator
+    onRequirementChangedCreator: OnValueChangedCreator
     removeFromMyRequirementArray: (location: MyInfoPath) => void
     onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
     addClaimToMyRequirementArray: AddToPath<ClaimType>
