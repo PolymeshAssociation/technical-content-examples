@@ -69,13 +69,22 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
             }</ul>
             : <div>Not trusted for anything</div>
         return <ul>
-            <li key="identity">Did: <input defaultValue={trustedIssuer.identity?.did} placeholder="0x123"
-                onChange={onRequirementChangedIdentityCreator([...location, "identity"])}
-                disabled={!canManipulate}
-            />
+            <li key="identity">
+                Did:
+                <input
+                    defaultValue={trustedIssuer.identity?.did}
+                    placeholder="0x123"
+                    onChange={onRequirementChangedIdentityCreator([...location, "identity"])}
+                    disabled={!canManipulate}
+                />
             </li>
             <li key="trustedFor">Trusted for:&nbsp;
-                <button className="submit add-trusted-for" onClick={() => addToMyRequirementArray([...location, "trustedFor"], ClaimType.Accredited)} disabled={!canManipulate}>Add trusted for</button>
+                <button
+                    className="submit add-trusted-for"
+                    onClick={() => addToMyRequirementArray([...location, "trustedFor"], ClaimType.Accredited)}
+                    disabled={!canManipulate}>
+                    Add trusted for
+                </button>
                 {trustedFor}
             </li>
         </ul>
@@ -101,7 +110,8 @@ export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewPr
             location,
             canManipulate
         } = this.props
-        if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0) return <div>No trusted issuers</div>
+        if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0)
+            return <div>No trusted issuers</div>
         return <ul>{
             trustedIssuers
                 .map((trustedIssuer: TrustedClaimIssuer, issuerIndex: number) =>
@@ -227,7 +237,12 @@ export class ClaimView extends Component<ClaimViewProps> {
             const targetDid: string = typeof target === "string" ? target : target.did
             const hasTarget: boolean = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
             elements.push(<li key="cddId">CDD id:
-                <input defaultValue={claim.cddId} placeholder="123" onChange={onRequirementChangedCreator([...location, "cddId"], false)} disabled={!canManipulate} />&nbsp;
+                <input
+                    defaultValue={claim.cddId}
+                    placeholder="123"
+                    onChange={onRequirementChangedCreator([...location, "cddId"], false)}
+                    disabled={!canManipulate}
+                />&nbsp;
                 {
                     (() => {
                         if (typeof target === "undefined" || isClaimData(claimData)) return ""
@@ -283,7 +298,8 @@ export class ClaimsView extends Component<ClaimsViewProps> {
             location,
             canManipulate
         } = this.props
-        if (typeof claims === "undefined" || claims === null || claims.length === 0) return <div>No claims</div>
+        if (typeof claims === "undefined" || claims === null || claims.length === 0)
+            return <div>No claims</div>
         return <ul>{
             claims
                 .map((claim: Claim, claimIndex: number) =>

@@ -3,19 +3,12 @@ import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
   CheckpointWithData,
-  ClaimType,
   Compliance,
-  Condition,
-  isMultiClaimCondition,
-  isSingleClaimCondition,
   KnownTokenType,
   Requirement,
   SecurityToken,
   SecurityTokenDetails,
-  TrustedClaimIssuer,
   Claim,
-  ConditionType,
-  ConditionTarget,
   ResultSet,
   ClaimData,
   ClaimTarget,
@@ -24,8 +17,6 @@ import {
   Authorization,
   AuthorizationType,
   Permissions,
-  PortfolioBalance,
-  CalendarUnit,
   ScheduleWithDetails,
   TickerReservationStatus,
   DividendDistributionDetails,
@@ -45,7 +36,6 @@ import {
   CorporateActionInfoJson,
   CustomPermissionGroupInfoJson,
   DividendDistributionInfoJson,
-  getCountryList,
   getEmptyMyInfo,
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
@@ -53,7 +43,6 @@ import {
   isCheckpointSchedule,
   isCheckpointWithData,
   isCustomPermissionGroup,
-  isIdentityCondition,
   isKnownPermissionGroup,
   isNumberedPortfolio,
   isPrimaryIssuanceAgentCondition,
@@ -95,12 +84,8 @@ import { presentEnumOptions } from "../src/components/EnumView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionView"
 import {
   AddInvestorUniquenessClaimView,
-  ClaimsView,
   ClaimView,
-  TrustedClaimIssuersView
 } from "../src/components/compliance/ClaimView"
-import { ConditionsView, ConditionView } from "../src/components/compliance/ConditionView"
-import { RequirementsView, RequirementView } from "../src/components/compliance/RequirementView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
@@ -832,14 +817,13 @@ export default function Home() {
     return checkpoint
   }
 
-  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string, location: MyInfoPath): Promise<string> {
-    const balance: string = (await checkpoint.checkpoint.balance({ identity: whoseBalance })).toString(10)
-    setMyInfo(returnUpdatedCreator([...location, "balance"], balance))
+  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string): Promise<BigNumber> {
+    const balance: BigNumber = (await checkpoint.checkpoint.balance({ identity: whoseBalance }))
     return balance
   }
 
-  async function createScheduledCheckpoint(): Promise<CheckpointSchedule> {
-    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.schedules.create(myInfo.checkpoints.scheduledToAdd)).run()
+  async function createScheduledCheckpoint(params: CreateCheckpointScheduleParams): Promise<CheckpointSchedule> {
+    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.schedules.create(params)).run()
     await loadCheckpointSchedules(myInfo.token.current)
     return schedule
   }
@@ -964,7 +948,6 @@ export default function Home() {
             checkpointInfo={action.checkpoint}
             location={location}
             canManipulate={canManipulate}
-            onRequirementChangedCreator={onRequirementChangedCreator}
             loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
           />
         </li>
@@ -972,7 +955,6 @@ export default function Home() {
           scheduleInfo={action.checkpointSchedule}
           location={location}
           canManipulate={canManipulate}
-          onRequirementChangedCreator={onRequirementChangedCreator}
           loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
         />
         </li>
@@ -1361,9 +1343,7 @@ export default function Home() {
           myInfo={myInfo}
           cardStyle={styles.card}
           createCheckpoint={createCheckpoint}
-          onRequirementChangedDateCreator={onRequirementChangedDateCreator}
           createScheduledCheckpoint={createScheduledCheckpoint}
-          onRequirementChangedCreator={onRequirementChangedCreator}
           loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
         />
 

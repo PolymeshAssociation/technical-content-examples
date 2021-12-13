@@ -111,7 +111,8 @@ export class RequirementsView extends Component<RequirementsViewProps> {
             location,
             canManipulate
         } = this.props
-        if (typeof requirements === "undefined" || requirements === null || requirements.length === 0) return <div>No requirements</div>
+        if (typeof requirements === "undefined" || requirements === null || requirements.length === 0)
+            return <div>No requirements</div>
         return <ul>{
             requirements
                 .map((requirement: Requirement, requirementIndex: number) => <li key={requirementIndex}>
