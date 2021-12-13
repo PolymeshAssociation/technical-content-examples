@@ -37,7 +37,7 @@ export class TickerManagerView extends Component<TickerViewProps, TickerViewStat
     }
 
     onReserveTicker = async (e) => {
-        await this.props.reserveTicker(e.target.value)
+        await this.props.reserveTicker(this.state.ticker)
     }
 
     render() {

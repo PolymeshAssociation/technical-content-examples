@@ -4,7 +4,6 @@ import styles from "../styles/Home.module.css"
 import {
   CheckpointWithData,
   Compliance,
-  KnownTokenType,
   Requirement,
   SecurityToken,
   SecurityTokenDetails,
@@ -18,7 +17,6 @@ import {
   AuthorizationType,
   Permissions,
   ScheduleWithDetails,
-  TickerReservationStatus,
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
@@ -52,6 +50,7 @@ import {
   PermissionGroupsInfoJson,
   PermissionsInfoJson,
   PortfolioInfoJson,
+  ReservationInfoJson,
 } from "../src/types"
 import {
   AddInvestorUniquenessClaimParams,
@@ -60,6 +59,7 @@ import {
   CheckpointSchedule,
   CorporateAction,
   CreateCheckpointScheduleParams,
+  CreateSecurityTokenParams,
   CustomPermissionGroup,
   DefaultPortfolio,
   DividendDistribution,
@@ -68,9 +68,9 @@ import {
   NumberedPortfolio,
   PolymeshError,
   TickerReservation,
+  TransferTickerOwnershipParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import {
-  checkboxProcessor,
   findValue,
   getBasicPolyWalletApi,
   replaceFetchTimer,
@@ -81,7 +81,6 @@ import {
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
-import { presentEnumOptions } from "../src/components/EnumView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionView"
 import {
   AddInvestorUniquenessClaimView,
@@ -92,6 +91,7 @@ import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioJsonInfosView, PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
+import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -181,19 +181,17 @@ export default function Home() {
     }
   }
 
-  async function transferReservationOwnership(): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    alert("Not implemented in the SDK yet")
+  async function transferReservationOwnership(reservation: ReservationInfoJson, params: TransferTickerOwnershipParams): Promise<TickerReservation> {
+    setStatus("Changing ownership on token reservation")
+    const updated: TickerReservation = await (await reservation.current.transferOwnership(params)).run()
+    setStatus("Ownership on token reservation changed")
+    await setReservation(updated)
+    return updated
   }
 
-  async function createSecurityToken(): Promise<SecurityToken> {
+  async function createSecurityToken(reservation: ReservationInfoJson, params: CreateSecurityTokenParams): Promise<SecurityToken> {
     setStatus("Creating token")
-    const token: SecurityToken = await (await myInfo.reservation.current.createToken({
-      name: myInfo.token.details?.name,
-      totalSupply: new BigNumber("0"),
-      isDivisible: myInfo.token.details?.isDivisible,
-      tokenType: KnownTokenType.EquityPreferred,
-    })).run()
+    const token: SecurityToken = await (await reservation.current.createToken(params)).run()
     await setToken(token)
     await loadReservation(myInfo.ticker)
     return token
@@ -1057,61 +1055,15 @@ export default function Home() {
           Latest status will show here
         </div>
 
-        <fieldset className={styles.card}>
-          <legend>Ticker Reservation: {myInfo.reservation.current?.ticker}</legend>
-
-          <div>{
-            (() => {
-              if (myInfo.reservation.current === null) return "There is no reservation"
-              else return <ul>
-                <li key="owner">
-                  Owned by: <LongHexView value={myInfo.reservation.details?.owner?.did} lut={{ [myInfo.myDid]: "me" }} />
-                </li>
-                <li key="status">With status: {myInfo.reservation.details?.status}</li>
-                <li key="expiry">Valid until: {myInfo.reservation.details?.expiryDate?.toISOString()}</li>
-              </ul>
-            })()
-          }</div>
-
-          <div>{
-            (() => {
-              const canCreate: boolean = myInfo.reservation.current !== null && myInfo.reservation.details?.status === TickerReservationStatus.Reserved && myInfo.reservation.details?.owner?.did === myInfo.myDid
-              return <div>
-                <div className="submit">
-                  <button className="submit transfer-reservation" onClick={transferReservationOwnership} disabled={!canCreate}>Transfer ownership</button>
-                </div>
-                <div className={styles.card}>
-                  <div>
-                    <label htmlFor="token-name">
-                      <span className={styles.hasTitle} title="Long name of your security token">Name</span>
-                    </label>
-                    <input name="token-name" type="text" placeholder="American CME" defaultValue={myInfo.token.details?.name} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "name"])} />
-                  </div>
-                  <div>
-                    <label htmlFor="token-divisible">
-                      <span className={styles.hasTitle} title="Whether it can be sub-divided">Divisible</span>
-                    </label>
-                    <input name="token-divisible" type="checkbox" defaultChecked={myInfo.token.details?.isDivisible} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "divisible"], false, checkboxProcessor)} />
-                  </div>
-                  <div>
-                    <label htmlFor="token-assetType">
-                      <span className={styles.hasTitle} title="Pick one from the list or type what you want">Asset Type</span>
-                    </label>
-                    <input name="token-assetType" type="text" placeholder="Equity Common" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "assetType"])} />
-                    &nbsp;
-                    <select name="known-assetTypes" defaultValue={myInfo.token.details?.assetType} disabled={!canCreate} onChange={onValueChangedCreator(["token", "details", "assetType"])}>
-                      {presentEnumOptions(KnownTokenType)}
-                    </select>
-                  </div>
-                  <div className="submit">
-                    <button className="submit create-token" onClick={createSecurityToken} disabled={!canCreate}>Create token</button>
-                  </div>
-                </div>
-              </div>
-            })()
-          }</div>
-
-        </fieldset>
+        <TickerReservationManagerView
+          reservation={myInfo.reservation}
+          myDid={myInfo.myDid}
+          cardStyle={styles.card}
+          hasTitleStyle={styles.hasTitle}
+          isWrongStyle={styles.isWrong}
+          transferReservationOwnership={transferReservationOwnership}
+          createSecurityToken={createSecurityToken}
+        />
 
         <fieldset className={styles.card}>
           <legend>Security Token: {myInfo.token.current?.ticker}</legend>
