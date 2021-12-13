@@ -103,6 +103,7 @@ import { ConditionsView, ConditionView } from "../src/components/compliance/Cond
 import { RequirementsView, RequirementView } from "../src/components/compliance/RequirementView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
+import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -475,7 +476,9 @@ export default function Home() {
 
   function presentPermissions(permissions: Permissions, location: MyInfoPath): JSX.Element {
     return <ul>
-      <li key="portfolios">Portfolios:&nbsp;{presentPorfolios(permissions.portfolios, [...location, "portfolios"])}</li>
+      <li key="portfolios">
+        Portfolios:&nbsp;<PortfoliosView portfolios={permissions.portfolios.values} myDid={myInfo.myDid} />
+      </li>
       <li key="tokens">Tokens:&nbsp;{
         permissions.tokens === null ? "null" : permissions.tokens
           .map((token: SecurityToken) => token.ticker)
@@ -486,31 +489,11 @@ export default function Home() {
     </ul>
   }
 
-  function presentPorfolio(portfolio: DefaultPortfolio | NumberedPortfolio, location: MyInfoPath): JSX.Element {
-    return <ul>
-      <li key="owner">
-        Owner:&nbsp;<LongHexView value={portfolio.owner.did} lut={{ [myInfo.myDid]: "me" }} />
-      </li>
-      <li key="id">Id:&nbsp;{portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : "null"}</li>
-    </ul>
-  }
-
-  function presentPorfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[] | null, location: MyInfoPath): JSX.Element {
-    if (portfolios === null) return <div>"There are no portfolios"</div>
-    return <ul>{
-      portfolios
-        .map((portfolio: DefaultPortfolio | NumberedPortfolio, portfolioIndex: number) => presentPorfolio(portfolio, [...location, portfolioIndex]))
-        .map((presented, portfolioIndex: number) => <li key={portfolioIndex}>
-          Portfolio {portfolioIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
   function presentAuthorisation(authorisation: Authorization, location: MyInfoPath): JSX.Element {
     const elements: JSX.Element[] = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
     if (authorisation.type === AuthorizationType.NoData) { // Add nothing
     } else if (authorisation.type === AuthorizationType.PortfolioCustody) {
-      elements.push(<li key="value">Value:&nbsp;{presentPorfolio(authorisation.value, [...location, "value"])}</li>)
+      elements.push(<li key="value">Value:&nbsp;<PortfolioView portfolio={authorisation.value} myDid={myInfo.myDid} /></li>)
     } else if (authorisation.type === AuthorizationType.JoinIdentity) {
       elements.push(<li key="value">Value:{presentPermissions(authorisation.value, [...location, "value"])}</li>)
     } else {
