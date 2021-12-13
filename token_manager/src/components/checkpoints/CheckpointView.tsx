@@ -24,10 +24,10 @@ export interface CheckpointViewProps extends BasicCheckpointViewProps {
 export class CheckpointView extends Component<CheckpointViewProps, CheckpointViewState> {
     constructor(props: CheckpointViewProps) {
         super(props)
-        this.setState({
+        this.state = {
             [whoseBalanceKey]: "",
             [balanceKey]: new BigNumber("0"),
-        })
+        }
     }
 
     updateNewWhoseBalance = (e) => {

@@ -30,12 +30,12 @@ export interface CheckpointManagerViewProps extends BasicCheckpointViewProps {
 export class CheckpointManagerView extends Component<CheckpointManagerViewProps, CheckpointManagerViewState> {
     constructor(props: CheckpointManagerViewProps) {
         super(props)
-        this.setState({
+        this.state = {
             [startKey]: new Date(),
             [periodValueKey]: 1,
             [periodUnitKey]: CalendarUnit.Month,
             [repetitionsKey]: 1
-        })
+        }
     }
 
     updateStart = (e) => this.setState({ [startKey]: new Date(e.target.value) })

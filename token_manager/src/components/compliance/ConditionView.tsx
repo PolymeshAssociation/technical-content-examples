@@ -62,7 +62,6 @@ export class ConditionView extends Component<ConditionViewProps> {
                     theEnum={ConditionTarget}
                     defaultValue={condition.target}
                     onChange={onRequirementChangedCreator([...location, "target"], false)}
-                    location={[...location, "target"]}
                     canManipulate={canManipulate}
                 />
             </li>,
@@ -88,7 +87,6 @@ export class ConditionView extends Component<ConditionViewProps> {
                     theEnum={ConditionType}
                     defaultValue={condition.type}
                     onChange={onRequirementChangedCreator([...location, "type"], false)}
-                    location={[...location, "type"]}
                     canManipulate={canManipulate}
                 />
             </li>,
@@ -165,20 +163,7 @@ export class ConditionsView extends Component<ConditionsViewProps> {
         if (conditions === null || conditions.length === 0) return <div>No conditions</div>
         return <ul>{
             conditions
-                .map((condition: Condition, conditionIndex: number) => <ConditionView
-                    condition={condition}
-                    myInfo={myInfo}
-                    onRequirementChangedCreator={onRequirementChangedCreator}
-                    removeFromMyRequirementArray={removeFromMyRequirementArray}
-                    onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-                    addClaimToMyRequirementArray={addClaimToMyRequirementArray}
-                    addTrustedIssuerToMyRequirementArray={addTrustedIssuerToMyRequirementArray}
-                    addToPath={addToPath}
-                    fetchCddId={fetchCddId}
-                    location={[...location, conditionIndex]}
-                    canManipulate={canManipulate}
-                />)
-                .map((presented: JSX.Element, index: number) => <li key={index}>
+                .map((condition: Condition, index: number) => <li key={index}>
                     Condition {index}:&nbsp;
                     <button
                         className="submit remove-condition"
@@ -186,7 +171,19 @@ export class ConditionsView extends Component<ConditionsViewProps> {
                         disabled={!canManipulate}>
                         Remove {index}
                     </button>
-                    {presented}
+                    <ConditionView
+                        condition={condition}
+                        myInfo={myInfo}
+                        onRequirementChangedCreator={onRequirementChangedCreator}
+                        removeFromMyRequirementArray={removeFromMyRequirementArray}
+                        onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
+                        addClaimToMyRequirementArray={addClaimToMyRequirementArray}
+                        addTrustedIssuerToMyRequirementArray={addTrustedIssuerToMyRequirementArray}
+                        addToPath={addToPath}
+                        fetchCddId={fetchCddId}
+                        location={[...location, index]}
+                        canManipulate={canManipulate}
+                    />
                 </li>)
         }</ul>
     }
