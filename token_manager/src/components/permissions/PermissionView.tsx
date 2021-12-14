@@ -8,10 +8,8 @@ import {
 import { InviteAgent, NewPermissionAgentView, PermissionAgentsView, RemoveAgent } from "./PermissionAgentView";
 import { PermissionGroupsInfoView } from "./PermissionGroupView";
 
-const pickedGroupKey = "pickedGroup"
-
 interface PermissionManagerViewState {
-    [pickedGroupKey]: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
+    pickedGroup: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
 }
 
 export interface PermissionManagerViewProps {
@@ -30,12 +28,12 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
     constructor(props: PermissionManagerViewProps) {
         super(props)
         this.state = {
-            [pickedGroupKey]: props.permissions.groups.known[0],
+            pickedGroup: props.permissions.groups.known[0],
         }
     }
 
     onGroupPicked = (group: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson) => this.setState({
-        [pickedGroupKey]: group,
+        pickedGroup: group,
     })
 
     render() {

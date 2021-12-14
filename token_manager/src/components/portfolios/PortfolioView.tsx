@@ -45,10 +45,8 @@ export class PortfoliosView extends Component<PortfoliosViewProps> {
 
 export type CreatePortfolio = (params: { name: string }) => Promise<NumberedPortfolio>
 
-const nameKey = "name"
-
 interface NewPortfolioViewState {
-    [nameKey]: string
+    name: string
 }
 
 export interface NewPortfolioViewProps {
@@ -61,11 +59,11 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
     constructor(props: NewPortfolioViewProps) {
         super(props)
         this.state = {
-            [nameKey]: ""
+            name: ""
         }
     }
 
-    updateName = (e) => this.setState({ [nameKey]: e.target.value })
+    updateName = (e) => this.setState({ name: e.target.value })
     onCreate = async (e) => this.props.createPortfolio({ name: this.state.name })
 
     render() {

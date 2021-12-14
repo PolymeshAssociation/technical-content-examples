@@ -8,16 +8,11 @@ import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
 
 export type CreateCheckpointSchedule = (params: CreateCheckpointScheduleParams) => Promise<CheckpointSchedule>
 
-const startKey = "start"
-const periodValueKey = "periodValue"
-const periodUnitKey = "periodUnit"
-const repetitionsKey = "repetitions"
-
 interface CheckpointManagerViewState {
-    [startKey]: Date
-    [periodValueKey]: number
-    [periodUnitKey]: CalendarUnit
-    [repetitionsKey]: number
+    start: Date
+    periodValue: number
+    periodUnit: CalendarUnit
+    repetitions: number
 }
 
 export interface CheckpointManagerViewProps extends BasicCheckpointViewProps {
@@ -31,17 +26,17 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
     constructor(props: CheckpointManagerViewProps) {
         super(props)
         this.state = {
-            [startKey]: new Date(),
-            [periodValueKey]: 1,
-            [periodUnitKey]: CalendarUnit.Month,
-            [repetitionsKey]: 1
+            start: new Date(),
+            periodValue: 1,
+            periodUnit: CalendarUnit.Month,
+            repetitions: 1
         }
     }
 
-    updateStart = (e) => this.setState({ [startKey]: new Date(e.target.value) })
-    updatePeriodValue = (e) => this.setState({ [periodValueKey]: parseInt(e.target.value) })
-    updatePeriodUnit = async (e) => this.setState({ [periodUnitKey]: e.target.value })
-    updateRepetitions = (e) => this.setState({ [repetitionsKey]: parseInt(e.target.value) })
+    updateStart = (e) => this.setState({ start: new Date(e.target.value) })
+    updatePeriodValue = (e) => this.setState({ periodValue: parseInt(e.target.value) })
+    updatePeriodUnit = async (e) => this.setState({ periodUnit: e.target.value })
+    updateRepetitions = (e) => this.setState({ repetitions: parseInt(e.target.value) })
 
     getScheduleParams = () => ({
         start: this.state.start,
@@ -88,7 +83,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                         Start at:&nbsp;
                         <input
                             defaultValue={this.state.start.toISOString()}
-                            placeholder="2021-12-31T06:00:00Z"
+                            placeholder={new Date().toISOString()}
                             disabled={!canManipulate}
                             onChange={this.updateStart}
                         />

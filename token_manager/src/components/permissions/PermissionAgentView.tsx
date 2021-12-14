@@ -32,9 +32,8 @@ function isIssuanceAgent(group: KnownPermissionGroupInfoJson | CustomPermissionG
         (isCustomPermissionGroup(group.current) && areIssuanceAgentPermissions(group.permissions))
 }
 
-const issuanceKey = "issuance"
 const patternAgentTags: { [key: string]: (TxTag | ModuleName)[] } = {
-    [issuanceKey]: [
+    issuance: [
         AssetTx.ControllerTransfer,
         AssetTx.Issue,
         AssetTx.Redeem,
@@ -54,16 +53,11 @@ declare enum GroupType {
     Custom = "Custom",
 }
 
-const agentKey = "agent"
-const groupTypeKey = "groupType"
-const knownGroupKey = "knownGroup"
-const customGroupKey = "customGroup"
-
 interface PermissionAgentViewState {
-    [agentKey]: AgentInfoJson
-    [groupTypeKey]: GroupType
-    [knownGroupKey]: KnownPermissionGroup
-    [customGroupKey]: CustomPermissionGroup
+    agent: AgentInfoJson
+    groupType: GroupType
+    knownGroup: KnownPermissionGroup
+    customGroup: CustomPermissionGroup
 }
 
 export interface PermissionAgentViewProps {
@@ -167,16 +161,11 @@ export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
 
 export type InviteAgent = (params: InviteExternalAgentParams) => Promise<void>
 
-const inviteTargetKey = "inviteTarget"
-const hasExpiryKey = "hasExpiry"
-const expiryKey = "expiry"
-const isExpiryValidKey = "isExpiryValid"
-
 interface NewPermissionAgentViewState {
-    [inviteTargetKey]: string
-    [hasExpiryKey]: boolean
-    [expiryKey]: string
-    [isExpiryValidKey]: boolean
+    inviteTarget: string
+    hasExpiry: boolean
+    expiry: string
+    isExpiryValid: boolean
 }
 
 export interface NewPermissionAgentViewProps {
@@ -192,10 +181,10 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
     constructor(props: NewPermissionAgentViewProps) {
         super(props)
         this.state = {
-            [inviteTargetKey]: "",
-            [hasExpiryKey]: true,
-            [expiryKey]: new Date().toISOString(),
-            [isExpiryValidKey]: true,
+            inviteTarget: "",
+            hasExpiry: true,
+            expiry: new Date().toISOString(),
+            isExpiryValid: true,
         }
     }
 
@@ -203,11 +192,11 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
     updateExpiry = (e) => {
         const newExpiry = e.target.value
         this.setState({
-            [expiryKey]: newExpiry,
-            [isExpiryValidKey]: new Date(newExpiry).toString() !== "Invalid Date"
+            expiry: newExpiry,
+            isExpiryValid: new Date(newExpiry).toString() !== "Invalid Date"
         })
     }
-    updateHasExpiry = (e) => this.setState({ [hasExpiryKey]: e.target.checked })
+    updateHasExpiry = (e) => this.setState({ hasExpiry: e.target.checked })
     onAgentInvited = async (e) => {
         this.props.inviteAgent({
             target: this.state.inviteTarget,
@@ -229,7 +218,7 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
 
             <div>
                 <label htmlFor="invite-target">
-                    <span className={hasTitleStyle} title="Long name of your security token">Name</span>
+                    <span className={hasTitleStyle} title="Did of your target agent">Identity</span>
                 </label>
                 <input
                     name="invite-target"
@@ -280,7 +269,7 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
                 </label>
                 {(function () {
                     if (defaultGroup === null || typeof defaultGroup === "undefined")
-                        return <div>Pick a group above</div>
+                        return <div>Pick a group from the list above</div>
                     if (isKnownPermissionGroup(defaultGroup.current))
                         return <KnownPermissionGroupView
                             group={defaultGroup.current}

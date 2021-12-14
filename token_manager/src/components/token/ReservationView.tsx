@@ -40,16 +40,11 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
 
 export type TransferTickerOwnership = (reservation: ReservationInfoJson, params: TransferTickerOwnershipParams) => Promise<TickerReservation>
 
-const targetKey = "target"
-const hasExpiryKey = "hasExpiry"
-const expiryKey = "expiry"
-const isExpiryValidKey = "isExpiryValid"
-
 interface TickerReservationTransferViewState {
-    [targetKey]: string
-    [hasExpiryKey]: boolean
-    [expiryKey]: string
-    [isExpiryValidKey]: boolean
+    target: string
+    hasExpiry: boolean
+    expiry: string
+    isExpiryValid: boolean
 }
 
 export interface TickerReservationTransferViewProps {
@@ -65,22 +60,22 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
     constructor(props: TickerReservationTransferViewProps) {
         super(props)
         this.state = {
-            [targetKey]: "",
-            [hasExpiryKey]: true,
-            [expiryKey]: new Date().toISOString(),
-            [isExpiryValidKey]: true,
+            target: "",
+            hasExpiry: true,
+            expiry: new Date().toISOString(),
+            isExpiryValid: true,
         }
     }
 
-    updateTarget = (e) => this.setState({ [targetKey]: e.target.value })
+    updateTarget = (e) => this.setState({ target: e.target.value })
     updateExpiry = (e) => {
         const newExpiry = e.target.value
         this.setState({
-            [expiryKey]: newExpiry,
-            [isExpiryValidKey]: new Date(newExpiry).toString() !== "Invalid Date"
+            expiry: newExpiry,
+            isExpiryValid: new Date(newExpiry).toString() !== "Invalid Date"
         })
     }
-    updateHasExpiry = (e) => this.setState({ [hasExpiryKey]: e.target.checked })
+    updateHasExpiry = (e) => this.setState({ hasExpiry: e.target.checked })
     onTransferReservationOwnership = async (e) => this.props.transferReservationOwnership(this.props.reservation, this.getTransferParams())
 
     getTransferParams = () => ({
@@ -158,22 +153,14 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
 
 export type CreateSecurityToken = (reservation: ReservationInfoJson, params: CreateSecurityTokenParams) => Promise<SecurityToken>
 
-const canCreateKey = "canCreate"
-const longNameKey = "longName"
-const isDivisibleKey = "isDivisible"
-const assetTypeKey = "assetType"
-const fundingRoundKey = "fundingRound"
-const requiresUniquenessKey = "requiresUniqueness"
-const tokenIdentifiersKey = "tokenIdentifiers"
-
 interface TokenCreatorViewState {
-    [canCreateKey]: boolean
-    [longNameKey]: string
-    [isDivisibleKey]: boolean
-    [assetTypeKey]: KnownTokenType
-    [fundingRoundKey]: string
-    [requiresUniquenessKey]: boolean
-    [tokenIdentifiersKey]: TokenIdentifier[]
+    canCreate: boolean
+    longName: string
+    isDivisible: boolean
+    assetType: KnownTokenType
+    fundingRound: string
+    requiresUniqueness: boolean
+    tokenIdentifiers: TokenIdentifier[]
 }
 
 export interface TokenCreatorViewProps {
@@ -191,22 +178,22 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
             && props.reservation.details?.status === TickerReservationStatus.Reserved
             && props.reservation.details?.owner?.did === props.myDid
         this.state = {
-            [canCreateKey]: canCreate,
-            [longNameKey]: "",
-            [isDivisibleKey]: false,
-            [assetTypeKey]: KnownTokenType.EquityCommon,
-            [fundingRoundKey]: "",
-            [requiresUniquenessKey]: false,
-            [tokenIdentifiersKey]: [],
+            canCreate: canCreate,
+            longName: "",
+            isDivisible: false,
+            assetType: KnownTokenType.EquityCommon,
+            fundingRound: "",
+            requiresUniqueness: false,
+            tokenIdentifiers: [],
         }
     }
 
-    updateLongName = (e) => this.setState({ [longNameKey]: e.target.value })
-    updateIsDivisible = (e) => this.setState({ [isDivisibleKey]: e.target.checked })
-    updateAssetTypeFromInput = (e) => this.setState({ [assetTypeKey]: e.target.value })
-    updateAssetTypeFromDropDown = async (e) => this.setState({ [assetTypeKey]: e.target.value })
-    updateFundingRound = (e) => this.setState({ [fundingRoundKey]: e.target.value })
-    updateUniqueness = (e) => this.setState({ [requiresUniquenessKey]: e.target.checked })
+    updateLongName = (e) => this.setState({ longName: e.target.value })
+    updateIsDivisible = (e) => this.setState({ isDivisible: e.target.checked })
+    updateAssetTypeFromInput = (e) => this.setState({ assetType: e.target.value })
+    updateAssetTypeFromDropDown = async (e) => this.setState({ assetType: e.target.value })
+    updateFundingRound = (e) => this.setState({ fundingRound: e.target.value })
+    updateUniqueness = (e) => this.setState({ requiresUniqueness: e.target.checked })
     onTokenIdentifiersChange = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
     onCreateToken = async (e) => this.props.createSecurityToken(this.props.reservation, this.getTokenParams())
 

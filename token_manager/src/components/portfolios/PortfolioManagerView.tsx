@@ -11,10 +11,8 @@ import { CreatePortfolio, NewPortfolioView } from "./PortfolioView"
 export type LoadPortfolios = (whose: string) => Promise<void>
 export type LoadCustodiedPortfolios = (whose: string) => Promise<void>
 
-const otherOwnerKey = "otherOwner"
-
 interface PortfolioManagerViewState {
-    [otherOwnerKey]: string
+    otherOwner: string
 }
 
 export interface PortfolioManagerViewProps {
@@ -34,11 +32,11 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     constructor(props: PortfolioManagerViewProps) {
         super(props)
         this.state = {
-            [otherOwnerKey]: "",
+            otherOwner: "",
         }
     }
 
-    updateOtherOwner = (e) => this.setState({ [otherOwnerKey]: e.target.value })
+    updateOtherOwner = (e) => this.setState({ otherOwner: e.target.value })
     onLoadMyPortfolios = (e) => this.props.loadPortfolios(this.props.myDid)
     onLoadOtherPortfolios = (e) => this.props.loadPortfolios(this.state.otherOwner)
     onLoadMyCustodiedPortfolios = (e) => this.props.loadCustodiedPortfolios(this.props.myDid)

@@ -4,12 +4,9 @@ import { CheckpointInfoJson } from "../../types";
 
 export type LoadBalanceAtCheckpoint = (checkpoint: CheckpointInfoJson, whoseBalance: string) => Promise<BigNumber>
 
-const whoseBalanceKey = "whoseBalance"
-const balanceKey = "balance"
-
 interface CheckpointViewState {
-    [whoseBalanceKey]: string
-    [balanceKey]: BigNumber
+    whoseBalance: string
+    balance: BigNumber
 }
 
 export interface BasicCheckpointViewProps {
@@ -25,23 +22,17 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
     constructor(props: CheckpointViewProps) {
         super(props)
         this.state = {
-            [whoseBalanceKey]: "",
-            [balanceKey]: new BigNumber("0"),
+            whoseBalance: "",
+            balance: new BigNumber("0"),
         }
     }
 
-    updateNewWhoseBalance = (e) => {
-        this.setState({
-            [whoseBalanceKey]: e.target.value,
-        })
-    }
-
-    updateBalanceAtCheckpoint = async (e) => {
-        this.setState({
-            [balanceKey]: await this.props.loadBalanceAtCheckpoint(this.props.checkpointInfo, this.state[whoseBalanceKey])
-        })
-    }
-
+    updateNewWhoseBalance = (e) => this.setState({
+        whoseBalance: e.target.value,
+    })
+    updateBalanceAtCheckpoint = async (e) => this.setState({
+        balance: await this.props.loadBalanceAtCheckpoint(this.props.checkpointInfo, this.state.whoseBalance)
+    })
 
     render() {
         const { checkpointInfo } = this.props
@@ -59,8 +50,7 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
                 &nbsp;
                 <button
                     className="submit get-balanceOf"
-                    onClick={this.updateBalanceAtCheckpoint}
-                >
+                    onClick={this.updateBalanceAtCheckpoint}>
                     Fetch
                 </button>
                 <br />
@@ -87,7 +77,8 @@ export class CheckpointsView extends Component<CheckpointsViewProps> {
         return <ul>{
             checkpoints
                 .map((checkpoint: CheckpointInfoJson, index: number) => <li key={index}>
-                    Checkpoint {index}:&nbsp;<CheckpointView
+                    Checkpoint {index}:&nbsp;
+                    <CheckpointView
                         checkpointInfo={checkpoint}
                         canManipulate={canManipulate}
                         loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}

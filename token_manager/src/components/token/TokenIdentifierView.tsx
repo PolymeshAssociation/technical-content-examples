@@ -4,12 +4,9 @@ import { EnumSelectView } from "../EnumView";
 
 export type OnTokenIdentifierChanged = (identifier: TokenIdentifier) => void
 
-const typeKey = "type"
-const valueKey = "value"
-
 interface TokenIdentifierViewState {
-    [typeKey]: TokenIdentifierType,
-    [valueKey]: string,
+    type: TokenIdentifierType,
+    value: string,
 }
 
 export interface TokenIdentifierViewProps {
@@ -77,10 +74,8 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
 
 export type OnTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => void
 
-const identifiersKey = "identifiers"
-
 interface TokenIdentifiersViewState {
-    [identifiersKey]: TokenIdentifier[],
+    identifiers: TokenIdentifier[],
 }
 
 export interface TokenIdentifiersViewProps {

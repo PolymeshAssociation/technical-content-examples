@@ -7,10 +7,8 @@ export type DeletePortfolio = (portfolio: NumberedPortfolio) => Promise<void>
 export type SetCustodian = (portfolio: DefaultPortfolio | NumberedPortfolio, custodian: string) => Promise<void>
 export type RelinquishCustody = (portfolio: DefaultPortfolio | NumberedPortfolio) => Promise<void>
 
-const newCustodianKey = "newCustodian"
-
 interface PortfolioInfoJsonViewState {
-    [newCustodianKey]: string
+    newCustodian: string
 }
 
 export interface PortfolioInfoJsonViewProps {
@@ -25,13 +23,13 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     constructor(props: PortfolioInfoJsonViewProps) {
         super(props);
         this.state = {
-            [newCustodianKey]: props.portfolio.custodian,
+            newCustodian: props.portfolio.custodian,
         }
     }
 
     updateNewCustodian = (e) => {
         this.setState({
-            [newCustodianKey]: e.target.value
+            newCustodian: e.target.value
         })
     }
 

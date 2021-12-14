@@ -20,11 +20,13 @@ function presentCheckpointScheduleInner(
     loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
     return [
         <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
-        <li key="createdCheckpoints">Created checkpoints:&nbsp;<CheckpointsView
-            checkpoints={scheduleInfo.createdCheckpoints}
-            canManipulate={canManipulate}
-            loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-        />
+        <li key="createdCheckpoints">
+            Created checkpoints:&nbsp;
+            <CheckpointsView
+                checkpoints={scheduleInfo.createdCheckpoints}
+                canManipulate={canManipulate}
+                loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+            />
         </li>,
     ]
 }
@@ -99,11 +101,13 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
         return <ul>{
             schedules
                 .map((schedule: CheckpointScheduleDetailsInfoJson, index: number) => <li key={index}>
-                    Checkpoint schedule&nbsp;<CheckpointScheduleDetailView
+                    Checkpoint schedule&nbsp;
+                    <CheckpointScheduleDetailView
                         scheduleDetailInfo={schedule}
                         canManipulate={canManipulate}
                         loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
-                    /></li>)
+                    />
+                </li>)
         }</ul>
     }
 }

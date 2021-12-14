@@ -63,16 +63,11 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
 
 export type TransferTokenOwnership = (token: TokenInfoJson, params: TransferTokenOwnershipParams) => Promise<void>
 
-const ownershipTargetKey = "ownershipTarget"
-const hasOwnershipExpiryKey = "hasOwnershipExpiry"
-const ownershipExpiryKey = "ownershipExpiry"
-const isOwnershipExpiryValidKey = "isOwnershipExpiryValid"
-
 interface SecurityTokenOwnerTransferViewState {
-    [ownershipTargetKey]: string
-    [hasOwnershipExpiryKey]: boolean
-    [ownershipExpiryKey]: string
-    [isOwnershipExpiryValidKey]: boolean
+    ownershipTarget: string
+    hasOwnershipExpiry: boolean
+    ownershipExpiry: string
+    isOwnershipExpiryValid: boolean
 }
 
 export interface SecurityTokenOwnerTransferViewProps {
@@ -88,22 +83,22 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
     constructor(props: SecurityTokenManagerViewProps) {
         super(props)
         this.state = {
-            [ownershipTargetKey]: "",
-            [hasOwnershipExpiryKey]: true,
-            [ownershipExpiryKey]: new Date().toISOString(),
-            [isOwnershipExpiryValidKey]: true,
+            ownershipTarget: "",
+            hasOwnershipExpiry: true,
+            ownershipExpiry: new Date().toISOString(),
+            isOwnershipExpiryValid: true,
         }
     }
 
-    updateOwnershipTarget = (e) => this.setState({ [ownershipTargetKey]: e.target.value })
+    updateOwnershipTarget = (e) => this.setState({ ownershipTarget: e.target.value })
     updateExpiry = (e) => {
         const newExpiry = e.target.value
         this.setState({
-            [ownershipExpiryKey]: newExpiry,
-            [isOwnershipExpiryValidKey]: new Date(newExpiry).toString() !== "Invalid Date"
+            ownershipExpiry: newExpiry,
+            isOwnershipExpiryValid: new Date(newExpiry).toString() !== "Invalid Date"
         })
     }
-    updateHasExpiry = (e) => this.setState({ [hasOwnershipExpiryKey]: e.target.checked })
+    updateHasExpiry = (e) => this.setState({ hasOwnershipExpiry: e.target.checked })
     onTransferReservationOwnership = async (e) => this.props.transferTokenOwnership(this.props.token, this.getTransferParams())
 
     getTransferParams = () => ({

@@ -7,10 +7,8 @@ import {
 
 export type WorkWithTicker = (ticker: string) => Promise<void>
 
-const tickerKey = "ticker"
-
 interface TickerViewState {
-    [tickerKey]: string
+    ticker: string
 }
 
 export interface TickerViewProps {
@@ -27,13 +25,13 @@ export class TickerManagerView extends Component<TickerViewProps, TickerViewStat
     constructor(props: TickerViewProps) {
         super(props)
         this.state = {
-            [tickerKey]: "",
+            ticker: "",
         }
     }
 
     updateTicker = async (e) => {
         const ticker: string = e.target.value
-        this.setState({ [tickerKey]: ticker })
+        this.setState({ ticker: ticker })
         if (ticker !== "") await this.props.loadTicker(ticker)
     }
 
