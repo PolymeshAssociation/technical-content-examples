@@ -1037,7 +1037,6 @@ export default function Home() {
           isWrongStyle={styles.isWrong}
           removeAgent={removeAgent}
           inviteAgent={inviteAgent}
-          location={[]}
           canManipulate={true}
         />
 

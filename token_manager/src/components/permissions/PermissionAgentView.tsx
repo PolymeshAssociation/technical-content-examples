@@ -19,7 +19,6 @@ import {
     isKnownPermissionGroup,
     KnownPermissionGroupInfoJson,
 } from "../../types";
-import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
 import { IdentityView } from "../identity/IdentityView";
 import { CustomPermissionGroupView, KnownPermissionGroupView } from "./PermissionGroupView";
@@ -67,11 +66,12 @@ interface PermissionAgentViewState {
     [customGroupKey]: CustomPermissionGroup
 }
 
-export interface PermissionAgentViewProps extends BasicProps {
+export interface PermissionAgentViewProps {
     myDid: string
     agent: AgentInfoJson
     knownGroups: KnownPermissionGroupInfoJson[]
     customGroups: CustomPermissionGroupInfoJson[]
+    canManipulate: boolean
 }
 
 export class PermissionAgentView extends Component<PermissionAgentViewProps, PermissionAgentViewState> {
@@ -91,7 +91,7 @@ export class PermissionAgentView extends Component<PermissionAgentViewProps, Per
 
     render() {
         const { agent } = this.state
-        const { myDid, location, canManipulate } = this.props
+        const { myDid } = this.props
         return <ul>
             <li key="did">
                 Did: <IdentityView value={agent.current} lut={{ [myDid]: "me" }} />
@@ -111,13 +111,9 @@ export class PermissionAgentView extends Component<PermissionAgentViewProps, Per
                     (function () {
                         if (isKnownPermissionGroup(agent.group.current)) return <KnownPermissionGroupView
                             group={agent.group.current}
-                            location={[...location, "current", "group"]}
-                            canManipulate={false}
                         />
                         else if (isCustomPermissionGroup(agent.group.current)) return <CustomPermissionGroupView
                             group={agent.group.current}
-                            location={[...location, "current", "group"]}
-                            canManipulate={false}
                         />
                     })()
                 }
@@ -128,11 +124,12 @@ export class PermissionAgentView extends Component<PermissionAgentViewProps, Per
 
 export type RemoveAgent = (params: RemoveExternalAgentParams) => Promise<void>
 
-export interface PermissionAgentsViewProps extends BasicProps {
+export interface PermissionAgentsViewProps {
     agents: AgentInfoJson[]
     myDid: string
     knownGroups: KnownPermissionGroupInfoJson[]
     customGroups: CustomPermissionGroupInfoJson[]
+    canManipulate: boolean
     removeAgent: RemoveAgent
 }
 
@@ -147,7 +144,6 @@ export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
             myDid,
             knownGroups,
             customGroups,
-            location,
             canManipulate,
         } = this.props
         if (agents.length === 0) return <span> None</span>
@@ -163,7 +159,6 @@ export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
                     myDid={myDid}
                     knownGroups={knownGroups}
                     customGroups={customGroups}
-                    location={[...location, index]}
                     canManipulate={canManipulate} />
             </li>)
         }</ol>
@@ -289,14 +284,10 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
                     if (isKnownPermissionGroup(defaultGroup.current))
                         return <KnownPermissionGroupView
                             group={defaultGroup.current}
-                            location={[]}
-                            canManipulate={false}
                         />
                     else
                         return <CustomPermissionGroupView
                             group={defaultGroup.current}
-                            location={[]}
-                            canManipulate={false}
                         />
                 })()}
             </div>

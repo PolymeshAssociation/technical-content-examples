@@ -5,7 +5,6 @@ import {
     PermissionsInfoJson,
     TokenInfoJson,
 } from "../../types";
-import { BasicProps } from "../BasicProps";
 import { InviteAgent, NewPermissionAgentView, PermissionAgentsView, RemoveAgent } from "./PermissionAgentView";
 import { PermissionGroupsInfoView } from "./PermissionGroupView";
 
@@ -15,13 +14,14 @@ interface PermissionManagerViewState {
     [pickedGroupKey]: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
 }
 
-export interface PermissionManagerViewProps extends BasicProps {
+export interface PermissionManagerViewProps {
     myDid: string
     permissions: PermissionsInfoJson
     token: TokenInfoJson
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
+    canManipulate: boolean
     removeAgent: RemoveAgent
     inviteAgent: InviteAgent
 }
@@ -48,7 +48,6 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
             isWrongStyle,
             removeAgent,
             inviteAgent,
-            location,
             canManipulate,
         } = this.props
         return <fieldset className={cardStyle}>
@@ -61,7 +60,6 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                     <PermissionGroupsInfoView
                         groups={permissions.groups}
                         onGroupPicked={this.onGroupPicked}
-                        location={[...location, "permissions", "groups"]}
                         canManipulate={canManipulate}
                     />
                 </div>
@@ -78,7 +76,6 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                         knownGroups={permissions.groups.known}
                         customGroups={permissions.groups.custom}
                         removeAgent={removeAgent}
-                        location={[...location, "permissions", "agents"]}
                         canManipulate={canManipulate}
                     />
                 </div>
