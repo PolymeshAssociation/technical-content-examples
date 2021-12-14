@@ -16,6 +16,7 @@ import {
 } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
+import { LongHexView } from "../LongHexView";
 
 export interface TransactionGroupsViewProps extends BasicProps {
     transactionGroups: TxGroup[]
@@ -113,7 +114,9 @@ export class KnownPermissionGroupView extends Component<KnownPermissionGroupView
                 canManipulate={false}
             /></li>
             <li key="ticker">Ticker: {group.ticker}</li>
-            <li key="uuid">Uuid: {group.uuid}</li>
+            <li key="uuid">
+                Uuid: <LongHexView value={group.uuid} lut={null} />
+            </li>
         </ul>
     }
 }
@@ -175,7 +178,9 @@ export class CustomPermissionGroupView extends Component<CustomPermissionGroupVi
         return <ul>
             <li key="id">Id: {group.id.toString(10)}</li>
             <li key="ticker">Ticker: {group.ticker}</li>
-            <li key="uuid">Uuid: {group.uuid}</li>
+            <li key="uuid">
+                Uuid: <LongHexView value={group.uuid} lut={null} />
+            </li>
         </ul>
     }
 }

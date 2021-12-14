@@ -99,7 +99,8 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         const canCreate: boolean = reservation.current !== null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
-        return <div className={cardStyle}>
+        return <fieldset className={cardStyle}>
+            <legend>Ownership transfer</legend>
             <div>
                 <label htmlFor="transfer-target">
                     <span className={hasTitleStyle} title="Target identity of the ownership transfer">Target</span>
@@ -151,7 +152,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                     Transfer ownership
                 </button>
             </div>
-        </div>
+        </fieldset>
     }
 }
 
@@ -229,7 +230,8 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
         const canCreate: boolean = reservation.current !== null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
-        return <div className={cardStyle}>
+        return <fieldset className={cardStyle}>
+            <legend>Token creation</legend>
             <div>
                 <label htmlFor="token-name">
                     <span className={hasTitleStyle} title="Long name of your security token">Name</span>
@@ -319,7 +321,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     Create token
                 </button>
             </div>
-        </div>
+        </fieldset>
     }
 }
 

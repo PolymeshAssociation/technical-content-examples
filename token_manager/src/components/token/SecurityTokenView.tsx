@@ -123,7 +123,7 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         const canTransfer: boolean = token.current !== null
             && token.details?.owner?.did === myDid
         return <fieldset className={cardStyle}>
-            <legend>New owner</legend>
+            <legend>Ownership transfer</legend>
             <div className="submit">
                 <label htmlFor="token-ownership-target">
                     <span className={hasTitleStyle} title="Who is the new owner">Target</span>

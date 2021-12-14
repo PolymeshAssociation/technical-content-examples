@@ -15,6 +15,7 @@ import {
     KnownPermissionGroupInfoJson,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
+import { IdentityView } from "../identity/IdentityView";
 import { CustomPermissionGroupView, KnownPermissionGroupView } from "./PermissionGroupView";
 
 function isOwner(group: KnownPermissionGroup | CustomPermissionGroup): boolean {
@@ -45,13 +46,16 @@ function areIssuanceAgentPermissions(permissions: GroupPermissions): boolean {
 
 export interface PermissionAgentViewProps extends BasicProps {
     agent: AgentInfoJson
+    myDid: string
 }
 
 export class PermissionAgentView extends Component<PermissionAgentViewProps> {
     render() {
-        const { agent, location, canManipulate } = this.props
+        const { agent, myDid, location, canManipulate } = this.props
         return <ul>
-            <li key="did">Did: {agent.current.did}</li>
+            <li key="did">
+                Did: <IdentityView value={agent.current} lut={{ [myDid]: "me" }} />
+            </li>
             <li key="isOwner">Is owner: {isOwner(agent.group.current) ? "true" : "false"}</li>
             <li key="isIssuanceAgent">Is issuance agent: {isIssuanceAgent(agent.group) ? "true" : "false"}</li>
             <li key="group">
@@ -76,16 +80,18 @@ export class PermissionAgentView extends Component<PermissionAgentViewProps> {
 
 export interface PermissionAgentsViewProps extends BasicProps {
     agents: AgentInfoJson[]
+    myDid: string
 }
 
 export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
     render() {
-        const { agents, location, canManipulate } = this.props
+        const { agents, myDid, location, canManipulate } = this.props
         if (agents.length === 0) return <span> None</span>
         else return <ol>{
             agents
                 .map((agent: AgentInfoJson, agentIndex: number) => <PermissionAgentView
                     agent={agent}
+                    myDid={myDid}
                     location={[...location, agentIndex]}
                     canManipulate={canManipulate} />)
                 .map((presented: JSX.Element, agentIndex: number) => <li key={agentIndex}>

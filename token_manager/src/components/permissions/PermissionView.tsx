@@ -34,6 +34,7 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps>
                 <div className="submit">
                     <PermissionAgentsView
                         agents={myInfo.permissions.agents.current}
+                        myDid={myInfo.myDid}
                         location={[...location, "permissions", "agents"]}
                         canManipulate={canManipulate}
                     />
