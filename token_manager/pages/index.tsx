@@ -222,11 +222,10 @@ export default function Home() {
       setPermissions(null, null)
       setComplianceRequirements(null, null, true)
     } else {
-      const details: SecurityTokenDetails = await token.details()
       setMyInfo(returnUpdatedCreator(["token"], {
         current: token,
         createdAt: await token.createdAt(),
-        details: details,
+        details: await token.details(),
       }, true))
       await loadPermissions(token)
     }
@@ -985,6 +984,7 @@ export default function Home() {
         <TickerManagerView
           myTickers={myInfo.myTickers}
           reservation={myInfo.reservation}
+          token={myInfo.token}
           cardStyle={styles.card}
           loadMyTickers={async () => { await loadYourTickers() }}
           loadTicker={onTickerChanged}

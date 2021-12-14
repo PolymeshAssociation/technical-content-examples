@@ -1,5 +1,9 @@
 import { Component } from "react";
-import { Getter, ReservationInfoJson } from "../../types";
+import {
+    Getter,
+    ReservationInfoJson,
+    TokenInfoJson,
+} from "../../types";
 
 export type WorkWithTicker = (ticker: string) => Promise<void>
 
@@ -12,6 +16,7 @@ interface TickerViewState {
 export interface TickerViewProps {
     myTickers: string[]
     reservation: ReservationInfoJson,
+    token: TokenInfoJson,
     cardStyle: any
     loadMyTickers: Getter<void>
     loadTicker: WorkWithTicker
@@ -44,9 +49,11 @@ export class TickerManagerView extends Component<TickerViewProps, TickerViewStat
         const {
             myTickers,
             reservation,
+            token,
             cardStyle,
             loadMyTickers,
         } = this.props
+        const canReserve = reservation.current === null && token.current === null
         return <fieldset className={cardStyle}>
             <legend>What ticker do you want to manage?</legend>
 
@@ -79,7 +86,7 @@ export class TickerManagerView extends Component<TickerViewProps, TickerViewStat
                 <button
                     className="submit reservation"
                     onClick={this.onReserveTicker}
-                    disabled={reservation.current !== null}>
+                    disabled={!canReserve}>
                     Reserve
                 </button>
             </div>
