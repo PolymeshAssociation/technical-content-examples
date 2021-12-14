@@ -30,7 +30,7 @@ export class IdentityView extends Component<IdentityViewProps> {
 }
 
 export interface IdentitiesViewProps {
-    values: (string | Identity)[]
+    values: (string | Identity)[] | null | undefined
     /**
      * Look-up table to replace well-known values.
      */
@@ -40,6 +40,7 @@ export interface IdentitiesViewProps {
 export class IdentitiesView extends Component<IdentitiesViewProps> {
     render() {
         const { values, lut } = this.props
+        if (!values || values.length === 0) return <div>There are no identities</div>
         return <ol>{
             values.map((value: Identity, index: number) => <li key={index}>
                 <IdentityView

@@ -37,7 +37,6 @@ import {
   getEmptyMyInfo,
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
-  getEmptyTokenDetails,
   isCheckpointSchedule,
   isCheckpointWithData,
   isCustomPermissionGroup,
@@ -173,12 +172,12 @@ export default function Home() {
     if (reservation === null) {
       setMyInfo(returnUpdatedCreator(["reservation"], {
         current: null,
-        details: getEmptyTokenDetails(),
+        details: null,
       }))
     } else {
       setMyInfo(returnUpdatedCreator(["reservation"], {
         current: reservation,
-        details: (await reservation.details()) || getEmptyTokenDetails(),
+        details: (await reservation.details()),
       }))
     }
   }

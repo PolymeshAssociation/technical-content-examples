@@ -16,16 +16,16 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
             token,
             cardStyle,
         } = this.props
-        if (token === null) return <div>There are no tokens</div>
-        else return <div className={cardStyle}>
+        return <fieldset className={cardStyle}>
+            <legend>Fields</legend>
             <ul>
-                <li key="did">Did: <LongHexView value={token.current.did} lut={null} /></li>
+                <li key="did">Did: <LongHexView value={token?.current?.did} lut={null} /></li>
                 <li key="createdAt">
-                    Created at: #{token.createdAt?.blockNumber?.toString(10)}/{token.createdAt?.eventIndex?.toString(10)},
-                    on {token.createdAt?.blockDate.toISOString()}
+                    Created at: #{token?.createdAt?.blockNumber?.toString(10)}/{token?.createdAt?.eventIndex?.toString(10)},
+                    on {token?.createdAt?.blockDate.toISOString()}
                 </li>
             </ul>
-        </div>
+        </fieldset>
     }
 }
 
@@ -44,20 +44,20 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
         } = this.props
         const owner: string = details?.owner?.did
         const identityLut = { [myDid]: "me" }
-        if (details === null) return <div>There are no token details</div>
-        else return <div className={cardStyle}>
+        return <fieldset className={cardStyle}>
+            <legend>Details</legend>
             <ul>
-                <li key="assetType">As asset type: {details.assetType}</li>
-                <li key="divisible">{details.isDivisible ? "" : "not"} divisible</li>
-                <li key="name">With the name: {details.name}</li>
+                <li key="assetType">As asset type: {details?.assetType}</li>
+                <li key="divisible">{details?.isDivisible ? "" : "not"} divisible</li>
+                <li key="name">With the name: {details?.name}</li>
                 <li key="owner">Owned by: <LongHexView value={owner} lut={identityLut} /></li>
-                <li key="totalSupply">With total supply of: {details.totalSupply?.toString(10)}</li>
-                <li key="fullAgents">Whose full agents are: <IdentitiesView values={details.fullAgents} lut={identityLut} /></li>
+                <li key="totalSupply">With total supply of: {details?.totalSupply?.toString(10)}</li>
+                <li key="fullAgents">Whose full agents are: <IdentitiesView values={details?.fullAgents} lut={identityLut} /></li>
                 <li key="requiresInvestorUniqueness">
-                    And requires investor uniqueness: {details.requiresInvestorUniqueness ? "true" : "false"}
+                    And requires investor uniqueness: {details?.requiresInvestorUniqueness ? "true" : "false"}
                 </li>
             </ul>
-        </div>
+        </fieldset>
     }
 }
 

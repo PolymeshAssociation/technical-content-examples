@@ -224,19 +224,6 @@ export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "curren
     participants: DistributionParticipant[],
 }
 
-export function getEmptyTokenDetails(): SecurityTokenDetails {
-    return {
-        assetType: KnownTokenType.EquityCommon,
-        isDivisible: false,
-        name: "",
-        owner: null,
-        totalSupply: new BigNumber("0"),
-        primaryIssuanceAgents: [],
-        fullAgents: [],
-        requiresInvestorUniqueness: false,
-    }
-}
-
 export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
     return {
         known: [] as KnownPermissionGroupInfoJson[],
@@ -284,7 +271,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         } as ReservationInfoJson,
         token: {
             current: null as SecurityToken,
-            details: getEmptyTokenDetails() as SecurityTokenDetails,
+            details: null as SecurityTokenDetails,
         } as TokenInfoJson,
         permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
         requirements: getEmptyRequirements() as RequirementsInfoJson,
