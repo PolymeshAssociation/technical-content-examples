@@ -73,11 +73,11 @@ export class TransactionPermissionsView extends Component<TransactionPermissions
     }
 }
 
-export interface PermissionsViewProps extends BasicProps {
+export interface GroupPermissionsViewProps extends BasicProps {
     permissions: GroupPermissions
 }
 
-export class PermissionsView extends Component<PermissionsViewProps> {
+export class GroupPermissionsView extends Component<GroupPermissionsViewProps> {
     render() {
         const { permissions, location, canManipulate } = this.props
         return <ul>
@@ -138,7 +138,7 @@ export class KnownPermissionGroupInfoView extends Component<KnownPermissionGroup
             </li>
             <li key="exists">Exists: {group.exists ? "true" : "false"}</li>
             <li key="permissions">
-                Permissions: <PermissionsView
+                Permissions: <GroupPermissionsView
                     permissions={group.permissions}
                     location={[...location, "permissions"]}
                     canManipulate={canManipulate}
@@ -213,7 +213,7 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
             </li>
             <li key="exists">Exists: {group.exists ? "true" : "false"}</li>
             <li key="permissions">
-                Permissions: <PermissionsView
+                Permissions: <GroupPermissionsView
                     permissions={group.permissions}
                     location={[...location, "permissions"]}
                     canManipulate={false}
