@@ -1,4 +1,9 @@
-import { CustomPermissionGroup, KnownPermissionGroup } from "@polymathnetwork/polymesh-sdk/internal";
+import {
+    CustomPermissionGroup,
+    InviteExternalAgentParams,
+    KnownPermissionGroup,
+    RemoveExternalAgentParams,
+} from "@polymathnetwork/polymesh-sdk/internal";
 import { AssetTx } from "@polymathnetwork/polymesh-sdk/polkadot/types";
 import {
     GroupPermissions,
@@ -15,6 +20,7 @@ import {
     KnownPermissionGroupInfoJson,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
+import { EnumSelectView } from "../EnumView";
 import { IdentityView } from "../identity/IdentityView";
 import { CustomPermissionGroupView, KnownPermissionGroupView } from "./PermissionGroupView";
 
@@ -44,32 +50,74 @@ function areIssuanceAgentPermissions(permissions: GroupPermissions): boolean {
         .size === patternAgentTags.issuance.length
 }
 
-export interface PermissionAgentViewProps extends BasicProps {
-    agent: AgentInfoJson
-    myDid: string
+declare enum GroupType {
+    Known = "Knwon",
+    Custom = "Custom",
 }
 
-export class PermissionAgentView extends Component<PermissionAgentViewProps> {
+const agentKey = "agent"
+const groupTypeKey = "groupType"
+const knownGroupKey = "knownGroup"
+const customGroupKey = "customGroup"
+
+interface PermissionAgentViewState {
+    [agentKey]: AgentInfoJson
+    [groupTypeKey]: GroupType
+    [knownGroupKey]: KnownPermissionGroup
+    [customGroupKey]: CustomPermissionGroup
+}
+
+export interface PermissionAgentViewProps extends BasicProps {
+    myDid: string
+    agent: AgentInfoJson
+    knownGroups: KnownPermissionGroupInfoJson[]
+    customGroups: CustomPermissionGroupInfoJson[]
+}
+
+export class PermissionAgentView extends Component<PermissionAgentViewProps, PermissionAgentViewState> {
+    constructor(props: PermissionAgentViewProps) {
+        super(props)
+        const currentGroup: KnownPermissionGroup | CustomPermissionGroup = props.agent.group.current
+        const groupType: GroupType = isKnownPermissionGroup(currentGroup) ? GroupType.Known : GroupType.Custom
+        this.state = {
+            agent: props.agent,
+            groupType: groupType,
+            knownGroup: isKnownPermissionGroup(currentGroup) ? currentGroup : props.knownGroups[0].current,
+            customGroup: isCustomPermissionGroup(currentGroup) ? currentGroup : props.customGroups[0]?.current,
+        }
+    }
+
+    onGroupTypeChanged = async (e) => this.setState({ groupType: e.target.value })
+
     render() {
-        const { agent, myDid, location, canManipulate } = this.props
+        const { agent } = this.state
+        const { myDid, location, canManipulate } = this.props
         return <ul>
             <li key="did">
                 Did: <IdentityView value={agent.current} lut={{ [myDid]: "me" }} />
             </li>
             <li key="isOwner">Is owner: {isOwner(agent.group.current) ? "true" : "false"}</li>
             <li key="isIssuanceAgent">Is issuance agent: {isIssuanceAgent(agent.group) ? "true" : "false"}</li>
+            <li key="groupType">
+                Group type: <EnumSelectView
+                    theEnum={GroupType}
+                    defaultValue={this.state.groupType}
+                    onChange={this.onGroupTypeChanged}
+                    canManipulate={false}
+                />
+            </li>
             <li key="group">
                 Group: {
                     (function () {
                         if (isKnownPermissionGroup(agent.group.current)) return <KnownPermissionGroupView
                             group={agent.group.current}
                             location={[...location, "current", "group"]}
-                            canManipulate={canManipulate}
+                            canManipulate={false}
                         />
                         else if (isCustomPermissionGroup(agent.group.current)) return <CustomPermissionGroupView
                             group={agent.group.current}
                             location={[...location, "current", "group"]}
-                            canManipulate={canManipulate}
+                            canManipulate={false}
                         />
                     })()
                 }
@@ -78,26 +126,188 @@ export class PermissionAgentView extends Component<PermissionAgentViewProps> {
     }
 }
 
+export type RemoveAgent = (params: RemoveExternalAgentParams) => Promise<void>
+
 export interface PermissionAgentsViewProps extends BasicProps {
     agents: AgentInfoJson[]
     myDid: string
+    knownGroups: KnownPermissionGroupInfoJson[]
+    customGroups: CustomPermissionGroupInfoJson[]
+    removeAgent: RemoveAgent
 }
 
 export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
+    onRemoveAgent = (agent: AgentInfoJson) => (e) => this.props.removeAgent({
+        target: agent.current,
+    })
+
     render() {
-        const { agents, myDid, location, canManipulate } = this.props
+        const {
+            agents,
+            myDid,
+            knownGroups,
+            customGroups,
+            location,
+            canManipulate,
+        } = this.props
         if (agents.length === 0) return <span> None</span>
         else return <ol>{
-            agents
-                .map((agent: AgentInfoJson, agentIndex: number) => <PermissionAgentView
+            agents.map((agent: AgentInfoJson, index: number) => <li key={index}>
+                <button
+                    className="submit"
+                    onClick={this.onRemoveAgent(agent)}>
+                    Remove it
+                </button>
+                <PermissionAgentView
                     agent={agent}
                     myDid={myDid}
-                    location={[...location, agentIndex]}
-                    canManipulate={canManipulate} />)
-                .map((presented: JSX.Element, agentIndex: number) => <li key={agentIndex}>
-                    {presented}
-                </li>)
+                    knownGroups={knownGroups}
+                    customGroups={customGroups}
+                    location={[...location, index]}
+                    canManipulate={canManipulate} />
+            </li>)
         }</ol>
     }
 }
 
+export type InviteAgent = (params: InviteExternalAgentParams) => Promise<void>
+
+const inviteTargetKey = "inviteTarget"
+const hasExpiryKey = "hasExpiry"
+const expiryKey = "expiry"
+const isExpiryValidKey = "isExpiryValid"
+
+interface NewPermissionAgentViewState {
+    [inviteTargetKey]: string
+    [hasExpiryKey]: boolean
+    [expiryKey]: string
+    [isExpiryValidKey]: boolean
+}
+
+export interface NewPermissionAgentViewProps {
+    cardStyle: any
+    hasTitleStyle: any
+    isWrongStyle: any
+    defaultGroup: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson | null | undefined
+    canManipulate: boolean
+    inviteAgent: InviteAgent
+}
+
+export class NewPermissionAgentView extends Component<NewPermissionAgentViewProps, NewPermissionAgentViewState> {
+    constructor(props: NewPermissionAgentViewProps) {
+        super(props)
+        this.state = {
+            [inviteTargetKey]: "",
+            [hasExpiryKey]: true,
+            [expiryKey]: new Date().toISOString(),
+            [isExpiryValidKey]: true,
+        }
+    }
+
+    updateInviteTarget = (e) => this.setState({ inviteTarget: e.target.value })
+    updateExpiry = (e) => {
+        const newExpiry = e.target.value
+        this.setState({
+            [expiryKey]: newExpiry,
+            [isExpiryValidKey]: new Date(newExpiry).toString() !== "Invalid Date"
+        })
+    }
+    updateHasExpiry = (e) => this.setState({ [hasExpiryKey]: e.target.checked })
+    onAgentInvited = async (e) => {
+        this.props.inviteAgent({
+            target: this.state.inviteTarget,
+            expiry: this.state.hasExpiry ? new Date(this.state.expiry) : undefined,
+            permissions: this.props.defaultGroup.current,
+        })
+    }
+
+    render() {
+        const {
+            cardStyle,
+            hasTitleStyle,
+            isWrongStyle,
+            defaultGroup,
+            canManipulate,
+        } = this.props
+        return <fieldset className={cardStyle} >
+            <legend>New Agent</legend>
+
+            <div>
+                <label htmlFor="invite-target">
+                    <span className={hasTitleStyle} title="Long name of your security token">Name</span>
+                </label>
+                <input
+                    name="invite-target"
+                    type="text"
+                    placeholder="0x123"
+                    defaultValue={this.state.inviteTarget}
+                    disabled={!canManipulate}
+                    onChange={this.updateInviteTarget}
+                />
+            </div>
+            <div>
+                <label htmlFor="invite-has-expiry">
+                    <span className={hasTitleStyle} title="Whether the invitation has an expiry">Has Expiry</span>
+                </label>
+                <input
+                    name="invite-has-expiry"
+                    type="checkbox"
+                    defaultChecked={this.state.hasExpiry}
+                    disabled={!canManipulate}
+                    onChange={this.updateHasExpiry}
+                />
+            </div>
+            <div>
+                <label htmlFor="invite-expiry">
+                    <span
+                        className={hasTitleStyle}
+                        title="Expiry of the invitation">
+                        Expiry
+                    </span>
+                </label>
+                <input
+                    name="invite-expiry"
+                    type="text"
+                    className={this.state.isExpiryValid ? "" : isWrongStyle}
+                    placeholder={new Date().toISOString()}
+                    defaultValue={this.state.expiry}
+                    disabled={!canManipulate || !this.state.hasExpiry}
+                    onChange={this.updateExpiry}
+                />
+            </div>
+            <div>
+                <label htmlFor="invite-group">
+                    <span
+                        className={hasTitleStyle}
+                        title="Picked group in which to invite the agent">
+                        Group
+                    </span>
+                </label>
+                {(function () {
+                    if (defaultGroup === null || typeof defaultGroup === "undefined")
+                        return <div>Pick a group above</div>
+                    if (isKnownPermissionGroup(defaultGroup.current))
+                        return <KnownPermissionGroupView
+                            group={defaultGroup.current}
+                            location={[]}
+                            canManipulate={false}
+                        />
+                    else
+                        return <CustomPermissionGroupView
+                            group={defaultGroup.current}
+                            location={[]}
+                            canManipulate={false}
+                        />
+                })()}
+            </div>
+
+            <button
+                className="submit"
+                disabled={!canManipulate || defaultGroup === null || typeof defaultGroup === "undefined"}
+                onClick={this.onAgentInvited}>
+                Invite agent
+            </button>
+
+        </fieldset >
+    }
+}

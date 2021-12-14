@@ -17,7 +17,6 @@ import {
     Identity,
     IdentityCondition,
     InvestorUniquenessClaim,
-    KnownTokenType,
     NumberedPortfolio,
     Requirement,
     Scope,

@@ -6,7 +6,6 @@ import {
   Compliance,
   Requirement,
   SecurityToken,
-  SecurityTokenDetails,
   Claim,
   ResultSet,
   ClaimData,
@@ -21,12 +20,10 @@ import {
   DistributionParticipant,
   DistributionWithDetails,
   AgentWithGroup,
-  PermissionGroupType,
   GroupPermissions,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
-  AgentInfoJson,
   AgentsInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleDetailsInfoJson,
@@ -63,9 +60,11 @@ import {
   DefaultPortfolio,
   DividendDistribution,
   Identity,
+  InviteExternalAgentParams,
   KnownPermissionGroup,
   NumberedPortfolio,
   PolymeshError,
+  RemoveExternalAgentParams,
   TickerReservation,
   TransferTickerOwnershipParams,
   TransferTokenOwnershipParams,
@@ -243,6 +242,7 @@ export default function Home() {
     const groups = await loadPermissionGroups(token)
     const agents = await loadPermissionAgents(token)
     const permissions: PermissionsInfoJson = {
+      current: token.permissions,
       groups: groups,
       agents: agents,
     }
@@ -303,6 +303,20 @@ export default function Home() {
         }
       }))
     }
+  }
+
+  async function inviteAgent(params: InviteExternalAgentParams): Promise<void> {
+    setStatus("Inviting agent")
+    await (await myInfo.permissions.current.inviteAgent(params)).run()
+    setStatus("Agent invited")
+    await loadToken(myInfo.ticker)
+  }
+
+  async function removeAgent(params: RemoveExternalAgentParams): Promise<void> {
+    setStatus("Removing agent")
+    await (await myInfo.permissions.current.removeAgent(params)).run()
+    setStatus("Agent removed")
+    await loadToken(myInfo.ticker)
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -1015,8 +1029,14 @@ export default function Home() {
         />
 
         <PermissionManagerView
-          myInfo={myInfo}
+          myDid={myInfo.myDid}
+          permissions={myInfo.permissions}
+          token={myInfo.token}
           cardStyle={styles.card}
+          hasTitleStyle={styles.hasTitle}
+          isWrongStyle={styles.isWrong}
+          removeAgent={removeAgent}
+          inviteAgent={inviteAgent}
           location={[]}
           canManipulate={true}
         />

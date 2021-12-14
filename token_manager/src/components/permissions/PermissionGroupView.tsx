@@ -111,7 +111,7 @@ export class KnownPermissionGroupView extends Component<KnownPermissionGroupView
                 theEnum={PermissionGroupType}
                 defaultValue={group.type}
                 onChange={undefined}
-                canManipulate={false}
+                canManipulate={canManipulate}
             /></li>
             <li key="ticker">Ticker: {group.ticker}</li>
             <li key="uuid">
@@ -141,28 +141,39 @@ export class KnownPermissionGroupInfoView extends Component<KnownPermissionGroup
                 Permissions: <PermissionsView
                     permissions={group.permissions}
                     location={[...location, "permissions"]}
-                    canManipulate={false}
+                    canManipulate={canManipulate}
                 />
             </li>
         </ul>
     }
 }
 
+export type PermissionGroupPicked = (group: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson) => void
+
 export interface KnownPermissionGroupInfosViewProps extends BasicProps {
     groups: KnownPermissionGroupInfoJson[]
+    onGroupPicked: PermissionGroupPicked
 }
 
 export class KnownPermissionGroupInfosView extends Component<KnownPermissionGroupInfosViewProps> {
+    onGroupPicked = (group: KnownPermissionGroupInfoJson) => (e) => this.props.onGroupPicked(group)
+
     render() {
         const { groups, location, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
         else return <ol>{
             groups
                 .map((group: KnownPermissionGroupInfoJson, groupIndex: number) => <li key={groupIndex}>
+                    <button
+                        className="submit"
+                        onClick={this.onGroupPicked(group)}
+                        disabled={!canManipulate}>
+                        Pick it
+                    </button>
                     <KnownPermissionGroupInfoView
                         group={group}
                         location={[...location, groupIndex]}
-                        canManipulate={canManipulate} />
+                        canManipulate={false} />
                 </li>)
         }</ol>
     }
@@ -191,13 +202,13 @@ export interface CustomPermissionGroupInfoViewProps extends BasicProps {
 
 export class CustomPermissionGroupInfoView extends Component<CustomPermissionGroupInfoViewProps> {
     render() {
-        const { group, location, canManipulate } = this.props
+        const { group, location } = this.props
         return <ul>
             <li key="current">
                 Group: <CustomPermissionGroupView
                     group={group.current}
                     location={[...location, "current"]}
-                    canManipulate={canManipulate}
+                    canManipulate={false}
                 />
             </li>
             <li key="exists">Exists: {group.exists ? "true" : "false"}</li>
@@ -214,15 +225,24 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
 
 export interface CustomPermissionGroupInfosViewProps extends BasicProps {
     groups: CustomPermissionGroupInfoJson[]
+    onGroupPicked: PermissionGroupPicked
 }
 
 export class CustomPermissionGroupInfosView extends Component<CustomPermissionGroupInfosViewProps> {
+    onGroupPicked = (group: CustomPermissionGroupInfoJson) => (e) => this.props.onGroupPicked(group)
+
     render() {
         const { groups, location, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
         else return <ol>{
             groups
                 .map((group: CustomPermissionGroupInfoJson, groupIndex: number) => <li key={groupIndex}>
+                    <button
+                        className="submit"
+                        onClick={this.onGroupPicked(group)}
+                        disabled={!canManipulate || !group.exists}>
+                        Pick it
+                    </button>
                     <CustomPermissionGroupInfoView
                         group={group}
                         location={[...location, groupIndex]}
@@ -234,17 +254,19 @@ export class CustomPermissionGroupInfosView extends Component<CustomPermissionGr
 
 export interface PermissionGroupsInfoViewProps extends BasicProps {
     groups: PermissionGroupsInfoJson
+    onGroupPicked: PermissionGroupPicked
 }
 
 export class PermissionGroupsInfoView extends Component<PermissionGroupsInfoViewProps> {
     render() {
-        const { groups, location, canManipulate } = this.props
+        const { groups, onGroupPicked, location, canManipulate } = this.props
         if (typeof groups === "undefined" || groups === null) return <div>No permission groups</div>
         return <ol>
             <li key="known">
                 Known:
                 <KnownPermissionGroupInfosView
                     groups={groups.known}
+                    onGroupPicked={onGroupPicked}
                     location={[...location, "known"]}
                     canManipulate={canManipulate} />
             </li>
@@ -252,6 +274,7 @@ export class PermissionGroupsInfoView extends Component<PermissionGroupsInfoView
                 Custom:
                 <CustomPermissionGroupInfosView
                     groups={groups.custom}
+                    onGroupPicked={onGroupPicked}
                     location={[...location, "custom"]}
                     canManipulate={canManipulate} />
             </li>
