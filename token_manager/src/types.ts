@@ -151,10 +151,8 @@ export type AuthorisationInfoJson = {
 export type PortfoliosInfoJson = {
     current: [DefaultPortfolio, ...NumberedPortfolio[]] | null,
     mine: [DefaultPortfolio, ...NumberedPortfolio[]],
-    otherOwner: string,
     details: PortfolioInfoJson[],
     myDetails: PortfolioInfoJson[],
-    newPortfolioName: string,
 }
 
 export type PortfolioInfoJson = {
@@ -301,10 +299,8 @@ export function getEmptyMyInfo(): MyInfoJson {
         portfolios: {
             current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
             mine: [] as unknown as [DefaultPortfolio, ...NumberedPortfolio[]],
-            otherOwner: "" as string,
             details: [] as PortfolioInfoJson[],
             myDetails: [] as PortfolioInfoJson[],
-            newPortfolioName: "",
         },
         checkpoints: {
             current: [] as CheckpointWithData[],

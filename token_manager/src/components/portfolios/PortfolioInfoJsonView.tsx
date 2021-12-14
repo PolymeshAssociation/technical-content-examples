@@ -1,7 +1,6 @@
 import { DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
-import { BasicProps } from "../BasicProps";
 import { LongHexView } from "../LongHexView";
 
 export type DeletePortfolio = (portfolio: NumberedPortfolio) => Promise<void>
@@ -14,12 +13,12 @@ interface PortfolioInfoJsonViewState {
     [newCustodianKey]: string
 }
 
-export interface PortfolioInfoJsonViewProps extends BasicProps {
+export interface PortfolioInfoJsonViewProps {
     portfolio: PortfolioInfoJson
     myDid: string
-    deletePortfolio: DeletePortfolio
     setCustodian: SetCustodian
     relinquishCustody: RelinquishCustody
+    canManipulate: boolean
 }
 
 export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps, PortfolioInfoJsonViewState> {
@@ -40,7 +39,6 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
         const {
             portfolio,
             myDid,
-            deletePortfolio,
             setCustodian,
             relinquishCustody,
             canManipulate,
@@ -56,17 +54,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
             <li key="owner">
                 Owner:&nbsp; <LongHexView value={original.owner.did} lut={{ [myDid]: "me" }} />
             </li>
-            <li key="id">
-                Id:&nbsp;{id}&nbsp;{(function () {
-                    if (!isNumbered) return ""
-                    return <button
-                        className="submit delete-portfolio"
-                        onClick={() => deletePortfolio(original)}
-                        disabled={!canManipulate}>
-                        Delete
-                    </button>
-                })()}
-            </li>
+            <li key="id">Id:&nbsp;{id}</li>
             <li key="name">Name:&nbsp;{portfolio.name}</li>
             <li key="custodian">Custodian:&nbsp;
                 <input
@@ -94,12 +82,13 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     }
 }
 
-export interface PortfolioJsonInfosViewProps extends BasicProps {
+export interface PortfolioJsonInfosViewProps {
     portfolios: PortfolioInfoJson[]
     myDid: string
     deletePortfolio: DeletePortfolio
     setCustodian: SetCustodian
     relinquishCustody: RelinquishCustody
+    canManipulate: boolean
 }
 
 export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProps> {
@@ -110,25 +99,32 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
             deletePortfolio,
             setCustodian,
             relinquishCustody,
-            location,
             canManipulate,
         } = this.props
         if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0)
             return <div>There are no portfolios</div>
-        return <ul>{
+        return <ol>{
             portfolios
-                .map((portfolio: PortfolioInfoJson, index: number) => <li key={index}>
-                    Portfolio {index}:&nbsp;
-                    <PortfolioInfoJsonView
-                        portfolio={portfolio}
-                        myDid={myDid}
-                        deletePortfolio={deletePortfolio}
-                        setCustodian={setCustodian}
-                        relinquishCustody={relinquishCustody}
-                        location={[...location, index]}
-                        canManipulate={canManipulate}
-                    />
-                </li>)
-        }</ul>
+                .map((portfolio: PortfolioInfoJson, index: number) => {
+                    const original: DefaultPortfolio | NumberedPortfolio = portfolio.original
+                    const isNumbered: boolean = isNumberedPortfolio(original)
+                    return <li key={index}>
+                        Portfolio {index}:&nbsp;
+                        <button
+                            className="submit delete-portfolio"
+                            onClick={() => isNumberedPortfolio(original) ? deletePortfolio(original) : ""}
+                            disabled={!canManipulate || !isNumbered}>
+                            Delete
+                        </button>
+                        <PortfolioInfoJsonView
+                            portfolio={portfolio}
+                            myDid={myDid}
+                            setCustodian={setCustodian}
+                            relinquishCustody={relinquishCustody}
+                            canManipulate={canManipulate}
+                        />
+                    </li>
+                })
+        }</ol >
     }
 }

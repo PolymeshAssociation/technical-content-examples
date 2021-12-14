@@ -88,10 +88,11 @@ import {
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
-import { PortfolioJsonInfosView, PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
+import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
+import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -655,10 +656,10 @@ export default function Home() {
     await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
-  async function createPortfolio(): Promise<NumberedPortfolio> {
+  async function createPortfolio(params): Promise<NumberedPortfolio> {
     const api: Polymesh = await getPolyWalletApi()
     const me: Identity = await api.getCurrentIdentity()
-    const newPortfolio = await (await me.portfolios.create({ name: myInfo.portfolios.newPortfolioName })).run()
+    const newPortfolio = await (await me.portfolios.create(params)).run()
     await loadMyPortfolios()
     return newPortfolio
   }
@@ -678,10 +679,6 @@ export default function Home() {
     return mine
   }
 
-  async function loadOtherPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
-    return await loadPortfolios(myInfo.portfolios.otherOwner)
-  }
-
   async function loadPortfolios(whose: string): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
     const api: Polymesh = await getPolyWalletApi()
     const who: Identity = await api.getIdentity({ did: whose })
@@ -692,11 +689,11 @@ export default function Home() {
     return portfolios
   }
 
-  async function loadMyCustodiedPortfolios(): Promise<(DefaultPortfolio | NumberedPortfolio)[]> {
+  async function loadCustodiedPortfolios(whose: string): Promise<(DefaultPortfolio | NumberedPortfolio)[]> {
     const api: Polymesh = await getPolyWalletApi()
-    const me: Identity = await api.getCurrentIdentity()
+    const who: Identity = await api.getIdentity({ did: whose })
     setStatus("Loading my custodied portfolios")
-    const result: ResultSet<DefaultPortfolio | NumberedPortfolio> = await me.portfolios.getCustodiedPortfolios()
+    const result: ResultSet<DefaultPortfolio | NumberedPortfolio> = await who.portfolios.getCustodiedPortfolios()
     setStatus("My custodied portfolios loaded")
     await setPortfolios(result.data)
     return result.data
@@ -935,10 +932,8 @@ export default function Home() {
         <PortfolioInfoJsonView
           portfolio={action.origin}
           myDid={myInfo.myDid}
-          deletePortfolio={deletePortfolio}
           setCustodian={setCustodian}
           relinquishCustody={relinquishCustody}
-          location={[...location, "origin"]}
           canManipulate={canManipulate}
         />
       </li>,
@@ -1119,42 +1114,18 @@ export default function Home() {
 
         </fieldset>
 
-        <fieldset className={styles.card}>
-          <legend>Portfolios</legend>
-
-          <div className="submit">
-            <button className="submit load-my-portfolios" onClick={loadMyPortfolios}>Load my portfolios</button>
-            &nbsp;
-            <button className="submit load-my-custodied-portfolios" onClick={loadMyCustodiedPortfolios}>Load my custodied portfolios</button>
-            <br />
-            <button className="submit load-portfolios" onClick={loadOtherPortfolios}>Load portfolios of</button>
-            &nbsp;
-            <input defaultValue={myInfo.portfolios.otherOwner} placeholder="0x123" onChange={onRequirementChangedCreator(["portfolios", "otherOwner"])} />
-          </div>
-
-          <PortfolioJsonInfosView
-            portfolios={myInfo.portfolios.details}
-            deletePortfolio={deletePortfolio}
-            setCustodian={setCustodian}
-            relinquishCustody={relinquishCustody}
-            myDid={myInfo.myDid}
-            location={["portfolios", "details"]}
-            canManipulate={true}
-          />
-
-          <div>See in the authorisations box above<br />for the pending custody authorisation</div>
-
-          <div className={styles.card}>
-            <div>Numbered portfolio to create:</div>
-            <div className="submit">
-              <input defaultValue={myInfo.portfolios.newPortfolioName} placeholder="Trading portfolio" disabled={false}
-                onChange={onRequirementChangedCreator(["portfolios", "newPortfolioName"])} />
-              &nbsp;
-              <button className="submit create-portfolio" onClick={createPortfolio}>Create</button>
-            </div>
-          </div>
-
-        </fieldset>
+        <PortfolioManagerView
+          portfolios={myInfo.portfolios}
+          myDid={myInfo.myDid}
+          cardStyle={styles.card}
+          createPortfolio={createPortfolio}
+          deletePortfolio={deletePortfolio}
+          loadPortfolios={async (whose: string) => { await loadPortfolios(whose) }}
+          loadCustodiedPortfolios={async (whose: string) => { await loadCustodiedPortfolios(whose) }}
+          relinquishCustody={relinquishCustody}
+          setCustodian={setCustodian}
+          canManipulate={true}
+        />
 
         <CheckpointManagerView
           myInfo={myInfo}

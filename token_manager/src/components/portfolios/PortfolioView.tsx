@@ -42,3 +42,52 @@ export class PortfoliosView extends Component<PortfoliosViewProps> {
         }</ul>
     }
 }
+
+export type CreatePortfolio = (params: { name: string }) => Promise<NumberedPortfolio>
+
+const nameKey = "name"
+
+interface NewPortfolioViewState {
+    [nameKey]: string
+}
+
+export interface NewPortfolioViewProps {
+    cardStyle: any
+    canManipulate: boolean
+    createPortfolio: CreatePortfolio
+}
+
+export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfolioViewState> {
+    constructor(props: NewPortfolioViewProps) {
+        super(props)
+        this.state = {
+            [nameKey]: ""
+        }
+    }
+
+    updateName = (e) => this.setState({ [nameKey]: e.target.value })
+    onCreate = async (e) => this.props.createPortfolio({ name: this.state.name })
+
+    render() {
+        const { cardStyle, canManipulate } = this.props
+        return <fieldset className={cardStyle}>
+            <legend>New portfolio</legend>
+            <div>Numbered portfolio to create:</div>
+            <div className="submit">
+                <input
+                    defaultValue={this.state.name}
+                    placeholder="Trading portfolio"
+                    disabled={!canManipulate}
+                    onChange={this.updateName}
+                />
+                &nbsp;
+                <button
+                    className="submit create-portfolio"
+                    onClick={this.onCreate}
+                    disabled={!canManipulate}>
+                    Create
+                </button>
+            </div>
+        </fieldset>
+    }
+}
