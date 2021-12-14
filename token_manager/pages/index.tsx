@@ -43,7 +43,6 @@ import {
   isCustomPermissionGroup,
   isKnownPermissionGroup,
   isNumberedPortfolio,
-  isPrimaryIssuanceAgentCondition,
   KnownPermissionGroupInfoJson,
   MyInfoPath,
   PermissionGroupsInfo,
@@ -51,6 +50,7 @@ import {
   PermissionsInfoJson,
   PortfolioInfoJson,
   ReservationInfoJson,
+  TokenInfoJson,
 } from "../src/types"
 import {
   AddInvestorUniquenessClaimParams,
@@ -69,6 +69,7 @@ import {
   PolymeshError,
   TickerReservation,
   TransferTickerOwnershipParams,
+  TransferTokenOwnershipParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import {
   findValue,
@@ -92,6 +93,7 @@ import { PortfoliosView, PortfolioView } from "../src/components/portfolios/Port
 import { PortfolioJsonInfosView, PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
+import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -217,72 +219,26 @@ export default function Home() {
       setMyInfo(returnUpdatedCreator(["token"], {
         current: null,
         details: null,
-        piaBalance: {
-          locked: "",
-          total: "",
-          toIssue: 0,
-          toRedeem: 0,
-        },
       }, true))
       setPermissions(null, null)
       setComplianceRequirements(null, null, true)
     } else {
       const details: SecurityTokenDetails = await token.details()
-      const defaultPortfolio: DefaultPortfolio = await details.primaryIssuanceAgent.portfolios.getPortfolio()
-      const balance: PortfolioBalance = (await defaultPortfolio.getTokenBalances({ tokens: [token] }))[0]
       setMyInfo(returnUpdatedCreator(["token"], {
         current: token,
         createdAt: await token.createdAt(),
         details: details,
-        piaBalance: {
-          locked: balance.locked.toString(10),
-          total: balance.total.toString(10),
-          toIssue: 0,
-          toRedeem: 0,
-        },
       }, true))
       await loadPermissions(token)
     }
   }
 
-  async function transferTokenOwnership(): Promise<void> {
+  async function transferTokenOwnership(token: TokenInfoJson, params: TransferTokenOwnershipParams): Promise<void> {
     setStatus("Transferring token ownership")
-    const token: SecurityToken = await (await myInfo.token.current.transferOwnership({
-      target: myInfo.token.ownershipTarget,
-    })).run()
+    const updated: SecurityToken = await (await token.current.transferOwnership(params)).run()
     setStatus("Token ownership transferred")
-    await setToken(token)
+    await setToken(updated)
     await loadYourTickers()
-  }
-
-  async function changeTokenPia(): Promise<void> {
-    setStatus("Changing token PIA")
-    await (await myInfo.token.current.modifyPrimaryIssuanceAgent(myInfo.token.piaChangeInfo)).run()
-    setStatus("PIA change queued in authorisations")
-    await loadAuthorisations()
-  }
-
-  async function removeTokenPia(): Promise<void> {
-    setStatus("Removing token PIA")
-    await (await myInfo.token.current.removePrimaryIssuanceAgent()).run()
-    setStatus("PIA removed")
-    await loadToken(myInfo.ticker)
-  }
-
-  async function issueTokens(): Promise<void> {
-    setStatus("Issuing tokens")
-    const updatedToken: SecurityToken = await (await myInfo.token.current.issuance.issue({
-      amount: new BigNumber(myInfo.token.piaBalance.toIssue)
-    })).run()
-    setStatus("Tokens issued")
-    await setToken(updatedToken)
-  }
-
-  async function redeemTokens(): Promise<void> {
-    setStatus(`Redeeming ${myInfo.token.piaBalance.toRedeem} ${myInfo.token.current.ticker} tokens`)
-    await (await myInfo.token.current.redeem({ amount: new BigNumber(myInfo.token.piaBalance.toRedeem) })).run()
-    setStatus("Tokens redeemed")
-    await loadToken(myInfo.ticker)
   }
 
   async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
@@ -293,7 +249,7 @@ export default function Home() {
       agents: agents,
     }
     await setPermissions(token, permissions)
-    await loadIssuanceInfo(token, permissions)
+    await loadComplianceRequirements(token)
     return permissions
   }
 
@@ -349,19 +305,6 @@ export default function Home() {
         }
       }))
     }
-  }
-
-  async function loadIssuanceInfo(token: SecurityToken, permissions: PermissionsInfoJson): Promise<IssuanceInfoJson> {
-    const pias = permissions.agents.current
-      .filter((agentWithGroup: AgentWithGroup) => {
-        if (isCustomPermissionGroup(agentWithGroup.group)) return false
-        if (isKnownPermissionGroup(agentWithGroup.group)) return agentWithGroup.group.type === PermissionGroupType.PolymeshV1Pia || agentWithGroup.group.type === PermissionGroupType.Full
-        throw new Error("Permission group is neither custom nor known: " + agentWithGroup.group)
-      })
-    const issuance: IssuanceInfoJson = {}
-    await setIssuanceInfo(token, issuance)
-    await loadComplianceRequirements(token)
-    return issuance
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -943,14 +886,12 @@ export default function Home() {
           Checkpoint:&nbsp;
           <CheckpointView
             checkpointInfo={action.checkpoint}
-            location={location}
             canManipulate={canManipulate}
             loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
           />
         </li>
         if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;<CheckpointScheduleView
           scheduleInfo={action.checkpointSchedule}
-          location={location}
           canManipulate={canManipulate}
           loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
         />
@@ -1065,96 +1006,14 @@ export default function Home() {
           createSecurityToken={createSecurityToken}
         />
 
-        <fieldset className={styles.card}>
-          <legend>Security Token: {myInfo.token.current?.ticker}</legend>
-
-          <div>{
-            (() => {
-              const owner: string = myInfo.token.details?.owner?.did
-              const pia: string = myInfo.token.details?.primaryIssuanceAgent?.did
-              if (myInfo.token.current === null) return "There is no token"
-              else return <ul>
-                <li key="owner">
-                  Owned by: <LongHexView value={owner} lut={{ [myInfo.myDid]: "me" }} />
-                </li>
-                <li key="assetType">As asset type: {myInfo.token.details?.assetType}</li>
-                <li key="divisible">{myInfo.token.details?.isDivisible ? "" : "not"} divisible</li>
-                <li key="createdAt">Created at: #{myInfo.token.createdAt?.blockNumber?.toString(10)}/{myInfo.token.createdAt?.eventIndex?.toString(10)}, on {myInfo.token.createdAt?.blockDate.toISOString()}</li>
-                <li key="pia">
-                  With PIA: <LongHexView value={pia} lut={{ [myInfo.myDid]: "me" }} />
-                  &nbsp;
-                  <button className="submit remove-token-pia" onClick={removeTokenPia} disabled={owner !== myInfo.myDid || owner === pia}>Remove</button>
-                </li>
-                <li key="totalSupply">And total supply of: {myInfo.token.details?.totalSupply?.toString(10)}</li>
-              </ul>
-            })()
-          }</div>
-
-          <fieldset className={styles.card}>
-            <legend>New owner</legend>
-            {
-              (() => {
-                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid
-                return <div className="submit">
-                  Target:&nbsp;
-                  <input name="token-ownership-target" type="text" placeholder="0x1234" defaultValue={myInfo.token.ownershipTarget} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "ownershipTarget"])} />
-                  &nbsp;
-                  <button className="submit transfer-token" onClick={transferTokenOwnership} disabled={!canManipulate}>Transfer ownership</button>
-                </div>
-              })()
-            }
-          </fieldset>
-
-          <fieldset className={styles.card}>
-            <legend>New PIA</legend>
-            {
-              (() => {
-                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid
-                const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
-                return <div className="submit">
-                  Target:&nbsp;
-                  <input name="token-pia-target" type="text" placeholder="0x1234" defaultValue={target} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"])} />
-                  <br />
-                  Request expiry:&nbsp;
-                  <input name="token-pia-expiry" type="text" placeholder="2020-12-31" defaultValue={myInfo.token.piaChangeInfo.requestExpiry?.toISOString()} disabled={!canManipulate}
-                    onChange={onValueChangedCreator(["token", "piaChangeInfo", "target"], false, (e) => Promise.resolve(new Date(e.target.value)))} />
-                  &nbsp;
-                  <button className="submit change-token-pia" onClick={changeTokenPia} disabled={!canManipulate}>Change PIA</button>
-                  <br />
-                  See lower for the pending authorisation
-                </div>
-              })()
-            }
-          </fieldset>
-
-          <fieldset className={styles.card}>
-            <legend>Issuance - Redemption</legend>
-
-            <div>
-              PIA's {myInfo.ticker} default portfolio balance total: {myInfo.token.piaBalance.total}. Locked: {myInfo.token.piaBalance.locked}
-            </div>
-            {
-              (() => {
-                const isPia: boolean = myInfo.token?.details?.primaryIssuanceAgent?.did === myInfo.myDid
-                const isOwner: boolean = myInfo.token?.details?.owner?.did === myInfo.myDid
-                const canManipulate: boolean = isPia || isOwner
-                const target: string = typeof myInfo.token.piaChangeInfo.target === "string" ? myInfo.token.piaChangeInfo.target : myInfo.token.piaChangeInfo.target.did
-                return <div className="submit">
-                  Amount to issue&nbsp;
-                  <input name="token-issue-amount" type="string" placeholder="100" defaultValue={myInfo.token.piaBalance.toIssue} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toIssue"])} />
-                  &nbsp;
-                  <button className="submit issue-pia" onClick={issueTokens} disabled={!canManipulate}>Issue</button>
-                  <br />
-                  Amount to redeem&nbsp;
-                  <input name="token-redeem-amount" type="string" placeholder="100" defaultValue={myInfo.token.piaBalance.toRedeem} disabled={!canManipulate} onChange={onValueChangedCreator(["token", "piaBalance", "toRedeem"])} />
-                  &nbsp;
-                  <button className="submit issue-pia" onClick={redeemTokens} disabled={!canManipulate}>Redeem</button>
-                </div>
-              })()
-            }
-          </fieldset>
-
-        </fieldset>
+        <SecurityTokenManagerView
+          token={myInfo.token}
+          myDid={myInfo.myDid}
+          cardStyle={styles.card}
+          hasTitleStyle={styles.hasTitle}
+          isWrongStyle={styles.isWrong}
+          transferTokenOwnership={transferTokenOwnership}
+        />
 
         <PermissionManagerView
           myInfo={myInfo}

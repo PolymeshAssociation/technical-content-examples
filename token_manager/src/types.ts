@@ -1,7 +1,5 @@
 import countries from "i18n-iso-countries"
 import {
-    AgentWithGroup,
-    CalendarUnit,
     CddClaim,
     CheckpointWithData,
     Claim,
@@ -16,11 +14,11 @@ import {
     DividendDistributionDetails,
     EventIdentifier,
     GroupPermissions,
+    Identity,
     IdentityCondition,
     InvestorUniquenessClaim,
     KnownTokenType,
     NumberedPortfolio,
-    PrimaryIssuanceAgentCondition,
     Requirement,
     Scope,
     ScopeType,
@@ -37,13 +35,10 @@ import {
     CheckpointSchedule,
     ConfigureDividendDistributionParams,
     CorporateAction,
-    CreateCheckpointScheduleParams,
     CustomPermissionGroup,
     DividendDistribution,
-    Identity,
     KnownPermissionGroup,
     ModifyCorporateActionsAgentParams,
-    ModifyPrimaryIssuanceAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
@@ -100,14 +95,6 @@ export type TokenInfoJson = {
     current: SecurityToken,
     createdAt: EventIdentifier,
     details: SecurityTokenDetails,
-    piaBalance: {
-        locked: string,
-        total: string,
-        toIssue: number,
-        toRedeem: number,
-    },
-    ownershipTarget: string,
-    piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
 }
 
 export type KnownPermissionGroupInfoJson = {
@@ -269,8 +256,6 @@ export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
         agents: getEmptyAgentsInfo() as AgentsInfoJson,
     }
 }
-    }
-}
 
 export function getEmptyRequirements(): RequirementsInfoJson {
     return {
@@ -300,17 +285,6 @@ export function getEmptyMyInfo(): MyInfoJson {
         token: {
             current: null as SecurityToken,
             details: getEmptyTokenDetails() as SecurityTokenDetails,
-            piaBalance: {
-                locked: "" as string,
-                total: "" as string,
-                toIssue: 0 as number,
-                toRedeem: 0 as number,
-            },
-            ownershipTarget: "" as string,
-            piaChangeInfo: {
-                target: "" as string | Identity,
-                requestExpiry: null as Date | null,
-            } as ModifyPrimaryIssuanceAgentParams,
         } as TokenInfoJson,
         permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
         requirements: getEmptyRequirements() as RequirementsInfoJson,
@@ -340,7 +314,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         } as AttestationsInfoJson,
         portfolios: {
             current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
-            mine: [] as [DefaultPortfolio, ...NumberedPortfolio[]],
+            mine: [] as unknown as [DefaultPortfolio, ...NumberedPortfolio[]],
             otherOwner: "" as string,
             details: [] as PortfolioInfoJson[],
             myDetails: [] as PortfolioInfoJson[],
@@ -381,11 +355,11 @@ export interface HasFetchTimer {
     fetchTimer: NodeJS.Timeout | null
 }
 
+export const isIdentity = (identity: string | Identity): identity is Identity => typeof (identity as Identity).did !== "undefined"
 export const isKnownPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is KnownPermissionGroup => typeof (group as KnownPermissionGroup).type !== "undefined"
 export const isCustomPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is CustomPermissionGroup => typeof (group as CustomPermissionGroup).id !== "undefined"
 export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfolio): portfolio is NumberedPortfolio => typeof (portfolio as NumberedPortfolio).id !== "undefined"
 export const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
-export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
 export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
 export const isScopeClaimProof = (claim: string | ScopeClaimProof): claim is ScopeClaimProof => typeof (claim as ScopeClaimProof).proofScopeIdCddIdMatch !== "undefined"
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness

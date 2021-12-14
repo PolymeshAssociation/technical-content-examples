@@ -1,5 +1,8 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
-import { CreateSecurityTokenParams, TransferTickerOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
+import {
+    CreateSecurityTokenParams,
+    TransferTickerOwnershipParams,
+} from "@polymathnetwork/polymesh-sdk/internal";
 import {
     KnownTokenType,
     SecurityToken,
@@ -147,7 +150,6 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                 </button>
             </div>
         </div>
-
     }
 }
 
@@ -259,7 +261,6 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 </button>
             </div>
         </div>
-
     }
 }
 
