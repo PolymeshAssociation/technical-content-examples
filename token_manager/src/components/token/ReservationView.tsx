@@ -8,11 +8,13 @@ import {
     SecurityToken,
     TickerReservation,
     TickerReservationStatus,
+    TokenIdentifier,
 } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { ReservationInfoJson } from "../../types";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
+import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
     reservation: ReservationInfoJson,
@@ -155,14 +157,22 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
 
 export type CreateSecurityToken = (reservation: ReservationInfoJson, params: CreateSecurityTokenParams) => Promise<SecurityToken>
 
+const canCreateKey = "canCreate"
 const longNameKey = "longName"
 const isDivisibleKey = "isDivisible"
 const assetTypeKey = "assetType"
+const fundingRoundKey = "fundingRound"
+const requiresUniquenessKey = "requiresUniqueness"
+const tokenIdentifiersKey = "tokenIdentifiers"
 
 interface TokenCreatorViewState {
+    [canCreateKey]: boolean
     [longNameKey]: string
     [isDivisibleKey]: boolean
     [assetTypeKey]: KnownTokenType
+    [fundingRoundKey]: string
+    [requiresUniquenessKey]: boolean
+    [tokenIdentifiersKey]: TokenIdentifier[]
 }
 
 export interface TokenCreatorViewProps {
@@ -176,17 +186,27 @@ export interface TokenCreatorViewProps {
 export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCreatorViewState> {
     constructor(props: TokenCreatorViewProps) {
         super(props)
+        const canCreate: boolean = props.reservation.current !== null
+            && props.reservation.details?.status === TickerReservationStatus.Reserved
+            && props.reservation.details?.owner?.did === props.myDid
         this.state = {
+            [canCreateKey]: canCreate,
             [longNameKey]: "",
             [isDivisibleKey]: false,
             [assetTypeKey]: KnownTokenType.EquityCommon,
+            [fundingRoundKey]: "",
+            [requiresUniquenessKey]: false,
+            [tokenIdentifiersKey]: [],
         }
     }
 
     updateLongName = (e) => this.setState({ [longNameKey]: e.target.value })
     updateIsDivisible = (e) => this.setState({ [isDivisibleKey]: e.target.checked })
     updateAssetTypeFromInput = (e) => this.setState({ [assetTypeKey]: e.target.value })
-    updateAssetTypeFromDropDown = async (assetType) => this.setState({ [assetTypeKey]: assetType })
+    updateAssetTypeFromDropDown = async (e) => this.setState({ [assetTypeKey]: e.target.value })
+    updateFundingRound = (e) => this.setState({ [fundingRoundKey]: e.target.value })
+    updateUniqueness = (e) => this.setState({ [requiresUniquenessKey]: e.target.checked })
+    onTokenIdentifiersChange = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
     onCreateToken = async (e) => this.props.createSecurityToken(this.props.reservation, this.getTokenParams())
 
     getTokenParams = () => ({
@@ -194,6 +214,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
         totalSupply: new BigNumber("0"),
         isDivisible: this.state.isDivisible,
         tokenType: this.state.assetType,
+        fundingRound: this.state.fundingRound,
+        requireInvestorUniqueness: this.state.requiresUniqueness,
+        tokenIdentifiers: this.state.tokenIdentifiers,
     }) as CreateSecurityTokenParams
 
     render() {
@@ -250,6 +273,42 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     defaultValue={this.state.assetType}
                     onChange={this.updateAssetTypeFromDropDown}
                     canManipulate={canCreate}
+                />
+            </div>
+            <div>
+                <label htmlFor="token-fundingRound">
+                    <span className={hasTitleStyle} title="Funding round in which the token currently is (Series A, Series B, etc)">Funding round</span>
+                </label>
+                <input
+                    name="token-fundingRound"
+                    type="text"
+                    placeholder="Series A"
+                    defaultValue={this.state.fundingRound}
+                    disabled={!canCreate}
+                    onChange={this.updateFundingRound}
+                />
+            </div>
+            <div>
+                <label htmlFor="token-requiresUniqueness">
+                    <span className={hasTitleStyle} title="Whether it requires investor uniqueness">Requires uniqueness</span>
+                </label>
+                <input
+                    name="token-requiresUniqueness"
+                    type="checkbox"
+                    defaultChecked={this.state.requiresUniqueness}
+                    disabled={!canCreate}
+                    onChange={this.updateUniqueness}
+                />
+            </div>
+            <div>
+                <label htmlFor="token-tokenIdentifiers">
+                    <span className={hasTitleStyle} title="Domestic or international alphanumeric security identifiers for the token (ISIN, CUSIP, etc)">Token identifiers</span>
+                </label>
+                <TokenIdentifiersView
+                    identifiers={this.state.tokenIdentifiers}
+                    hasTitleStyle={hasTitleStyle}
+                    canManipulate={canCreate}
+                    onChange={this.onTokenIdentifiersChange}
                 />
             </div>
             <div className="submit">
