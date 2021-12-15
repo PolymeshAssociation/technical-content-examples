@@ -1,175 +1,104 @@
 import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/internal";
 import {
+    CddClaim,
     Claim,
     ClaimData,
     ClaimTarget,
     ClaimType,
     CountryCode,
     Identity,
+    InvestorUniquenessClaim,
+    InvestorUniquenessV2Claim,
     isInvestorUniquenessClaim,
     isScopedClaim,
     Scope,
+    ScopedClaim,
     ScopeType,
-    TrustedClaimIssuer,
 } from "@polymathnetwork/polymesh-sdk/types";
-import React, { Component } from "react";
+import { Component } from "react";
 import {
-    AddToPath,
     FetchAndAddToPath,
     FetchDefaultAndAddToPath,
     isCddClaim,
     isClaimData,
+    isInvestorUniquenessV2Claim,
+    isJurisdictionClaim,
     isScopeClaimProof,
+    JurisdictionClaim,
     MyInfoJson,
-    MyInfoPath,
-    OnValueChangedCreator,
-    OnRequirementChangedIdentityCreator,
+    NoDataClaim,
 } from "../../types";
 import { findValue } from "../../ui-helpers";
 import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
 
-export interface TrustedClaimIssuerViewProps extends BasicProps {
-    trustedIssuer: TrustedClaimIssuer
-    onRequirementChangedCreator: OnValueChangedCreator
-    removeFromMyRequirementArray: (location: MyInfoPath) => void
-    onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
-    addToMyRequirementArray: AddToPath<ClaimType>
+export type OnScopeChanged = (scope: Scope) => void
+
+export interface ScopeViewState {
+    type: ScopeType
+    value: string
+    modified: boolean
 }
 
-export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProps> {
-    render() {
-        const {
-            trustedIssuer,
-            onRequirementChangedCreator,
-            removeFromMyRequirementArray,
-            onRequirementChangedIdentityCreator,
-            addToMyRequirementArray,
-            location,
-            canManipulate
-        } = this.props
-        const trustedFor: JSX.Element = trustedIssuer.trustedFor
-            ? <ul>{
-                trustedIssuer.trustedFor.map((claimType: ClaimType, claimTypeIndex: number) => <li key={claimTypeIndex}>
-                    <EnumSelectView<ClaimType>
-                        theEnum={ClaimType}
-                        defaultValue={claimType}
-                        onChange={onRequirementChangedCreator([...location, "trustedFor", claimTypeIndex], false)}
-                        canManipulate={canManipulate}
-                    />
-                    &nbsp;
-                    <button
-                        className="submit remove-trusted-for"
-                        onClick={() => removeFromMyRequirementArray([...location, "trustedFor", claimTypeIndex])}
-                        disabled={!canManipulate}>
-                        Remove {claimTypeIndex}
-                    </button>
-                </li>)
-            }</ul>
-            : <div>Not trusted for anything</div>
-        return <ul>
-            <li key="identity">
-                Did:
-                <input
-                    defaultValue={trustedIssuer.identity?.did}
-                    placeholder="0x123"
-                    onChange={onRequirementChangedIdentityCreator([...location, "identity"])}
-                    disabled={!canManipulate}
-                />
-            </li>
-            <li key="trustedFor">Trusted for:&nbsp;
-                <button
-                    className="submit add-trusted-for"
-                    onClick={() => addToMyRequirementArray([...location, "trustedFor"], ClaimType.Accredited)}
-                    disabled={!canManipulate}>
-                    Add trusted for
-                </button>
-                {trustedFor}
-            </li>
-        </ul>
-    }
-}
-
-export interface TrustedClaimIssuersViewProps extends BasicProps {
-    trustedIssuers: TrustedClaimIssuer[] | null
-    onRequirementChangedCreator: OnValueChangedCreator
-    removeFromMyRequirementArray: (location: MyInfoPath) => void
-    onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
-    addClaimToMyRequirementArray: AddToPath<ClaimType>
-}
-
-export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewProps> {
-    render() {
-        const {
-            trustedIssuers,
-            onRequirementChangedCreator,
-            removeFromMyRequirementArray,
-            onRequirementChangedIdentityCreator,
-            addClaimToMyRequirementArray,
-            location,
-            canManipulate
-        } = this.props
-        if (typeof trustedIssuers === "undefined" || trustedIssuers === null || trustedIssuers.length === 0)
-            return <div>No trusted issuers</div>
-        return <ul>{
-            trustedIssuers
-                .map((trustedIssuer: TrustedClaimIssuer, issuerIndex: number) =>
-                    <li key={issuerIndex}>
-                        Issuer {issuerIndex}:&nbsp;
-                        <button
-                            className="submit remove-trusted-claim-issuer"
-                            onClick={() => removeFromMyRequirementArray([...location, issuerIndex])}
-                            disabled={!canManipulate}>
-                            Remove {issuerIndex}
-                        </button>
-                        <TrustedClaimIssuerView
-                            trustedIssuer={trustedIssuer}
-                            onRequirementChangedCreator={onRequirementChangedCreator}
-                            removeFromMyRequirementArray={removeFromMyRequirementArray}
-                            onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-                            addToMyRequirementArray={addClaimToMyRequirementArray}
-                            location={[...location, issuerIndex]}
-                            canManipulate={canManipulate}
-                        />
-                    </li>)
-        }</ul >
-    }
-}
-
-export interface ScopeViewProps extends BasicProps {
+export interface ScopeViewProps {
     scope: Scope
-    addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnValueChangedCreator
+    onScopeChanged: OnScopeChanged
+    canManipulate: boolean
 }
 
-export class ScopeView extends Component<ScopeViewProps> {
-    render() {
-        let { scope } = this.props
-        const {
-            addToPath,
-            onRequirementChangedCreator,
-            location,
-            canManipulate
-        } = this.props
-        if (typeof scope === "undefined" || scope === null) {
-            const defaultScope: Scope = { type: ScopeType.Custom, value: "" }
-            addToPath(location, defaultScope as Scope)
-            scope = defaultScope
+export class ScopeView extends Component<ScopeViewProps, ScopeViewState> {
+    constructor(props: ScopeViewProps) {
+        super(props)
+        this.state = ScopeView.ScopeToState(props.scope)
+    }
+
+    static DummyScopeViewState = (): ScopeViewState => ({
+        type: ScopeType.Custom,
+        value: "",
+        modified: false,
+    })
+    static ScopeToState = (scope: Scope): ScopeViewState => ({
+        type: scope.type ?? ScopeType.Custom,
+        value: scope.value ?? "",
+        modified: false,
+    })
+
+    onTypeChanged = async (e) => this.setState((prev: ScopeViewState) => {
+        const updated: ScopeViewState = {
+            ...prev,
+            type: e.target.value,
+            modified: true,
         }
+        this.props.onScopeChanged(updated)
+        return updated
+    })
+    onValueChanged = (e) => this.setState((prev: ScopeViewState) => {
+        const updated: ScopeViewState = {
+            ...prev,
+            value: e.target.value,
+            modified: true,
+        }
+        this.props.onScopeChanged(updated)
+        return updated
+    })
+
+    render() {
+        const { type, value } = this.state
+        const { canManipulate } = this.props
         return <ul>
             <li key="type">Type: &nbsp;
                 <EnumSelectView<ScopeType>
                     theEnum={ScopeType}
-                    defaultValue={scope.type}
-                    onChange={onRequirementChangedCreator([...location, "type"], false)}
+                    defaultValue={type}
+                    onChange={this.onTypeChanged}
                     canManipulate={canManipulate}
                 />
             </li>
             <li key="value">Value:&nbsp;
                 <input
-                    defaultValue={scope.value}
+                    defaultValue={value}
                     placeholder="ACME"
-                    onChange={onRequirementChangedCreator([...location, "value"], false)}
+                    onChange={this.onValueChanged}
                     disabled={!canManipulate}
                 />
             </li>
@@ -177,31 +106,135 @@ export class ScopeView extends Component<ScopeViewProps> {
     }
 }
 
+export type OnClaimChanged = (claim: ClaimViewState) => void
+
+export interface ClaimViewState {
+    type: ClaimType
+    id: string
+    scope: ScopeViewState
+    cddId: string
+    scopeId: string
+    code: CountryCode
+    modified: boolean
+}
+
 export interface ClaimViewProps extends BasicProps {
-    claim: Claim
+    claim: ClaimViewState
     myInfo: MyInfoJson
-    addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnValueChangedCreator
+    onClaimChanged: OnClaimChanged
     fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
-export class ClaimView extends Component<ClaimViewProps> {
+export class ClaimView extends Component<ClaimViewProps, ClaimViewState> {
+    constructor(props: ClaimViewProps) {
+        super(props)
+        this.state = props.claim
+    }
+
+    static DummyClaimViewState = (): ClaimViewState => ({
+        type: ClaimType.NoData,
+        id: "",
+        scope: ScopeView.DummyScopeViewState(),
+        cddId: "",
+        scopeId: "",
+        code: CountryCode.Ad,
+        modified: false,
+    })
+    static ClaimToState = (claim: Claim): ClaimViewState => ({
+        type: claim.type,
+        id: isCddClaim(claim) ? claim.id : "",
+        scope: ScopeView.ScopeToState(isScopedClaim(claim) ? claim.scope : {
+            type: ScopeType.Custom,
+            value: "",
+        }),
+        cddId: isInvestorUniquenessClaim(claim) || isInvestorUniquenessV2Claim(claim) ? claim.cddId : "",
+        scopeId: isInvestorUniquenessClaim(claim) ? claim.scopeId : "",
+        code: isJurisdictionClaim(claim) ? claim.code : CountryCode.Ad,
+        modified: true,
+    })
+    static StateToClaim = (state: ClaimViewState): Claim => {
+        switch (state.type) {
+            case ClaimType.CustomerDueDiligence: return {
+                type: state.type,
+                id: state.id,
+            } as CddClaim
+            case ClaimType.InvestorUniqueness: return {
+                type: state.type,
+                scope: state.scope,
+                cddId: state.cddId,
+                scopeId: state.scopeId,
+            } as InvestorUniquenessClaim
+            case ClaimType.InvestorUniquenessV2: return {
+                type: state.type,
+                cddId: state.cddId,
+            } as InvestorUniquenessV2Claim
+            case ClaimType.Jurisdiction: return {
+                type: state.type,
+                code: state.code,
+                scope: state.scope,
+            } as JurisdictionClaim
+            case ClaimType.NoData: return {
+                type: state.type
+            } as NoDataClaim
+            default: return {
+                type: state.type,
+                scope: state.scope,
+            } as ScopedClaim
+        }
+    }
+
+    onClaimTypeChanged = async (e) => this.setState((prev: ClaimViewState) => {
+        const updated: ClaimViewState = {
+            ...prev,
+            type: e.target.value,
+            modified: true,
+        }
+        this.props.onClaimChanged(updated)
+        return updated
+    })
+    onStringChanged = (key: keyof ClaimViewState) => (e) => this.setState((prev: ClaimViewState) => {
+        const updated: ClaimViewState = {
+            ...prev,
+            [key]: e.target.value,
+            modified: true,
+        }
+        this.props.onClaimChanged(updated)
+        return updated
+    })
+    onScopeChanged = (scope: ScopeViewState) => this.setState((prev: ClaimViewState) => {
+        const updated: ClaimViewState = {
+            ...prev,
+            scope: scope,
+            modified: true,
+        }
+        this.props.onClaimChanged(updated)
+        return updated
+    })
+    onCountryCodeChanged = async (e) => this.setState((prev: ClaimViewState) => {
+        const updated: ClaimViewState = {
+            ...prev,
+            code: e.target.value,
+            modified: true,
+        }
+        this.props.onClaimChanged(updated)
+        return updated
+    })
+
     render() {
+        const claim: Claim = ClaimView.StateToClaim(this.state)
+        const { type, id, scope, cddId, scopeId, code, } = this.state
         const {
-            claim,
             myInfo,
-            addToPath,
-            onRequirementChangedCreator,
             fetchCddId,
             location,
             canManipulate
         } = this.props
         const elements: JSX.Element[] = [
-            <li key="type">Type: &nbsp;
+            <li key="type">Type:&nbsp;
                 <EnumSelectView<ClaimType>
                     theEnum={ClaimType}
-                    defaultValue={claim.type}
-                    onChange={onRequirementChangedCreator([...location, "type"], false)}
+                    defaultValue={type}
+                    onChange={this.onClaimTypeChanged}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -209,9 +242,9 @@ export class ClaimView extends Component<ClaimViewProps> {
         if (isCddClaim(claim)) {
             elements.push(<li key="id">Id:&nbsp;
                 <input
-                    defaultValue={claim.id}
+                    defaultValue={id}
                     placeholder="123"
-                    onChange={onRequirementChangedCreator([...location, "id"], false)}
+                    onChange={this.onStringChanged("id")}
                     disabled={!canManipulate}
                 />
             </li>)
@@ -220,10 +253,8 @@ export class ClaimView extends Component<ClaimViewProps> {
             elements.push(<li key="scope">
                 Scope:&nbsp;
                 <ScopeView
-                    scope={claim.scope}
-                    addToPath={addToPath}
-                    onRequirementChangedCreator={onRequirementChangedCreator}
-                    location={[...location, "scope"]}
+                    scope={scope}
+                    onScopeChanged={this.onScopeChanged}
                     canManipulate={canManipulate}
                 />
             </li>)
@@ -235,9 +266,9 @@ export class ClaimView extends Component<ClaimViewProps> {
             const hasTarget: boolean = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
             elements.push(<li key="cddId">CDD id:
                 <input
-                    defaultValue={claim.cddId}
+                    defaultValue={cddId}
                     placeholder="123"
-                    onChange={onRequirementChangedCreator([...location, "cddId"], false)}
+                    onChange={this.onStringChanged("cddId")}
                     disabled={!canManipulate}
                 />&nbsp;
                 {
@@ -254,19 +285,19 @@ export class ClaimView extends Component<ClaimViewProps> {
             </li>)
             elements.push(<li key="scopeId">Scope id:&nbsp;
                 <input
-                    defaultValue={claim.scopeId}
+                    defaultValue={scopeId}
                     placeholder="123"
-                    onChange={onRequirementChangedCreator([...location, "scopeId"], false)}
+                    onChange={this.onStringChanged("scopeId")}
                     disabled={!canManipulate}
                 />
             </li>)
         }
-        if (claim.type === ClaimType.Jurisdiction) {
+        if (isJurisdictionClaim(claim)) {
             elements.push(<li key="countryCode">Country code:&nbsp;
                 <EnumSelectView<CountryCode>
                     theEnum={CountryCode}
-                    defaultValue={claim.code}
-                    onChange={onRequirementChangedCreator([...location, "code"], false)}
+                    defaultValue={code}
+                    onChange={this.onCountryCodeChanged}
                     canManipulate={canManipulate}
                 />
             </li>)
@@ -275,84 +306,182 @@ export class ClaimView extends Component<ClaimViewProps> {
     }
 }
 
+export type OnClaimsChanged = (claims: ClaimsViewState) => void
+
+export interface ClaimsViewState {
+    claims: ClaimViewState[]
+    modified: boolean
+}
+
 export interface ClaimsViewProps extends BasicProps {
-    claims: Claim[] | null
+    claims: ClaimsViewState
     myInfo: MyInfoJson
-    addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnValueChangedCreator
+    onClaimsChanged: OnClaimsChanged
     fetchAndAddToPath: FetchAndAddToPath<string | Identity>
 }
 
-export class ClaimsView extends Component<ClaimsViewProps> {
+export class ClaimsView extends Component<ClaimsViewProps, ClaimsViewState> {
+    constructor(props: ClaimsViewProps) {
+        super(props)
+        this.state = props.claims
+    }
+
+    static DummyClaimsViewState = (): ClaimsViewState => ({
+        claims: [],
+        modified: false,
+    })
+    static ClaimsToState = (claims: Claim[]): ClaimsViewState => ({
+        claims: claims.map(ClaimView.ClaimToState),
+        modified: false,
+    })
+    static StateToClaims = (state: ClaimsViewState): Claim[] => state.claims.map(ClaimView.StateToClaim)
+
+    addClaim = () => this.setState((prev: ClaimsViewState) => {
+        const updated: ClaimsViewState = {
+            ...prev,
+            claims: [
+                ClaimView.DummyClaimViewState(),
+                ...prev.claims,
+            ],
+            modified: true,
+        }
+        this.props.onClaimsChanged(updated)
+        return updated
+    })
+    onClaimChangedAt = (index: number) => (claim: ClaimViewState) => this.setState((prev: ClaimsViewState) => {
+        const claims: ClaimViewState[] = prev.claims
+        claims[index] = claim
+        const updated: ClaimsViewState = {
+            ...prev,
+            claims: claims,
+            modified: true,
+        }
+        this.props.onClaimsChanged(updated)
+        return updated
+    })
+
     render() {
-        const {
-            claims,
-            myInfo,
-            addToPath,
-            onRequirementChangedCreator,
-            fetchAndAddToPath,
-            location,
-            canManipulate
-        } = this.props
-        if (typeof claims === "undefined" || claims === null || claims.length === 0)
-            return <div>No claims</div>
-        return <ul>{
-            claims
-                .map((claim: Claim, claimIndex: number) =>
-                    <li key={claimIndex}>
-                        Claim {claimIndex}:
-                        <ClaimView
-                            claim={claim}
-                            myInfo={myInfo}
-                            addToPath={addToPath}
-                            onRequirementChangedCreator={onRequirementChangedCreator}
-                            fetchCddId={fetchAndAddToPath}
-                            location={[...location, claimIndex]}
-                            canManipulate={canManipulate}
-                        />
-                    </li>
-                )
-        }</ul>
+        const { claims } = this.state
+        const { myInfo, fetchAndAddToPath, location, canManipulate } = this.props
+        const addButton: JSX.Element = <button
+            className="submit add-claim"
+            onClick={this.addClaim}
+            disabled={!canManipulate}>
+            Add
+        </button>
+        if (claims.length === 0) return <div>
+            No claims&nbsp;{addButton}
+        </div>
+        return <div>
+            {addButton}
+            <ul>{
+                claims
+                    .map((claim: Claim, index: number) =>
+                        <li key={index}>
+                            Claim {index}:
+                            <ClaimView
+                                claim={ClaimView.ClaimToState(claim)}
+                                myInfo={myInfo}
+                                onClaimChanged={this.onClaimChangedAt(index)}
+                                fetchCddId={fetchAndAddToPath}
+                                location={[...location, index]}
+                                canManipulate={canManipulate}
+                            />
+                        </li>
+                    )
+            }</ul>
+        </div>
     }
 }
 
+export interface AddInvestorUniquenessClaimViewState {
+    scope: Scope,
+    claimParams: AddInvestorUniquenessClaimParams,
+    expiry: string
+    hasExpiry: boolean
+    isExpiryValid: boolean
+    modified: boolean
+}
+
 export interface AddInvestorUniquenessClaimViewProps extends BasicProps {
-    claim: AddInvestorUniquenessClaimParams
-    addToPath: AddToPath<Scope>
-    onRequirementChangedCreator: OnValueChangedCreator
+    claimParams: AddInvestorUniquenessClaimParams | null
+    isWrongStyle: any
     fetchMyCddId: FetchDefaultAndAddToPath
 }
 
-export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquenessClaimViewProps> {
+export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquenessClaimViewProps, AddInvestorUniquenessClaimViewState> {
+    constructor(props: AddInvestorUniquenessClaimViewProps) {
+        super(props)
+        this.state = {
+            scope: props.claimParams.scope,
+            claimParams: props.claimParams ?? {
+                cddId: "",
+                proof: "",
+                scope: {
+                    type: ScopeType.Identity,
+                    value: "",
+                },
+                scopeId: "",
+            },
+            expiry: new Date().toISOString(),
+            hasExpiry: false,
+            isExpiryValid: true,
+            modified: false,
+        }
+    }
+
+    onScopeChanged = (scope: Scope) => this.setState((prev: AddInvestorUniquenessClaimViewState) => {
+        const updated: AddInvestorUniquenessClaimViewState = {
+            ...prev,
+            scope: scope,
+            modified: true,
+        }
+
+        return updated
+    })
+    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e) => this.setState((prev: AddInvestorUniquenessClaimViewState) => {
+        const updated: AddInvestorUniquenessClaimViewState = {
+            ...prev,
+            claimParams: {
+                ...prev.claimParams,
+                [key]: e.target.value,
+            },
+            modified: true,
+        }
+        return updated
+    })
+    updateExpiry = (e) => {
+        const newExpiry = e.target.value
+        this.setState({
+            expiry: newExpiry,
+            isExpiryValid: new Date(newExpiry).toString() !== "Invalid Date",
+            modified: true,
+        })
+    }
+    updateHasExpiry = (e) => this.setState({ hasExpiry: e.target.checked })
+
+
     render() {
-        const {
-            claim,
-            addToPath,
-            onRequirementChangedCreator,
-            fetchMyCddId,
-            location,
-            canManipulate
-        } = this.props
-        const proofToShow = isScopeClaimProof(claim.proof)
-            ? claim.proof.proofScopeIdWellformed
-            : claim.proof
+        const { scope, claimParams, expiry, hasExpiry, isExpiryValid } = this.state
+        const { fetchMyCddId, isWrongStyle, location, canManipulate } = this.props
+        const proofToShow = isScopeClaimProof(claimParams.proof)
+            ? claimParams.proof.proofScopeIdWellformed
+            : claimParams.proof
         return <ul>
             <li key="scope">
                 Scope:&nbsp;
                 <ScopeView
-                    scope={claim.scope}
-                    addToPath={addToPath}
-                    onRequirementChangedCreator={onRequirementChangedCreator}
-                    location={[...location, "scope"]}
+                    scope={scope}
+                    onScopeChanged={this.onScopeChanged}
                     canManipulate={canManipulate}
                 />
             </li>
             <li key="cddId">
                 CDD id:&nbsp;
                 <input
-                    defaultValue={claim.cddId}
+                    defaultValue={claimParams.cddId}
                     placeholder="123"
-                    onChange={onRequirementChangedCreator([...location, "cddId"], false)}
+                    onChange={this.onParamsStringChanged("cddId")}
                     disabled={!canManipulate}
                 />
                 &nbsp;
@@ -368,22 +497,41 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
                 <input
                     defaultValue={proofToShow}
                     placeholder="123"
+                    onChange={this.onParamsStringChanged("proof")}
                     disabled={true}
                 />
             </li>
             <li key="scopeId">
                 Scope id:&nbsp;
                 <input
-                    defaultValue={claim.scopeId}
+                    defaultValue={claimParams.scopeId}
                     placeholder="123"
+                    onChange={this.onParamsStringChanged("scopeId")}
                     disabled={true}
+                />
+            </li>
+            <li key="hasExpiry">
+                Has expiry:&nbsp;<input
+                    name="invite-has-expiry"
+                    type="checkbox"
+                    defaultChecked={hasExpiry}
+                    disabled={!canManipulate}
+                    onChange={this.updateHasExpiry}
                 />
             </li>
             <li key="expiry">
                 Expiry:&nbsp;<input
-                    defaultValue={claim.expiry?.toISOString()}
+                    defaultValue={claimParams.expiry?.toISOString()}
                     placeholder="2020-12-31"
                     disabled={!canManipulate}
+                />
+                <input
+                    type="text"
+                    className={isExpiryValid ? "" : isWrongStyle}
+                    placeholder={new Date().toISOString()}
+                    defaultValue={expiry}
+                    disabled={!canManipulate || !hasExpiry}
+                    onChange={this.updateExpiry}
                 />
             </li>
         </ul>

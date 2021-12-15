@@ -17,6 +17,7 @@ import {
     Identity,
     IdentityCondition,
     InvestorUniquenessClaim,
+    InvestorUniquenessV2Claim,
     NumberedPortfolio,
     Requirement,
     Scope,
@@ -136,12 +137,6 @@ export type RequirementsInfoJson = {
     current: Requirement[],
     arePaused: boolean,
     canManipulate: boolean,
-    modified: boolean,
-    settleSimulation: {
-        sender: string,
-        recipient: string,
-        works: boolean | null,
-    },
 }
 
 export type AuthorisationInfoJson = {
@@ -246,12 +241,6 @@ export function getEmptyRequirements(): RequirementsInfoJson {
         current: [] as Requirement[],
         arePaused: true as boolean,
         canManipulate: false as boolean,
-        modified: false as boolean,
-        settleSimulation: {
-            sender: "" as string,
-            recipient: "" as string,
-            works: null as boolean | null,
-        },
     }
 }
 
@@ -345,8 +334,30 @@ export const isIdentityCondition = (condition: Condition): condition is Identity
 export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
 export const isScopeClaimProof = (claim: string | ScopeClaimProof): claim is ScopeClaimProof => typeof (claim as ScopeClaimProof).proofScopeIdCddIdMatch !== "undefined"
 export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
+export const isInvestorUniquenessV2Claim = (claim: Claim): claim is InvestorUniquenessV2Claim => (claim as InvestorUniquenessV2Claim).type === ClaimType.InvestorUniquenessV2
+export const isJurisdictionClaim = (claim: Claim): claim is JurisdictionClaim => (claim as JurisdictionClaim).type === ClaimType.Jurisdiction
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
+export const isNoDataClaim = (claim: Claim): claim is NoDataClaim => (claim as NoDataClaim).type === ClaimType.NoData
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
 export const isCheckpointWithData = (checkpointInfo: CheckpointWithData | Checkpoint): checkpointInfo is CheckpointWithData => typeof (checkpointInfo as CheckpointWithData).createdAt !== "undefined"
 export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
 
+export declare type JurisdictionClaim = {
+    type: ClaimType.Jurisdiction
+    code: CountryCode
+    scope: Scope
+}
+export declare type NoDataClaim = {
+    type: ClaimType.NoData
+}
+
+/**
+ * For type safety. See https://schneidenbach.gitbooks.io/typescript-cookbook/content/nameof-operator.html
+ */
+export const nameofFactory = <T>() => (name: keyof T) => name;
+
+/**
+ * For exhaustiveness via compiler:
+ * https://stackoverflow.com/questions/39419170/how-do-i-check-that-a-switch-block-is-exhaustive-in-typescript
+ */
+export const assertUnreachable = (x: never): never => { throw new Error("Didn't expect to get here") }

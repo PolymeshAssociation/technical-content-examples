@@ -46,6 +46,7 @@ import {
   PermissionsInfoJson,
   PortfolioInfoJson,
   ReservationInfoJson,
+  SimpleAction,
   TokenInfoJson,
 } from "../src/types"
 import {
@@ -65,6 +66,7 @@ import {
   NumberedPortfolio,
   PolymeshError,
   RemoveExternalAgentParams,
+  SetAssetRequirementsParams,
   TickerReservation,
   TransferTickerOwnershipParams,
   TransferTokenOwnershipParams,
@@ -73,8 +75,6 @@ import {
   findValue,
   getBasicPolyWalletApi,
   replaceFetchTimer,
-  returnAddedArrayCreator,
-  returnRemovedArrayCreator,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
@@ -85,7 +85,7 @@ import {
   AddInvestorUniquenessClaimView,
   ClaimView,
 } from "../src/components/compliance/ClaimView"
-import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
+import { ComplianceCheckParams, ComplianceManagerView, RequirementsSaver } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
@@ -93,6 +93,7 @@ import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
+import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -111,6 +112,10 @@ export default function Home() {
 
   async function getMyIdentity(): Promise<Identity> {
     return (await getPolyWalletApi()).getCurrentIdentity()
+  }
+
+  async function getIdentity(did: string): Promise<Identity> {
+    return await (await getPolyWalletApi()).getIdentity({ did: did })
   }
 
   async function getMyDid(): Promise<string> {
@@ -354,51 +359,27 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedIdentityCreator(path: MyInfoPath): (e) => Promise<void> {
-    return onRequirementChangedCreator(
-      path,
-      false,
-      async (e) => (await getPolyWalletApi()).getIdentity({ did: e.target.value }))
-  }
+  const saveRequirements = (requirements: Requirements): RequirementsSaver =>
+    async (params: SetAssetRequirementsParams): Promise<void> => {
+      const updatedToken: SecurityToken = await (await requirements.set(params)).run()
+      setToken(updatedToken)
+    }
 
-  function addToMyRequirementArray(containerLocation: MyInfoPath, dummy: any): void {
-    setMyInfo(returnAddedArrayCreator(containerLocation, dummy))
-    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
-  }
+  const pauseCompliance = (requirements: Requirements): SimpleAction =>
+    async (): Promise<void> => {
+      const updatedToken: SecurityToken = await (await requirements.pause()).run()
+      setToken(updatedToken)
+    }
 
-  function removeFromMyRequirementArray(containerLocation: MyInfoPath): void {
-    setMyInfo(returnRemovedArrayCreator(containerLocation))
-    setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
-  }
+  const resumeCompliance = (requirements: Requirements): SimpleAction =>
+    async (): Promise<void> => {
+      const updatedToken: SecurityToken = await (await requirements.unpause()).run()
+      setToken(updatedToken)
+    }
 
-  async function saveRequirements(): Promise<SecurityToken> {
-    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.set({
-      requirements: myInfo.requirements.current.map((requirement: Requirement) => requirement.conditions)
-    })).run()
-    setToken(updatedToken)
-    return updatedToken
-  }
-
-  async function pauseCompliance(): Promise<SecurityToken> {
-    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.pause()).run()
-    setToken(updatedToken)
-    return updatedToken
-  }
-
-  async function resumeCompliance(): Promise<SecurityToken> {
-    const updatedToken: SecurityToken = await (await myInfo.token.current.compliance.requirements.unpause()).run()
-    setToken(updatedToken)
-    return updatedToken
-  }
-
-  async function simulateCompliance(): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], null))
-    const result: Compliance = await myInfo.token.current.compliance.requirements.checkSettle({
-      from: myInfo.requirements.settleSimulation.sender,
-      to: myInfo.requirements.settleSimulation.recipient,
-    })
-    setMyInfo(returnUpdatedCreator(["requirements", "settleSimulation", "works"], result.complies))
-  }
+  const simulateCompliance = (requirements: Requirements) =>
+    async (args: ComplianceCheckParams): Promise<Compliance> =>
+      requirements.checkSettle(args)
 
   async function loadAuthorisations(): Promise<void> {
     const api: Polymesh = await getPolyWalletApi();
@@ -561,8 +542,6 @@ export default function Home() {
         <ClaimView
           claim={claimData.claim}
           myInfo={myInfo}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          onRequirementChangedCreator={onRequirementChangedCreator}
           fetchCddId={fetchCddId}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
@@ -590,8 +569,6 @@ export default function Home() {
         <ClaimView
           claim={claimTarget.claim}
           myInfo={myInfo}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          onRequirementChangedCreator={onRequirementChangedCreator}
           fetchCddId={fetchCddId}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
@@ -1039,19 +1016,12 @@ export default function Home() {
           requirements={myInfo.requirements}
           cardStyle={styles.card}
           myInfo={myInfo}
-          onValueChangedCreator={onValueChangedCreator}
-          onRequirementChangedCreator={onRequirementChangedCreator}
-          removeFromMyRequirementArray={removeFromMyRequirementArray}
-          onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-          addRequirementToMyRequirementArray={addToMyRequirementArray}
-          addConditionToMyRequirementArray={addToMyRequirementArray}
-          addClaimToMyRequirementArray={addToMyRequirementArray}
-          addTrustedIssuerToMyRequirementArray={addToMyRequirementArray}
-          addToPath={(location, value) => setMyInfo(returnUpdatedCreator(location, value))}
-          saveRequirements={saveRequirements}
-          pauseCompliance={pauseCompliance}
-          resumeCompliance={resumeCompliance}
-          simulateCompliance={simulateCompliance}
+          identityGetter={getIdentity}
+          onComplianceChanged={() => { }}
+          saveRequirements={saveRequirements(myInfo.token.current?.compliance?.requirements)}
+          pauseCompliance={pauseCompliance(myInfo.token.current?.compliance?.requirements)}
+          resumeCompliance={resumeCompliance(myInfo.token.current?.compliance?.requirements)}
+          simulateCompliance={simulateCompliance(myInfo.token.current?.compliance?.requirements)}
           fetchCddId={fetchCddId}
           getMyDid={getMyDid}
           location={["requirements"]}
@@ -1097,7 +1067,7 @@ export default function Home() {
 
             <div>
               <AddInvestorUniquenessClaimView
-                claim={myInfo.attestations.uniquenessToAdd}
+                claimParams={myInfo.attestations.uniquenessToAdd}
                 addToPath={(location, value) => setMyInfo(returnUpdatedCreator([...location, "scope"], value))}
                 onRequirementChangedCreator={onRequirementChangedCreator}
                 fetchMyCddId={fetchMyCddId}

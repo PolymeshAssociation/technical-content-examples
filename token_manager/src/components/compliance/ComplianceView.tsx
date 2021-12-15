@@ -1,169 +1,188 @@
-import {
-    ClaimType,
-    Condition,
-    Identity,
-    Requirement,
-    Scope,
-    SecurityToken,
-    TrustedClaimIssuer,
-} from "@polymathnetwork/polymesh-sdk/types";
+import { SetAssetRequirementsParams } from "@polymathnetwork/polymesh-sdk/api/procedures/setAssetRequirements";
+import { Compliance, Identity, Requirement } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
 import {
-    AddToPath,
     FetchAndAddToPath,
-    MyInfoJson,
-    MyInfoPath,
-    OnValueChangedCreator,
-    OnRequirementChangedIdentityCreator,
     Getter,
-    SimpleAction,
+    MyInfoJson,
     RequirementsInfoJson,
+    SimpleAction,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
-import { RequirementsView } from "./RequirementView";
+import { RequirementsView, RequirementsViewState } from "./RequirementView";
+
+export type IdentityGetter = (did: string) => Promise<Identity>
+export type OnComplianceChanged = (complianceState: ComplianceManagerViewState) => void
+export type RequirementsSaver = (params: SetAssetRequirementsParams) => Promise<void>
+export type ComplianceSimulator = (params: ComplianceCheckParams) => Promise<Compliance>
+
+export interface ComplianceCheckParams {
+    from?: string | Identity
+    to: string | Identity
+}
+
+export interface ComplianceManagerViewState {
+    requirements: RequirementsViewState
+    modified: boolean
+    simulationFrom: string
+    simulationTo: string
+    compliance: Compliance | null
+}
 
 export interface ComplianceManagerViewProps extends BasicProps {
     requirements: RequirementsInfoJson
     myInfo: MyInfoJson
     cardStyle: any
-    onValueChangedCreator: OnValueChangedCreator
-    onRequirementChangedCreator: OnValueChangedCreator
-    removeFromMyRequirementArray: (location: MyInfoPath) => void
-    onRequirementChangedIdentityCreator: OnRequirementChangedIdentityCreator
-    addRequirementToMyRequirementArray: AddToPath<Requirement>
-    addConditionToMyRequirementArray: AddToPath<Condition>
-    addClaimToMyRequirementArray: AddToPath<ClaimType>
-    addTrustedIssuerToMyRequirementArray: AddToPath<TrustedClaimIssuer>
-    saveRequirements: Getter<SecurityToken>
-    pauseCompliance: Getter<SecurityToken>
-    resumeCompliance: Getter<SecurityToken>
-    simulateCompliance: SimpleAction,
-    addToPath: AddToPath<Scope>
+    identityGetter: IdentityGetter
+    onComplianceChanged: OnComplianceChanged,
+    saveRequirements: RequirementsSaver
+    pauseCompliance: SimpleAction
+    resumeCompliance: SimpleAction
+    simulateCompliance: ComplianceSimulator,
     fetchCddId: FetchAndAddToPath<string | Identity>
     getMyDid: Getter<string>
 }
 
-export class ComplianceManagerView extends Component<ComplianceManagerViewProps> {
+export class ComplianceManagerView extends Component<ComplianceManagerViewProps, ComplianceManagerViewState> {
+    constructor(props: ComplianceManagerViewProps) {
+        super(props)
+        this.state = ComplianceManagerView.RequirementsToState(props.requirements)
+    }
+
+    static DummyComplianceManagerViewState = (): ComplianceManagerViewState => ({
+        requirements: RequirementsView.DummyRequirementsViewState(),
+        modified: false,
+        simulationFrom: "",
+        simulationTo: "",
+        compliance: null,
+    })
+    static RequirementsToState = (requirements: RequirementsInfoJson): ComplianceManagerViewState => ({
+        requirements: RequirementsView.RequirementsToState(requirements.current),
+        modified: false,
+        simulationFrom: "",
+        simulationTo: "",
+        compliance: null,
+    })
+    static StateToParams = (getter: IdentityGetter) => async (state: ComplianceManagerViewState): Promise<SetAssetRequirementsParams> =>
+    ({
+        requirements: (await RequirementsView.StateToRequirements(getter)(state.requirements))
+            .map((requirement: Requirement) => requirement.conditions)
+    })
+
+    onRequirementsChanged = (requirements: RequirementsViewState) => this.setState((prev: ComplianceManagerViewState) => {
+        const updated: ComplianceManagerViewState = {
+            ...prev,
+            requirements: requirements,
+            modified: true,
+        }
+        this.props.onComplianceChanged(updated)
+        return updated
+    })
+    onFromChanged = (e) => this.setState({ simulationFrom: e.target.value })
+    onFromPicked = async () => this.setState({ simulationFrom: await this.props.getMyDid() })
+    onToChanged = (e) => this.setState({ simulationTo: e.target.value })
+    onToPicked = async () => this.setState({ simulationTo: await this.props.getMyDid() })
+    onSaveRequirements = async () =>
+        this.props.saveRequirements(await ComplianceManagerView.StateToParams(this.props.identityGetter)(this.state))
+    onSimulateCompliance = async () => this.setState({
+        compliance: await this.props.simulateCompliance({
+            from: this.state.simulationFrom === "" ? undefined : this.state.simulationFrom,
+            to: this.state.simulationTo,
+        })
+    })
+
     render() {
+        const { requirements, modified, simulationFrom, simulationTo, compliance } = this.state
         const {
-            requirements,
+            requirements: reqs,
             myInfo,
             cardStyle,
-            onValueChangedCreator,
-            onRequirementChangedCreator,
-            removeFromMyRequirementArray,
-            onRequirementChangedIdentityCreator,
-            addRequirementToMyRequirementArray,
-            addConditionToMyRequirementArray,
-            addClaimToMyRequirementArray,
-            addTrustedIssuerToMyRequirementArray,
-            saveRequirements,
             pauseCompliance,
             resumeCompliance,
-            simulateCompliance,
-            addToPath,
             fetchCddId,
-            getMyDid,
             location,
+            canManipulate,
         } = this.props
+        const canSaveAll: boolean = myInfo.token.current !== null
+            && myInfo.token.details?.owner?.did === myInfo.myDid
+            && modified
+        const canSimulate: boolean = myInfo.token.current !== null
         return <fieldset className={cardStyle}>
             <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
 
-            <div className="submit">
-                <button
-                    className="submit add-requirement"
-                    onClick={() => addRequirementToMyRequirementArray([...location, "current"], { id: Math.round(Math.random() * 1000), conditions: [] })}
-                    disabled={!requirements.canManipulate}>
-                    Add requirement
-                </button>
-            </div>
-
             <div>
                 <RequirementsView
-                    requirements={requirements.current}
+                    requirements={requirements}
                     myInfo={myInfo}
-                    onRequirementChangedCreator={onRequirementChangedCreator}
-                    removeFromMyRequirementArray={removeFromMyRequirementArray}
-                    onRequirementChangedIdentityCreator={onRequirementChangedIdentityCreator}
-                    addConditionToMyRequirementArray={addConditionToMyRequirementArray}
-                    addClaimToMyRequirementArray={addClaimToMyRequirementArray}
-                    addTrustedIssuerToMyRequirementArray={addTrustedIssuerToMyRequirementArray}
-                    addToPath={addToPath}
+                    onRequirementsChanged={this.onRequirementsChanged}
                     fetchCddId={fetchCddId}
                     location={[...location, "current"]}
-                    canManipulate={requirements.canManipulate}
+                    canManipulate={canManipulate}
                 />
             </div>
 
-            <div>{
-                (() => {
-                    const canManipulate: boolean = myInfo.token.current !== null
-                        && myInfo.token.details?.owner?.did === myInfo.myDid
-                        && requirements.modified
-                    return <div className="submit">
-                        <button
-                            className="submit save-requirements"
-                            onClick={saveRequirements} disabled={!canManipulate}>
-                            Save the whole list of requirements
-                        </button>
-                    </div>
-                })()
-            }</div>
+            <div className="submit">
+                <button
+                    className="submit save-requirements"
+                    onClick={this.onSaveRequirements}
+                    disabled={!canSaveAll}>
+                    Save the whole list of requirements
+                </button>
+            </div>
 
-            <div>{
-                <div className="submit">
-                    <button
-                        className="submit pause-compliance"
-                        onClick={pauseCompliance}
-                        disabled={!requirements.canManipulate || requirements.arePaused}>
-                        Pause compliance
-                    </button>
-                    &nbsp;
-                    <button
-                        className="submit resume-compliance"
-                        onClick={resumeCompliance}
-                        disabled={!requirements.canManipulate || !requirements.arePaused}>
-                        Resume compliance
-                    </button>
-                </div>
-            }</div>
+            <div className="submit">
+                <button
+                    className="submit pause-compliance"
+                    onClick={pauseCompliance}
+                    disabled={!canManipulate || reqs.arePaused}>
+                    Pause compliance
+                </button>
+                &nbsp;
+                <button
+                    className="submit resume-compliance"
+                    onClick={resumeCompliance}
+                    disabled={!canManipulate || !reqs.arePaused}>
+                    Resume compliance
+                </button>
+            </div>
 
             <div className={cardStyle}>
                 <div>Would a transfer of {myInfo.token.current?.ticker} work</div>
                 <div>From:&nbsp;
                     <input
-                        defaultValue={requirements.settleSimulation.sender}
+                        defaultValue={simulationFrom}
                         placeholder="0x123"
-                        onChange={onValueChangedCreator([...location, "settleSimulation", "sender"], false)} />
+                        onChange={this.onFromChanged} />
                     &nbsp;
                     <button
                         className="submit pick-me-for-sender"
-                        onClick={onValueChangedCreator([...location, "settleSimulation", "sender"], false, getMyDid)}>
+                        onClick={this.onFromPicked}>
                         Pick mine
                     </button>
                 </div>
                 <div>To:&nbsp;
                     <input
-                        defaultValue={requirements.settleSimulation.recipient}
+                        defaultValue={simulationTo}
                         placeholder="0x123"
-                        onChange={onValueChangedCreator([...location, "settleSimulation", "recipient"], false)} />
+                        onChange={this.onToChanged} />
                     &nbsp;
                     <button
                         className="submit pick-me-for-recipient"
-                        onClick={onValueChangedCreator([...location, "settleSimulation", "recipient"], false, getMyDid)}>
+                        onClick={this.onToPicked}>
                         Pick mine
                     </button>
                 </div>
                 <div className="submit">
                     <button
                         className="submit simulate-compliance"
-                        onClick={simulateCompliance} disabled={myInfo.token.current === null}>
+                        onClick={this.onSimulateCompliance}
+                        disabled={!canSimulate}>
                         Try
                     </button>
                 </div>
                 <div>
                     Result:
-                    {requirements.settleSimulation.works === null ? "No info" : requirements.settleSimulation.works ? "Aye" : "Nay"}
+                    {compliance?.complies === null ? "No info" : compliance?.complies ? "Aye" : "Nay"}
                 </div>
             </div>
 
