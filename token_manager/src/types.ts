@@ -26,6 +26,7 @@ import {
     SecurityTokenDetails,
     TickerReservation,
     TickerReservationDetails,
+    TokenIdentifier,
     UnscopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
 import {
@@ -92,9 +93,21 @@ export type ReservationInfoJson = {
 }
 
 export type TokenInfoJson = {
-    current: SecurityToken,
-    createdAt: EventIdentifier,
-    details: SecurityTokenDetails,
+    current: SecurityToken
+    createdAt: EventIdentifier | null
+    details: SecurityTokenDetails
+    currentFundingRound: string
+    tokenIdentifiers: TokenIdentifier[]
+}
+
+export function getEmptyTokenInfoJson(): TokenInfoJson {
+    return {
+        current: null as SecurityToken,
+        details: null as SecurityTokenDetails,
+        createdAt: null as EventIdentifier,
+        currentFundingRound: "",
+        tokenIdentifiers: [],
+    }
 }
 
 export type KnownPermissionGroupInfoJson = {
@@ -159,12 +172,12 @@ export type PortfolioInfoJson = {
 }
 
 export type AttestationsInfoJson = {
-    current: ClaimData<Claim>[],
-    otherTarget: string,
+    current: ClaimData<Claim>[]
+    otherTarget: string
     toAdd: {
-        target: string,
-        expiry: Date | null,
-        claim: Claim,
+        target: string
+        expiry: Date | null
+        claim: Claim
     },
     uniquenessToAdd: AddInvestorUniquenessClaimParams,
 }
@@ -257,10 +270,7 @@ export function getEmptyMyInfo(): MyInfoJson {
             current: null as TickerReservation,
             details: null as TickerReservationDetails,
         } as ReservationInfoJson,
-        token: {
-            current: null as SecurityToken,
-            details: null as SecurityTokenDetails,
-        } as TokenInfoJson,
+        token: getEmptyTokenInfoJson() as TokenInfoJson,
         permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
         requirements: getEmptyRequirements() as RequirementsInfoJson,
         authorisations: {

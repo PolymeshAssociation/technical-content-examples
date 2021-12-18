@@ -12,13 +12,14 @@ import {
 } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { ReservationInfoJson } from "../../types";
+import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
-import { TokenIdentifiersView } from "./TokenIdentifierView";
+import { TokenIdentifiersView, TokenIdentifiersViewState, } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
-    reservation: ReservationInfoJson,
-    myDid: string,
+    reservation: ReservationInfoJson
+    myDid: string
 }
 
 export class TickerReservationView extends Component<TickerReservationViewProps> {
@@ -42,18 +43,16 @@ export type TransferTickerOwnership = (reservation: ReservationInfoJson, params:
 
 interface TickerReservationTransferViewState {
     target: string
-    hasExpiry: boolean
-    expiry: string
-    isExpiryValid: boolean
+    transferExpiry: Date | null
 }
 
 export interface TickerReservationTransferViewProps {
-    reservation: ReservationInfoJson,
-    myDid: string,
-    cardStyle: any,
-    hasTitleStyle: any,
-    isWrongStyle: any,
-    transferReservationOwnership: TransferTickerOwnership,
+    reservation: ReservationInfoJson
+    myDid: string
+    cardStyle: any
+    hasTitleStyle: any
+    isWrongStyle: any
+    transferReservationOwnership: TransferTickerOwnership
 }
 
 export class TickerReservationTransferView extends Component<TickerReservationTransferViewProps, TickerReservationTransferViewState> {
@@ -61,29 +60,20 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         super(props)
         this.state = {
             target: "",
-            hasExpiry: true,
-            expiry: new Date().toISOString(),
-            isExpiryValid: true,
+            transferExpiry: null,
         }
     }
 
-    updateTarget = (e) => this.setState({ target: e.target.value })
-    updateExpiry = (e) => {
-        const newExpiry = e.target.value
-        this.setState({
-            expiry: newExpiry,
-            isExpiryValid: new Date(newExpiry).toString() !== "Invalid Date"
-        })
-    }
-    updateHasExpiry = (e) => this.setState({ hasExpiry: e.target.checked })
+    onTargetChanged = (e) => this.setState({ target: e.target.value })
+    onTransferExpiryChanged = (expiry: Date) => this.setState({ transferExpiry: expiry })
     onTransferReservationOwnership = async (e) => this.props.transferReservationOwnership(this.props.reservation, this.getTransferParams())
-
     getTransferParams = () => ({
         target: this.state.target,
-        expiry: this.state.hasExpiry ? new Date(this.state.expiry) : undefined
+        expiry: this.state.transferExpiry,
     }) as TransferTickerOwnershipParams
 
     render() {
+        const { target, transferExpiry } = this.state
         const {
             reservation,
             myDid,
@@ -104,21 +94,9 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                     name="transfer-target"
                     type="text"
                     placeholder="0x123"
-                    defaultValue={this.state.target}
+                    defaultValue={target}
                     disabled={!canCreate}
-                    onChange={this.updateTarget}
-                />
-            </div>
-            <div>
-                <label htmlFor="transfer-has-expiry">
-                    <span className={hasTitleStyle} title="Whether the ownership transfer has an expiry">Has Expiry</span>
-                </label>
-                <input
-                    name="transfer-has-expiry"
-                    type="checkbox"
-                    defaultChecked={this.state.hasExpiry}
-                    disabled={!canCreate}
-                    onChange={this.updateHasExpiry}
+                    onChange={this.onTargetChanged}
                 />
             </div>
             <div>
@@ -129,21 +107,20 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                         Expiry
                     </span>
                 </label>
-                <input
-                    name="transfer-expiry"
-                    type="text"
-                    className={this.state.isExpiryValid ? "" : isWrongStyle}
-                    placeholder={new Date().toISOString()}
-                    defaultValue={this.state.expiry}
-                    disabled={!canCreate || !this.state.hasExpiry}
-                    onChange={this.updateExpiry}
+                <DateTimeEntryView
+                    dateTime={transferExpiry}
+                    isOptional={true}
+                    validDateChanged={this.onTransferExpiryChanged}
+                    isWrongStyle={isWrongStyle}
+                    canManipulate={canCreate}
                 />
+
             </div>
             <div className="submit">
                 <button
                     className="submit transfer-reservation"
                     onClick={this.onTransferReservationOwnership}
-                    disabled={!canCreate || !this.state.isExpiryValid}>
+                    disabled={!canCreate}>
                     Transfer ownership
                 </button>
             </div>
@@ -164,11 +141,11 @@ interface TokenCreatorViewState {
 }
 
 export interface TokenCreatorViewProps {
-    reservation: ReservationInfoJson,
-    myDid: string,
-    cardStyle: any,
-    hasTitleStyle: any,
-    createSecurityToken: CreateSecurityToken,
+    reservation: ReservationInfoJson
+    myDid: string
+    cardStyle: any
+    hasTitleStyle: any
+    createSecurityToken: CreateSecurityToken
 }
 
 export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCreatorViewState> {
@@ -188,14 +165,14 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
         }
     }
 
-    updateLongName = (e) => this.setState({ longName: e.target.value })
-    updateIsDivisible = (e) => this.setState({ isDivisible: e.target.checked })
-    updateAssetTypeFromInput = (e) => this.setState({ assetType: e.target.value })
-    updateAssetTypeFromDropDown = async (e) => this.setState({ assetType: e.target.value })
-    updateFundingRound = (e) => this.setState({ fundingRound: e.target.value })
-    updateUniqueness = (e) => this.setState({ requiresUniqueness: e.target.checked })
-    onTokenIdentifiersChange = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
-    onCreateToken = async (e) => this.props.createSecurityToken(this.props.reservation, this.getTokenParams())
+    onLongNameChanged = (e) => this.setState({ longName: e.target.value })
+    onIsDivisibleChanged = (e) => this.setState({ isDivisible: e.target.checked })
+    onAssetTypeFromInputChanged = (e) => this.setState({ assetType: e.target.value })
+    onAssetTypeFromDropDownChanged = async (e) => this.setState({ assetType: e.target.value })
+    onFundingRoundChanged = (e) => this.setState({ fundingRound: e.target.value })
+    onUniquenessChanged = (e) => this.setState({ requiresUniqueness: e.target.checked })
+    onTokenIdentifiersChanged = (identifiers: TokenIdentifiersViewState) => this.setState({ tokenIdentifiers: identifiers.identifiers })
+    onCreateToken = async () => this.props.createSecurityToken(this.props.reservation, this.getTokenParams())
 
     getTokenParams = () => ({
         name: this.state.longName,
@@ -208,6 +185,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
     }) as CreateSecurityTokenParams
 
     render() {
+        const { longName, isDivisible, assetType, fundingRound, requiresUniqueness, tokenIdentifiers } = this.state
         const {
             reservation,
             myDid,
@@ -227,9 +205,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-name"
                     type="text"
                     placeholder="American CME"
-                    defaultValue={this.state.longName}
+                    value={longName}
                     disabled={!canCreate}
-                    onChange={this.updateLongName}
+                    onChange={this.onLongNameChanged}
                 />
             </div>
             <div>
@@ -239,9 +217,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 <input
                     name="token-divisible"
                     type="checkbox"
-                    defaultChecked={this.state.isDivisible}
+                    checked={isDivisible}
                     disabled={!canCreate}
-                    onChange={this.updateIsDivisible}
+                    onChange={this.onIsDivisibleChanged}
                 />
             </div>
             <div>
@@ -252,15 +230,15 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-assetType"
                     type="text"
                     placeholder={KnownTokenType.EquityCommon}
-                    defaultValue={this.state.assetType}
+                    value={assetType}
                     disabled={!canCreate}
-                    onChange={this.updateAssetTypeFromInput}
+                    onChange={this.onAssetTypeFromInputChanged}
                 />
                 &nbsp;
                 <EnumSelectView<KnownTokenType>
                     theEnum={KnownTokenType}
-                    defaultValue={this.state.assetType}
-                    onChange={this.updateAssetTypeFromDropDown}
+                    defaultValue={assetType}
+                    onChange={this.onAssetTypeFromDropDownChanged}
                     canManipulate={canCreate}
                 />
             </div>
@@ -272,9 +250,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-fundingRound"
                     type="text"
                     placeholder="Series A"
-                    defaultValue={this.state.fundingRound}
+                    value={fundingRound}
                     disabled={!canCreate}
-                    onChange={this.updateFundingRound}
+                    onChange={this.onFundingRoundChanged}
                 />
             </div>
             <div>
@@ -284,9 +262,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 <input
                     name="token-requiresUniqueness"
                     type="checkbox"
-                    defaultChecked={this.state.requiresUniqueness}
+                    checked={requiresUniqueness}
                     disabled={!canCreate}
-                    onChange={this.updateUniqueness}
+                    onChange={this.onUniquenessChanged}
                 />
             </div>
             <div>
@@ -294,10 +272,10 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     <span className={hasTitleStyle} title="Domestic or international alphanumeric security identifiers for the token (ISIN, CUSIP, etc)">Token identifiers</span>
                 </label>
                 <TokenIdentifiersView
-                    identifiers={this.state.tokenIdentifiers}
+                    identifiers={tokenIdentifiers}
                     hasTitleStyle={hasTitleStyle}
                     canManipulate={canCreate}
-                    onChange={this.onTokenIdentifiersChange}
+                    onChange={this.onTokenIdentifiersChanged}
                 />
             </div>
             <div className="submit">
@@ -313,13 +291,13 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
 }
 
 export interface TickerReservationManagerProps {
-    reservation: ReservationInfoJson,
-    myDid: string,
-    cardStyle: any,
-    hasTitleStyle: any,
-    isWrongStyle: any,
-    transferReservationOwnership: TransferTickerOwnership,
-    createSecurityToken: CreateSecurityToken,
+    reservation: ReservationInfoJson
+    myDid: string
+    cardStyle: any
+    hasTitleStyle: any
+    isWrongStyle: any
+    transferReservationOwnership: TransferTickerOwnership
+    createSecurityToken: CreateSecurityToken
 }
 
 export class TickerReservationManagerView extends Component<TickerReservationManagerProps> {
@@ -333,9 +311,6 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
             transferReservationOwnership,
             createSecurityToken
         } = this.props
-        const canCreate: boolean = reservation.current !== null
-            && reservation.details?.status === TickerReservationStatus.Reserved
-            && reservation.details?.owner?.did === myDid
         return <fieldset className={cardStyle}>
             <legend>Ticker Reservation: {reservation.current?.ticker}</legend>
 

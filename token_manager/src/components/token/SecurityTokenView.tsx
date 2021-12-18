@@ -2,27 +2,39 @@ import { TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/inte
 import { SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { TokenInfoJson } from "../../types";
+import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView } from "../identity/IdentityView";
 import { LongHexView } from "../LongHexView";
+import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface SecurityTokenFieldsViewProps {
-    token: TokenInfoJson,
-    cardStyle: any,
+    token: TokenInfoJson
+    cardStyle: any
+    hasTitleStyle: any
 }
 
 export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewProps> {
     render() {
-        const {
-            token,
-            cardStyle,
-        } = this.props
+        const { token, cardStyle, hasTitleStyle } = this.props
         return <fieldset className={cardStyle}>
             <legend>Fields</legend>
             <ul>
                 <li key="did">Did: <LongHexView value={token?.current?.did} lut={null} /></li>
                 <li key="createdAt">
-                    Created at: #{token?.createdAt?.blockNumber?.toString(10)}/{token?.createdAt?.eventIndex?.toString(10)},
-                    on {token?.createdAt?.blockDate.toISOString()}
+                    Created at:&nbsp;
+                    <EventIdentifierView
+                        eventId={token?.createdAt}
+                    />
+                </li>
+                <li key="currentFundingRound">Current funding round: {token.currentFundingRound}</li>
+                <li key="tokenIdentifiers">
+                    Token identifiers:&nbsp;
+                    <TokenIdentifiersView
+                        hasTitleStyle={hasTitleStyle}
+                        onChange={() => { }}
+                        identifiers={token.tokenIdentifiers ?? []}
+                        canManipulate={false}
+                    />
                 </li>
             </ul>
         </fieldset>
@@ -30,9 +42,9 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
 }
 
 export interface SecurityTokenDetailsViewProps {
-    details: SecurityTokenDetails,
-    myDid: string,
-    cardStyle: any,
+    details: SecurityTokenDetails
+    myDid: string
+    cardStyle: any
 }
 
 export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsViewProps> {
@@ -47,15 +59,27 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
         return <fieldset className={cardStyle}>
             <legend>Details</legend>
             <ul>
-                <li key="assetType">As asset type: {details?.assetType}</li>
-                <li key="divisible">{details?.isDivisible ? "" : "not"} divisible</li>
                 <li key="name">With the name: {details?.name}</li>
+                <li key="divisible">
+                    Divisible:&nbsp;
+                    <input
+                        type="checkbox"
+                        checked={details?.isDivisible}
+                        disabled={true}
+                    />
+                </li>
+                <li key="assetType">As asset type: {details?.assetType}</li>
+                <li key="requiresInvestorUniqueness">
+                    Requires investor uniqueness:&nbsp;
+                    <input
+                        type="checkbox"
+                        checked={details?.requiresInvestorUniqueness}
+                        disabled={true}
+                    />
+                </li>
                 <li key="owner">Owned by: <LongHexView value={owner} lut={identityLut} /></li>
                 <li key="totalSupply">With total supply of: {details?.totalSupply?.toString(10)}</li>
                 <li key="fullAgents">Whose full agents are: <IdentitiesView values={details?.fullAgents} lut={identityLut} /></li>
-                <li key="requiresInvestorUniqueness">
-                    And requires investor uniqueness: {details?.requiresInvestorUniqueness ? "true" : "false"}
-                </li>
             </ul>
         </fieldset>
     }
@@ -71,12 +95,12 @@ interface SecurityTokenOwnerTransferViewState {
 }
 
 export interface SecurityTokenOwnerTransferViewProps {
-    token: TokenInfoJson,
-    myDid: string,
-    cardStyle: any,
-    hasTitleStyle: any,
-    isWrongStyle: any,
-    transferTokenOwnership: TransferTokenOwnership,
+    token: TokenInfoJson
+    myDid: string
+    cardStyle: any
+    hasTitleStyle: any
+    isWrongStyle: any
+    transferTokenOwnership: TransferTokenOwnership
 }
 
 export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwnerTransferViewProps, SecurityTokenOwnerTransferViewState> {
@@ -114,7 +138,6 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
             hasTitleStyle,
             isWrongStyle,
         } = this.props
-        const owner: string = token.details?.owner?.did
         const canTransfer: boolean = token.current !== null
             && token.details?.owner?.did === myDid
         return <fieldset className={cardStyle}>
@@ -174,12 +197,12 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
 }
 
 export interface SecurityTokenManagerViewProps {
-    token: TokenInfoJson,
-    myDid: string,
-    cardStyle: any,
-    hasTitleStyle: any,
-    isWrongStyle: any,
-    transferTokenOwnership: TransferTokenOwnership,
+    token: TokenInfoJson
+    myDid: string
+    cardStyle: any
+    hasTitleStyle: any
+    isWrongStyle: any
+    transferTokenOwnership: TransferTokenOwnership
 }
 
 export class SecurityTokenManagerView extends Component<SecurityTokenManagerViewProps> {
@@ -198,6 +221,7 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
             <SecurityTokenFieldsView
                 token={token}
                 cardStyle={cardStyle}
+                hasTitleStyle={hasTitleStyle}
             />
 
             <SecurityTokenDetailsView

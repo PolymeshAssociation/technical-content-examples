@@ -13,8 +13,8 @@ interface TickerViewState {
 
 export interface TickerViewProps {
     myTickers: string[]
-    reservation: ReservationInfoJson,
-    token: TokenInfoJson,
+    reservation: ReservationInfoJson
+    token: TokenInfoJson
     cardStyle: any
     loadMyTickers: Getter<void>
     loadTicker: WorkWithTicker
@@ -34,14 +34,8 @@ export class TickerManagerView extends Component<TickerViewProps, TickerViewStat
         this.setState({ ticker: ticker })
         if (ticker !== "") await this.props.loadTicker(ticker)
     }
-
-    onMyTickerSelected = async (e) => {
-        await this.props.loadTicker(e.target.value)
-    }
-
-    onReserveTicker = async (e) => {
-        await this.props.reserveTicker(this.state.ticker)
-    }
+    onMyTickerSelected = async (e) => await this.props.loadTicker(e.target.value)
+    onReserveTicker = async (e) => await this.props.reserveTicker(this.state.ticker)
 
     render() {
         const {

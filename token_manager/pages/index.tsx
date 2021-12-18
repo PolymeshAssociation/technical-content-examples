@@ -34,6 +34,7 @@ import {
   getEmptyMyInfo,
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
+  getEmptyTokenInfoJson,
   isCheckpointSchedule,
   isCheckpointWithData,
   isCustomPermissionGroup,
@@ -221,17 +222,16 @@ export default function Home() {
 
   async function setToken(token: SecurityToken | null): Promise<void> {
     if (token === null) {
-      setMyInfo(returnUpdatedCreator(["token"], {
-        current: null,
-        details: null,
-      }, true))
+      setMyInfo(returnUpdatedCreator(["token"], getEmptyTokenInfoJson(), true))
       setPermissions(null, null)
       setComplianceRequirements(null, null, true)
     } else {
       setMyInfo(returnUpdatedCreator(["token"], {
         current: token,
-        createdAt: await token.createdAt(),
         details: await token.details(),
+        createdAt: await token.createdAt(),
+        currentFundingRound: await token.currentFundingRound(),
+        tokenIdentifiers: await token.getIdentifiers(),
       }, true))
       await loadPermissions(token)
     }

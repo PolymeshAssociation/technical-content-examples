@@ -5,14 +5,14 @@ import { EnumSelectView } from "../EnumView";
 export type OnTokenIdentifierChanged = (identifier: TokenIdentifier) => void
 
 interface TokenIdentifierViewState {
-    type: TokenIdentifierType,
-    value: string,
+    type: TokenIdentifierType
+    value: string
 }
 
 export interface TokenIdentifierViewProps {
-    identifier: TokenIdentifier,
-    hasTitleStyle: any,
-    canManipulate: boolean,
+    identifier: TokenIdentifier
+    hasTitleStyle: any
+    canManipulate: boolean
     onChange: OnTokenIdentifierChanged
 }
 
@@ -25,23 +25,16 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
         }
     }
 
-    public getIdentifier = () => ({
-        type: this.state.type,
-        value: this.state.value,
-    }) as TokenIdentifier
-
-    updateType = async (e) => {
-        const type: TokenIdentifierType = e.target.value
-        this.setState({ type: type })
-        this.props.onChange({ type: type, value: this.state.value })
-    }
-    updateValue = (e) => {
-        const value: string = e.target.value
-        this.setState({ value: value })
-        this.props.onChange({ type: this.state.type, value: value })
-    }
+    onStateChanged = () => this.props.onChange({ type: this.state.type, value: this.state.value })
+    onTypeChanged = async (e) => this.setState(
+        { type: e.target.value },
+        this.onStateChanged)
+    onValueChanged = (e) => this.setState(
+        { value: e.target.value },
+        this.onStateChanged)
 
     render() {
+        const { type, value } = this.state
         const { hasTitleStyle, canManipulate } = this.props
         return <div>
             <div>
@@ -50,8 +43,8 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
                 </label>
                 <EnumSelectView<TokenIdentifierType>
                     theEnum={TokenIdentifierType}
-                    defaultValue={this.state.type}
-                    onChange={this.updateType}
+                    defaultValue={type}
+                    onChange={this.onTypeChanged}
                     canManipulate={canManipulate}
                 />
             </div>
@@ -63,26 +56,26 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
                     name="token-value"
                     type="text"
                     placeholder="ACME"
-                    defaultValue={this.state.value}
+                    value={value}
                     disabled={!canManipulate}
-                    onChange={this.updateValue}
+                    onChange={this.onValueChanged}
                 />
             </div>
         </div>
     }
 }
 
-export type OnTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => void
+export type OnTokenIdentifiersChanged = (identifiers: TokenIdentifiersViewState) => void
 
-interface TokenIdentifiersViewState {
-    identifiers: TokenIdentifier[],
+export interface TokenIdentifiersViewState {
+    identifiers: TokenIdentifier[]
 }
 
 export interface TokenIdentifiersViewProps {
-    identifiers: TokenIdentifier[],
-    hasTitleStyle: any,
-    canManipulate: boolean,
-    onChange: OnTokenIdentifiersChanged,
+    identifiers: TokenIdentifier[]
+    hasTitleStyle: any
+    canManipulate: boolean
+    onChange: OnTokenIdentifiersChanged
 }
 
 export class TokenIdentifiersView extends Component<TokenIdentifiersViewProps, TokenIdentifiersViewState> {
@@ -91,56 +84,62 @@ export class TokenIdentifiersView extends Component<TokenIdentifiersViewProps, T
         this.state = { identifiers: props.identifiers }
     }
 
-    addTokenIdentifier = () => this.setState((prev: TokenIdentifiersViewState) => {
-        const identifiers = [
-            { type: TokenIdentifierType.Cins, value: "" },
-            ...prev.identifiers,
-        ]
-        this.props.onChange(identifiers)
-        return { identifiers: identifiers }
-    })
-    onIdentifierChanged = (atIndex: number) =>
-        (identifier: TokenIdentifier) =>
-            this.setState((prev: TokenIdentifiersViewState) => {
-                const identifiers = prev.identifiers
-                identifiers[atIndex] = identifier
-                this.props.onChange(identifiers)
-                return { identifiers: identifiers }
-            })
-    removeTokenIdentifier = (atIndex: number) =>
-        this.setState((prev: TokenIdentifiersViewState) => {
+    onStateChanged = () => this.props.onChange(this.state)
+    onAddTokenIdentifier = () => this.setState(
+        (prev: TokenIdentifiersViewState) => ({
+            ...prev,
+            identifiers: [
+                { type: TokenIdentifierType.Cins, value: "" },
+                ...prev.identifiers,
+            ]
+        }),
+        this.onStateChanged)
+    onTokenIdentifierChanged = (atIndex: number) => (identifier: TokenIdentifier) => this.setState(
+        (prev: TokenIdentifiersViewState) => {
+            const identifiers = prev.identifiers
+            identifiers[atIndex] = identifier
+            return { identifiers: identifiers }
+        },
+        this.onStateChanged)
+    onRemoveTokenIdentifier = (atIndex: number) => () => this.setState(
+        (prev: TokenIdentifiersViewState) => {
             const identifiers = prev.identifiers
             identifiers.splice(atIndex, 1)
-            this.props.onChange(identifiers)
             this.setState({ identifiers: identifiers })
-        })
+        },
+        this.onStateChanged)
 
     render() {
+        const { identifiers } = this.state
         const { hasTitleStyle, canManipulate } = this.props
+        const addButton: JSX.Element = <button
+            className="submit add-tokenIdentifier"
+            onClick={this.onAddTokenIdentifier}
+            disabled={!canManipulate}>
+            Add identifier
+        </button>
+        if (identifiers.length === 0) return <div>
+            There are no identifiers&nbsp;{addButton}
+        </div>
         return <div>
-            <button
-                className="submit add-tokenIdentifier"
-                onClick={this.addTokenIdentifier}
-                disabled={!canManipulate}>
-                Add identifier
-            </button>
-
-            <ul>{
-                this.state.identifiers.map((identifier: TokenIdentifier, index: number) => <li key={index}>
+            {addButton}
+            <ol>{
+                identifiers.map((identifier: TokenIdentifier, index: number) => <li key={index}>
+                    <button
+                        className="submit remote-tokenIdentifier"
+                        onClick={this.onRemoveTokenIdentifier(index)}
+                        disabled={!canManipulate}>
+                        Remove
+                    </button>
                     <TokenIdentifierView
                         identifier={identifier}
                         hasTitleStyle={hasTitleStyle}
                         canManipulate={canManipulate}
-                        onChange={this.onIdentifierChanged(index)}
+                        onChange={this.onTokenIdentifierChanged(index)}
                     />
-                    <button
-                        className="submit remote-tokenIdentifier"
-                        onClick={() => this.removeTokenIdentifier(index)}
-                        disabled={!canManipulate}>
-                        Remove the above
-                    </button>
+
                 </li>)
-            }</ul>
+            }</ol>
         </div>
     }
 }
