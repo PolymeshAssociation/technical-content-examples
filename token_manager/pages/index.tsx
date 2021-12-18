@@ -41,6 +41,7 @@ import {
   isKnownPermissionGroup,
   isNumberedPortfolio,
   KnownPermissionGroupInfoJson,
+  MyInfoJson,
   MyInfoPath,
   PermissionGroupsInfo,
   PermissionGroupsInfoJson,
@@ -57,7 +58,6 @@ import {
   CheckpointSchedule,
   CorporateAction,
   CreateCheckpointScheduleParams,
-  CreateSecurityTokenParams,
   CustomPermissionGroup,
   DefaultPortfolio,
   DividendDistribution,
@@ -70,13 +70,10 @@ import {
   RenamePortfolioParams,
   SetAssetRequirementsParams,
   TickerReservation,
-  TransferTickerOwnershipParams,
-  TransferTokenOwnershipParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import {
   findValue,
   getBasicPolyWalletApi,
-  replaceFetchTimer,
   returnUpdatedCreator,
 } from "../src/ui-helpers"
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
@@ -91,7 +88,7 @@ import { ComplianceCheckParams, ComplianceManagerView, RequirementsSaver } from 
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
-import { TickerManagerView } from "../src/components/token/TickerView"
+import { TickerManagerView, TickerManagerViewState } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
@@ -124,85 +121,30 @@ export default function Home() {
     return (await getMyIdentity()).did
   }
 
-  async function loadYourTickers(): Promise<string[]> {
-    const api: Polymesh = await getPolyWalletApi()
-    setStatus("Getting your current identity")
-    const me: Identity = await api.getCurrentIdentity()
-    setStatus("Fetching your security tokens")
-    const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: me })
-    setStatus("Fetching your token reservations")
-    const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: me });
-    const myTickers: string[] = [...myTokens, ...myReservations]
-      .map((element: SecurityToken | TickerReservation) => element.ticker)
-    setMyInfo(returnUpdatedCreator(["myTickers"], myTickers))
-    return myTickers
-  }
-
-  async function onTickerChanged(ticker: string): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["ticker"], ticker))
-    replaceFetchTimer(myInfo.reservation, async () => await loadReservation(ticker))
-  }
-
   function onValueChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
     return async function (e): Promise<void> {
       const value = valueProcessor ? await valueProcessor(e) : e.target.value
       setMyInfo(returnUpdatedCreator(path, value, deep))
-      if (path[path.length - 1] === "ticker") replaceFetchTimer(myInfo.reservation, async () => await loadReservation(value))
     }
   }
 
-  async function reserveTicker(ticker: string): Promise<TickerReservation> {
-    const api: Polymesh = await getPolyWalletApi()
-    setStatus(`Reserving ticker ${ticker}`)
-    const reservation: TickerReservation = await (await api.reserveTicker({ ticker: ticker })).run()
-    await setReservation(reservation)
-    return reservation
+  function setTicker(info: TickerManagerViewState): void {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      ticker: info.ticker,
+    }))
   }
 
-  async function loadReservation(ticker: string): Promise<TickerReservation> {
-    const api: Polymesh = await getPolyWalletApi()
-    let reservation: TickerReservation = null
-    try {
-      setStatus("Fetching ticker reservation")
-      reservation = await api.getTickerReservation({ ticker })
-    } catch (e) {
-      if (!(e instanceof PolymeshError)) {
-        throw e
-      }
-    }
-    await setReservation(reservation)
-    await loadToken(ticker)
-    return reservation
+  async function setTickerReservation(reservation: TickerReservation | null): Promise<void> {
+    if (reservation === null) setReservationInfo({ current: null, details: null })
+    else setReservationInfo({ current: reservation, details: await reservation.details() })
   }
 
-  async function setReservation(reservation: TickerReservation | null): Promise<void> {
-    if (reservation === null) {
-      setMyInfo(returnUpdatedCreator(["reservation"], {
-        current: null,
-        details: null,
-      }))
-    } else {
-      setMyInfo(returnUpdatedCreator(["reservation"], {
-        current: reservation,
-        details: (await reservation.details()),
-      }))
-    }
-  }
-
-  async function transferReservationOwnership(reservation: ReservationInfoJson, params: TransferTickerOwnershipParams): Promise<TickerReservation> {
-    setStatus("Changing ownership on token reservation")
-    const updated: TickerReservation = await (await reservation.current.transferOwnership(params)).run()
-    setStatus("Ownership on token reservation changed")
-    await setReservation(updated)
-    return updated
-  }
-
-  async function createSecurityToken(reservation: ReservationInfoJson, params: CreateSecurityTokenParams): Promise<SecurityToken> {
-    setStatus("Creating token")
-    const token: SecurityToken = await (await reservation.current.createToken(params)).run()
-    await setToken(token)
-    await loadReservation(myInfo.ticker)
-    return token
+  function setReservationInfo(reservation: ReservationInfoJson): void {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      reservation: reservation,
+    }))
   }
 
   async function loadToken(ticker: string): Promise<SecurityToken> {
@@ -216,33 +158,32 @@ export default function Home() {
         throw e
       }
     }
-    await setToken(token)
+    await setSecurityToken(token)
     return token
   }
 
-  async function setToken(token: SecurityToken | null): Promise<void> {
+  async function setSecurityToken(token: SecurityToken | null): Promise<void> {
     if (token === null) {
-      setMyInfo(returnUpdatedCreator(["token"], getEmptyTokenInfoJson(), true))
+      setTokenInfo(getEmptyTokenInfoJson())
       setPermissions(null, null)
       setComplianceRequirements(null, null, true)
     } else {
-      setMyInfo(returnUpdatedCreator(["token"], {
+      setTokenInfo({
         current: token,
-        details: await token.details(),
         createdAt: await token.createdAt(),
+        details: await token.details(),
         currentFundingRound: await token.currentFundingRound(),
         tokenIdentifiers: await token.getIdentifiers(),
-      }, true))
+      })
       await loadPermissions(token)
     }
   }
 
-  async function transferTokenOwnership(token: TokenInfoJson, params: TransferTokenOwnershipParams): Promise<void> {
-    setStatus("Transferring token ownership")
-    const updated: SecurityToken = await (await token.current.transferOwnership(params)).run()
-    setStatus("Token ownership transferred")
-    await setToken(updated)
-    await loadYourTickers()
+  function setTokenInfo(token: TokenInfoJson): void {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      token: token,
+    }))
   }
 
   async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
@@ -363,19 +304,19 @@ export default function Home() {
   const saveRequirements = (requirements: Requirements): RequirementsSaver =>
     async (params: SetAssetRequirementsParams): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.set(params)).run()
-      setToken(updatedToken)
+      setSecurityToken(updatedToken)
     }
 
   const pauseCompliance = (requirements: Requirements): SimpleAction =>
     async (): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.pause()).run()
-      setToken(updatedToken)
+      setSecurityToken(updatedToken)
     }
 
   const resumeCompliance = (requirements: Requirements): SimpleAction =>
     async (): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.unpause()).run()
-      setToken(updatedToken)
+      setSecurityToken(updatedToken)
     }
 
   const simulateCompliance = (requirements: Requirements) =>
@@ -966,6 +907,8 @@ export default function Home() {
     </ul>
   }
 
+  const apiPromise: Promise<Polymesh> = getPolyWalletApi()
+
   return (
     <div className={styles.container}>
       <Head>
@@ -979,13 +922,11 @@ export default function Home() {
         </h1>
 
         <TickerManagerView
-          myTickers={myInfo.myTickers}
-          reservation={myInfo.reservation}
           token={myInfo.token}
           cardStyle={styles.card}
-          loadMyTickers={async () => { await loadYourTickers() }}
-          loadTicker={onTickerChanged}
-          reserveTicker={async (ticker) => { await reserveTicker(ticker) }}
+          apiPromise={apiPromise}
+          onTickerChanged={setTicker}
+          onTickerReservationChanged={setTickerReservation}
         />
 
         <div id="status" className={styles.status}>
@@ -994,12 +935,13 @@ export default function Home() {
 
         <TickerReservationManagerView
           reservation={myInfo.reservation}
+          token={myInfo.token}
           myDid={myInfo.myDid}
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
-          transferReservationOwnership={transferReservationOwnership}
-          createSecurityToken={createSecurityToken}
+          onTickerReservationChanged={setTickerReservation}
+          onSecurityTokenChanged={setSecurityToken}
         />
 
         <SecurityTokenManagerView
@@ -1008,7 +950,7 @@ export default function Home() {
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
-          transferTokenOwnership={transferTokenOwnership}
+          onSecurityTokenChanged={setSecurityToken}
         />
 
         <PermissionManagerView

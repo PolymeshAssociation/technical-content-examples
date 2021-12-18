@@ -41,7 +41,7 @@ import {
     KnownPermissionGroup,
     ModifyCorporateActionsAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
-import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
@@ -59,6 +59,7 @@ export function getCountryList(): CountryInfo[] {
     })
 }
 
+export type ApiGetter = () => Promise<Polymesh>
 export type MyInfoPath = (string | number)[]
 export type OnValueChangedCreator = (path: MyInfoPath, deep: boolean, valueProcessor?: (e) => Promise<any>) => (e) => Promise<void>
 export type OnRequirementChangedDateCreator = (path: MyInfoPath) => (e) => Promise<void>
@@ -87,7 +88,6 @@ export type MyInfoJson = {
 }
 
 export type ReservationInfoJson = {
-    fetchTimer: NodeJS.Timeout,
     current: TickerReservation,
     details: TickerReservationDetails,
 }

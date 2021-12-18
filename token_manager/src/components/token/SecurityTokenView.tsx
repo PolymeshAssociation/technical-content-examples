@@ -5,6 +5,7 @@ import { TokenInfoJson } from "../../types";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView } from "../identity/IdentityView";
 import { LongHexView } from "../LongHexView";
+import { OnSecurityTokenChanged } from "./ReservationView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface SecurityTokenFieldsViewProps {
@@ -100,11 +101,11 @@ export interface SecurityTokenOwnerTransferViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    transferTokenOwnership: TransferTokenOwnership
+    onSecurityTokenChanged: OnSecurityTokenChanged
 }
 
 export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwnerTransferViewProps, SecurityTokenOwnerTransferViewState> {
-    constructor(props: SecurityTokenManagerViewProps) {
+    constructor(props: SecurityTokenOwnerTransferViewProps) {
         super(props)
         this.state = {
             ownershipTarget: "",
@@ -123,8 +124,8 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         })
     }
     updateHasExpiry = (e) => this.setState({ hasOwnershipExpiry: e.target.checked })
-    onTransferReservationOwnership = async (e) => this.props.transferTokenOwnership(this.props.token, this.getTransferParams())
-
+    onTransferReservationOwnership = async (e) =>
+        this.props.onSecurityTokenChanged(await (await this.props.token.current.transferOwnership(this.getTransferParams())).run())
     getTransferParams = () => ({
         target: this.state.ownershipTarget,
         expiry: this.state.hasOwnershipExpiry ? new Date(this.state.ownershipExpiry) : undefined
@@ -202,7 +203,7 @@ export interface SecurityTokenManagerViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    transferTokenOwnership: TransferTokenOwnership
+    onSecurityTokenChanged: OnSecurityTokenChanged
 }
 
 export class SecurityTokenManagerView extends Component<SecurityTokenManagerViewProps> {
@@ -213,7 +214,7 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
             cardStyle,
             hasTitleStyle,
             isWrongStyle,
-            transferTokenOwnership,
+            onSecurityTokenChanged,
         } = this.props
         return <fieldset className={cardStyle}>
             <legend>Security Token: {token.current?.ticker}</legend>
@@ -236,7 +237,7 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}
                 isWrongStyle={isWrongStyle}
-                transferTokenOwnership={transferTokenOwnership}
+                onSecurityTokenChanged={onSecurityTokenChanged}
             />
 
         </fieldset>

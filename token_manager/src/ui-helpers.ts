@@ -57,13 +57,6 @@ export async function getBasicPolyWalletApi(setStatus: (content: string) => void
     return (window || {})["api"]
 }
 
-export function replaceFetchTimer(where: HasFetchTimer, todo: () => void): NodeJS.Timeout {
-    if (where.fetchTimer !== null) clearTimeout(where.fetchTimer)
-    const timer: NodeJS.Timeout = setTimeout(todo, 1000)
-    where.fetchTimer = timer
-    return timer
-}
-
 export async function checkboxProcessor(e): Promise<boolean> {
     return Promise.resolve(e.target.checked)
 }

@@ -11,10 +11,11 @@ import {
     TokenIdentifier,
 } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { ReservationInfoJson } from "../../types";
+import { ReservationInfoJson, TokenInfoJson } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
+import { OnTickerReservationChanged } from "./TickerView";
 import { TokenIdentifiersView, TokenIdentifiersViewState, } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
@@ -39,8 +40,6 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
     }
 }
 
-export type TransferTickerOwnership = (reservation: ReservationInfoJson, params: TransferTickerOwnershipParams) => Promise<TickerReservation>
-
 interface TickerReservationTransferViewState {
     target: string
     transferExpiry: Date | null
@@ -52,7 +51,7 @@ export interface TickerReservationTransferViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    transferReservationOwnership: TransferTickerOwnership
+    onTickerReservationChanged: OnTickerReservationChanged
 }
 
 export class TickerReservationTransferView extends Component<TickerReservationTransferViewProps, TickerReservationTransferViewState> {
@@ -66,21 +65,19 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
 
     onTargetChanged = (e) => this.setState({ target: e.target.value })
     onTransferExpiryChanged = (expiry: Date) => this.setState({ transferExpiry: expiry })
-    onTransferReservationOwnership = async (e) => this.props.transferReservationOwnership(this.props.reservation, this.getTransferParams())
     getTransferParams = () => ({
         target: this.state.target,
         expiry: this.state.transferExpiry,
     }) as TransferTickerOwnershipParams
+    onTransferReservationOwnership = async () => await this.transferOwnership()
+    transferOwnership = async () => {
+        const updated: TickerReservation = await (await this.props.reservation.current.transferOwnership(this.getTransferParams())).run()
+        this.props.onTickerReservationChanged(updated)
+    }
 
     render() {
         const { target, transferExpiry } = this.state
-        const {
-            reservation,
-            myDid,
-            cardStyle,
-            hasTitleStyle,
-            isWrongStyle,
-        } = this.props
+        const { reservation, myDid, cardStyle, hasTitleStyle, isWrongStyle } = this.props
         const canCreate: boolean = reservation.current !== null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
@@ -128,7 +125,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
     }
 }
 
-export type CreateSecurityToken = (reservation: ReservationInfoJson, params: CreateSecurityTokenParams) => Promise<SecurityToken>
+export type OnSecurityTokenChanged = (token: SecurityToken) => void
 
 interface TokenCreatorViewState {
     canCreate: boolean
@@ -142,10 +139,11 @@ interface TokenCreatorViewState {
 
 export interface TokenCreatorViewProps {
     reservation: ReservationInfoJson
+    token: TokenInfoJson
     myDid: string
     cardStyle: any
     hasTitleStyle: any
-    createSecurityToken: CreateSecurityToken
+    onSecurityTokenChanged: OnSecurityTokenChanged
 }
 
 export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCreatorViewState> {
@@ -172,8 +170,8 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
     onFundingRoundChanged = (e) => this.setState({ fundingRound: e.target.value })
     onUniquenessChanged = (e) => this.setState({ requiresUniqueness: e.target.checked })
     onTokenIdentifiersChanged = (identifiers: TokenIdentifiersViewState) => this.setState({ tokenIdentifiers: identifiers.identifiers })
-    onCreateToken = async () => this.props.createSecurityToken(this.props.reservation, this.getTokenParams())
-
+    onCreateToken = async () =>
+        this.props.onSecurityTokenChanged(await (await this.props.reservation.current.createToken(this.getTokenParams())).run())
     getTokenParams = () => ({
         name: this.state.longName,
         totalSupply: new BigNumber("0"),
@@ -186,13 +184,9 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
 
     render() {
         const { longName, isDivisible, assetType, fundingRound, requiresUniqueness, tokenIdentifiers } = this.state
-        const {
-            reservation,
-            myDid,
-            cardStyle,
-            hasTitleStyle,
-        } = this.props
+        const { reservation, token, myDid, cardStyle, hasTitleStyle } = this.props
         const canCreate: boolean = reservation.current !== null
+            && token.current === null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
         return <fieldset className={cardStyle}>
@@ -292,24 +286,26 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
 
 export interface TickerReservationManagerProps {
     reservation: ReservationInfoJson
+    token: TokenInfoJson
     myDid: string
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    transferReservationOwnership: TransferTickerOwnership
-    createSecurityToken: CreateSecurityToken
+    onTickerReservationChanged: OnTickerReservationChanged
+    onSecurityTokenChanged: OnSecurityTokenChanged
 }
 
 export class TickerReservationManagerView extends Component<TickerReservationManagerProps> {
     render() {
         const {
             reservation,
+            token,
             myDid,
             cardStyle,
             hasTitleStyle,
             isWrongStyle,
-            transferReservationOwnership,
-            createSecurityToken
+            onTickerReservationChanged,
+            onSecurityTokenChanged
         } = this.props
         return <fieldset className={cardStyle}>
             <legend>Ticker Reservation: {reservation.current?.ticker}</legend>
@@ -325,15 +321,16 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}
                 isWrongStyle={isWrongStyle}
-                transferReservationOwnership={transferReservationOwnership}
+                onTickerReservationChanged={onTickerReservationChanged}
             />
 
             <TokenCreatorView
                 reservation={reservation}
+                token={token}
                 myDid={myDid}
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}
-                createSecurityToken={createSecurityToken}
+                onSecurityTokenChanged={onSecurityTokenChanged}
             />
 
         </fieldset>
