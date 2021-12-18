@@ -152,8 +152,10 @@ export type PortfoliosInfoJson = {
 
 export type PortfolioInfoJson = {
     original: DefaultPortfolio | NumberedPortfolio,
-    name: string,
-    custodian: string,
+    name: string
+    exists: boolean
+    custodian: string
+    createdAt: EventIdentifier | null
 }
 
 export type AttestationsInfoJson = {

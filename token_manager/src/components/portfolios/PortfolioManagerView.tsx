@@ -2,8 +2,9 @@ import { Component } from "react"
 import { PortfoliosInfoJson } from "../../types"
 import {
     DeletePortfolio,
+    ModifyNamePortfolio,
     PortfolioJsonInfosView,
-    RelinquishCustody,
+    QuitCustody,
     SetCustodian,
 } from "./PortfolioInfoJsonView"
 import { CreatePortfolio, NewPortfolioView } from "./PortfolioView"
@@ -21,10 +22,12 @@ export interface PortfolioManagerViewProps {
     cardStyle: any
     loadPortfolios: LoadPortfolios,
     loadCustodiedPortfolios: LoadPortfolios,
+    modifyName: ModifyNamePortfolio,
     deletePortfolio: DeletePortfolio
     setCustodian: SetCustodian
-    relinquishCustody: RelinquishCustody
+    quitCustody: QuitCustody
     createPortfolio: CreatePortfolio
+    isWrongStyle: any
     canManipulate: boolean
 }
 
@@ -46,10 +49,12 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             portfolios,
             myDid,
             cardStyle,
+            modifyName,
             deletePortfolio,
             setCustodian,
-            relinquishCustody,
+            quitCustody,
             createPortfolio,
+            isWrongStyle,
             canManipulate,
         } = this.props
         return <fieldset className={cardStyle}>
@@ -85,10 +90,12 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
                 <legend>Loaded portfolios</legend>
                 <PortfolioJsonInfosView
                     portfolios={portfolios.details}
+                    modifyName={modifyName}
                     deletePortfolio={deletePortfolio}
                     setCustodian={setCustodian}
-                    relinquishCustody={relinquishCustody}
+                    quitCustody={quitCustody}
                     myDid={myDid}
+                    isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
                 />
             </fieldset>
@@ -102,6 +109,5 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             />
 
         </fieldset>
-
     }
 }

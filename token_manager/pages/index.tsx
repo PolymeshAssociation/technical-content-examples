@@ -66,6 +66,7 @@ import {
   NumberedPortfolio,
   PolymeshError,
   RemoveExternalAgentParams,
+  RenamePortfolioParams,
   SetAssetRequirementsParams,
   TickerReservation,
   TransferTickerOwnershipParams,
@@ -679,8 +680,10 @@ export default function Home() {
   async function getPortfolioInfo(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
     return {
       original: portfolio,
-      name: portfolio instanceof NumberedPortfolio ? await portfolio.getName() : "null",
+      name: isNumberedPortfolio(portfolio) ? await portfolio.getName() : "null",
+      exists: await portfolio.exists(),
       custodian: (await portfolio.getCustodian()).did,
+      createdAt: isNumberedPortfolio(portfolio) ? await portfolio.createdAt() : null,
     }
   }
 
@@ -693,6 +696,13 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
   }
 
+  async function modifyNamePortfolio(portfolio: NumberedPortfolio, params: RenamePortfolioParams): Promise<NumberedPortfolio> {
+    setStatus("Modifying name")
+    const updated = await (await portfolio.modifyName(params)).run()
+    setStatus("Name modified")
+    return updated
+  }
+
   async function setCustodian(portfolio: DefaultPortfolio | NumberedPortfolio, newCustodian: string): Promise<void> {
     setStatus("Setting custodian")
     await (await portfolio.setCustodian({ targetIdentity: newCustodian })).run()
@@ -700,9 +710,9 @@ export default function Home() {
     await loadMyPortfolios()
   }
 
-  async function relinquishCustody(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<void> {
+  async function quitCustody(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<void> {
     setStatus("Relinquishing custody")
-    await (await portfolio.setCustodian({ targetIdentity: portfolio.owner })).run()
+    await (await portfolio.quitCustody()).run()
     setStatus("Custody relinquished")
     await loadPortfolios(portfolio.owner.did)
   }
@@ -909,8 +919,9 @@ export default function Home() {
         <PortfolioInfoJsonView
           portfolio={action.origin}
           myDid={myInfo.myDid}
+          modifyName={modifyNamePortfolio}
           setCustodian={setCustodian}
-          relinquishCustody={relinquishCustody}
+          quitCustody={quitCustody}
           canManipulate={canManipulate}
         />
       </li>,
@@ -1068,10 +1079,9 @@ export default function Home() {
             <div>
               <AddInvestorUniquenessClaimView
                 claimParams={myInfo.attestations.uniquenessToAdd}
-                addToPath={(location, value) => setMyInfo(returnUpdatedCreator([...location, "scope"], value))}
-                onRequirementChangedCreator={onRequirementChangedCreator}
                 fetchMyCddId={fetchMyCddId}
                 location={["attestations", "uniquenessToAdd"]}
+                isWrongStyle={styles.isWrong}
                 canManipulate={true}
               />
             </div>
@@ -1092,8 +1102,10 @@ export default function Home() {
           deletePortfolio={deletePortfolio}
           loadPortfolios={async (whose: string) => { await loadPortfolios(whose) }}
           loadCustodiedPortfolios={async (whose: string) => { await loadCustodiedPortfolios(whose) }}
-          relinquishCustody={relinquishCustody}
+          modifyName={modifyNamePortfolio}
+          quitCustody={quitCustody}
           setCustodian={setCustodian}
+          isWrongStyle={styles.isWrong}
           canManipulate={true}
         />
 

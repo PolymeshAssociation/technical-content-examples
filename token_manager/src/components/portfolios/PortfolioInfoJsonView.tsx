@@ -1,21 +1,28 @@
-import { DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/internal";
+import { DefaultPortfolio, NumberedPortfolio, RenamePortfolioParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
-import { LongHexView } from "../LongHexView";
+import { DateTimeEntryView } from "../elements/DateTimeEntry";
+import { EventIdentifierView } from "../elements/EventIdentifierView";
+import { PortfolioView } from "./PortfolioView";
 
 export type DeletePortfolio = (portfolio: NumberedPortfolio) => Promise<void>
+export type ModifyNamePortfolio = (portfolio: NumberedPortfolio, params: RenamePortfolioParams) => Promise<NumberedPortfolio>
 export type SetCustodian = (portfolio: DefaultPortfolio | NumberedPortfolio, custodian: string) => Promise<void>
-export type RelinquishCustody = (portfolio: DefaultPortfolio | NumberedPortfolio) => Promise<void>
+export type QuitCustody = (portfolio: DefaultPortfolio | NumberedPortfolio) => Promise<void>
 
 interface PortfolioInfoJsonViewState {
     newCustodian: string
+    custodianExpiry: Date | null
+    newName: string
 }
 
 export interface PortfolioInfoJsonViewProps {
     portfolio: PortfolioInfoJson
     myDid: string
+    modifyName: ModifyNamePortfolio,
     setCustodian: SetCustodian
-    relinquishCustody: RelinquishCustody
+    quitCustody: QuitCustody
+    isWrongStyle: any
     canManipulate: boolean
 }
 
@@ -24,57 +31,93 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
         super(props);
         this.state = {
             newCustodian: props.portfolio.custodian,
+            custodianExpiry: new Date(),
+            newName: props.portfolio.name,
         }
     }
 
-    updateNewCustodian = (e) => {
-        this.setState({
-            newCustodian: e.target.value
-        })
-    }
+    onUpdateNewCustodian = (e) => this.setState({ newCustodian: e.target.value })
+    onNewName = (e) => this.setState({ newName: e.target.value })
+    onModifyName = (portfolio: DefaultPortfolio | NumberedPortfolio) =>
+        async () => isNumberedPortfolio(portfolio) ? this.props.modifyName(portfolio, { name: this.state.newName }) : Promise.resolve()
+    onSetCustodian = (portfolio: PortfolioInfoJson) => async () => this.props.setCustodian(portfolio.original, this.state.newCustodian)
+    onCustodianExpiryChanged = (expiry: Date) => this.setState({ custodianExpiry: expiry })
+    onQuitCustody = (portfolio: PortfolioInfoJson) => async () => this.props.quitCustody(portfolio.original)
 
     render() {
-        const {
-            portfolio,
-            myDid,
-            setCustodian,
-            relinquishCustody,
-            canManipulate,
-        } = this.props
+        const { newCustodian, custodianExpiry, newName } = this.state
+        const { portfolio, myDid, isWrongStyle, canManipulate } = this.props
         const isCustodied: boolean = portfolio.original.owner.did !== portfolio.custodian
         const isMine: boolean = portfolio.original.owner.did === myDid
+        const isNumbered: boolean = isNumberedPortfolio(portfolio.original)
+        const canRename: boolean = canManipulate && isMine && isNumbered
         const canSetCustody: boolean = canManipulate && isMine && !isCustodied
-        const canRelinquish: boolean = canManipulate && isCustodied && portfolio.custodian === myDid
-        const original = portfolio.original
-        const isNumbered = isNumberedPortfolio(original)
-        const id = isNumbered ? original.id.toString(10) : "null"
+        const canClickSetCustody: boolean = canSetCustody && newCustodian !== myDid
+        const canQuit: boolean = canManipulate && isCustodied && portfolio.custodian === myDid
         return <ul>
-            <li key="owner">
-                Owner:&nbsp; <LongHexView value={original.owner.did} lut={{ [myDid]: "me" }} />
+            <li key="fields">
+                Fields:&nbsp;
+                <PortfolioView myDid={myDid} portfolio={portfolio.original} />
             </li>
-            <li key="id">Id:&nbsp;{id}</li>
-            <li key="name">Name:&nbsp;{portfolio.name}</li>
+            <li key="name">
+                Name:&nbsp;
+                <input
+                    value={newName}
+                    placeholder="My portfolio"
+                    onChange={this.onNewName}
+                    disabled={!canRename}
+                />
+                &nbsp;
+                <button
+                    className="submit rename"
+                    onClick={this.onModifyName(portfolio.original)}
+                    disabled={!canRename || portfolio.name === newName}>
+                    Modify
+                </button>
+            </li>
+            <li key="exists">
+                Exists:&nbsp;
+                <input
+                    type="checkbox"
+                    defaultChecked={portfolio.exists}
+                    disabled={true}
+                />
+            </li>
+            <li key="createdAt">
+                Created at:&nbsp;
+                <EventIdentifierView eventId={portfolio.createdAt}
+                />
+            </li>
             <li key="custodian">Custodian:&nbsp;
                 <input
-                    defaultValue={this.state.newCustodian}
+                    defaultValue={newCustodian}
                     placeholder="0x123"
-                    onChange={this.updateNewCustodian}
+                    onChange={this.onUpdateNewCustodian}
                     disabled={!canSetCustody}
                 />
                 &nbsp;
                 <button
                     className="submit set-custodian"
-                    onClick={() => setCustodian(portfolio.original, this.state.newCustodian)}
-                    disabled={!canSetCustody}>
+                    onClick={this.onSetCustodian(portfolio)}
+                    disabled={!canClickSetCustody}>
                     Set
                 </button>
                 &nbsp;
                 <button
                     className="submit unset-custodian"
-                    onClick={() => relinquishCustody(portfolio.original)}
-                    disabled={!canRelinquish}>
-                    Unset
+                    onClick={this.onQuitCustody(portfolio)}
+                    disabled={!canQuit}>
+                    Quit
                 </button>
+                <br />
+                With expiry: &nbsp;
+                <DateTimeEntryView
+                    dateTime={custodianExpiry}
+                    isOptional={true}
+                    validDateChanged={this.onCustodianExpiryChanged}
+                    isWrongStyle={isWrongStyle}
+                    canManipulate={canManipulate && canSetCustody}
+                />
             </li>
         </ul>
     }
@@ -83,20 +126,27 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
 export interface PortfolioJsonInfosViewProps {
     portfolios: PortfolioInfoJson[]
     myDid: string
+    modifyName: ModifyNamePortfolio,
     deletePortfolio: DeletePortfolio
     setCustodian: SetCustodian
-    relinquishCustody: RelinquishCustody
+    quitCustody: QuitCustody
+    isWrongStyle: any
     canManipulate: boolean
 }
 
 export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProps> {
+
+    onDelete = (portfolio: DefaultPortfolio | NumberedPortfolio) =>
+        async () => (isNumberedPortfolio(portfolio) ? this.props.deletePortfolio(portfolio) : Promise.resolve())
+
     render() {
         const {
             portfolios,
             myDid,
-            deletePortfolio,
+            modifyName,
             setCustodian,
-            relinquishCustody,
+            quitCustody,
+            isWrongStyle,
             canManipulate,
         } = this.props
         if (typeof portfolios === "undefined" || portfolios === null || portfolios.length === 0)
@@ -107,18 +157,20 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
                     const original: DefaultPortfolio | NumberedPortfolio = portfolio.original
                     const isNumbered: boolean = isNumberedPortfolio(original)
                     return <li key={index}>
-                        Portfolio {index}:&nbsp;
+                        {isNumberedPortfolio(original) ? "Numbered" : "Default"}&nbsp;Portfolio:&nbsp;
                         <button
                             className="submit delete-portfolio"
-                            onClick={() => isNumberedPortfolio(original) ? deletePortfolio(original) : ""}
+                            onClick={this.onDelete(original)}
                             disabled={!canManipulate || !isNumbered}>
                             Delete
                         </button>
                         <PortfolioInfoJsonView
                             portfolio={portfolio}
                             myDid={myDid}
+                            modifyName={modifyName}
                             setCustodian={setCustodian}
-                            relinquishCustody={relinquishCustody}
+                            quitCustody={quitCustody}
+                            isWrongStyle={isWrongStyle}
                             canManipulate={canManipulate}
                         />
                     </li>

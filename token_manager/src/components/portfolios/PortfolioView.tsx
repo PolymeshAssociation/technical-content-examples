@@ -1,11 +1,6 @@
-import {
-    DefaultPortfolio,
-    NumberedPortfolio,
-} from "@polymathnetwork/polymesh-sdk/types";
+import { DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import {
-    isNumberedPortfolio,
-} from "../../types";
+import { isNumberedPortfolio } from "../../types";
 import { LongHexView } from "../LongHexView";
 
 export interface PortfolioViewProps {
@@ -43,7 +38,10 @@ export class PortfoliosView extends Component<PortfoliosViewProps> {
     }
 }
 
-export type CreatePortfolio = (params: { name: string }) => Promise<NumberedPortfolio>
+export interface NewPortfolioParams {
+    name: string
+}
+export type CreatePortfolio = (params: NewPortfolioParams) => Promise<NumberedPortfolio>
 
 interface NewPortfolioViewState {
     name: string
@@ -72,6 +70,7 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
             <legend>New portfolio</legend>
             <div>Numbered portfolio to create:</div>
             <div className="submit">
+                Name:&nbsp;
                 <input
                     defaultValue={this.state.name}
                     placeholder="Trading portfolio"

@@ -20,7 +20,7 @@ import {
 } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
-import { ClaimsView, ClaimsViewState, ClaimView, ClaimViewState, } from "./ClaimView";
+import { ClaimsView, ClaimsViewState, ClaimView, ClaimViewState } from "./ClaimView";
 import { IdentityGetter } from "./ComplianceView";
 import {
     TrustedClaimIssuersView,
