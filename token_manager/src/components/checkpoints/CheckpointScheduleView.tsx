@@ -1,31 +1,29 @@
 import { Component } from "react";
-import {
-    CheckpointScheduleDetailsInfoJson,
-    CheckpointScheduleInfoJson,
-} from "../../types";
-import {
-    BasicCheckpointViewProps,
-    CheckpointsView,
-    LoadBalanceAtCheckpoint
-} from "./CheckpointView";
+import { CheckpointScheduleDetailsInfoJson, CheckpointScheduleInfoJson } from "../../types";
+import { CheckpointsView } from "./CheckpointView";
 
-export interface CheckpointScheduleViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleViewProps {
     scheduleInfo: CheckpointScheduleInfoJson
     canManipulate: boolean
 }
 
 function presentCheckpointScheduleInner(
     scheduleInfo: CheckpointScheduleInfoJson,
-    canManipulate: boolean,
-    loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
+    canManipulate: boolean): JSX.Element[] {
     return [
-        <li key="exists">Exists:&nbsp;{scheduleInfo.exists ? "true" : "false"}</li>,
+        <li key="exists">
+            Exists:&nbsp;
+            <input
+                type="checkbox"
+                checked={scheduleInfo.exists}
+                disabled={true}
+            />
+        </li>,
         <li key="createdCheckpoints">
             Created checkpoints:&nbsp;
             <CheckpointsView
                 checkpoints={scheduleInfo.createdCheckpoints}
                 canManipulate={canManipulate}
-                loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
             />
         </li>,
     ]
@@ -33,13 +31,11 @@ function presentCheckpointScheduleInner(
 
 function presentCheckpointScheduleDetailInner(
     scheduleInfo: CheckpointScheduleDetailsInfoJson,
-    canManipulate: boolean,
-    loadBalanceAtCheckpoint: LoadBalanceAtCheckpoint): JSX.Element[] {
+    canManipulate: boolean): JSX.Element[] {
     return [
         ...presentCheckpointScheduleInner(
             scheduleInfo,
-            canManipulate,
-            loadBalanceAtCheckpoint),
+            canManipulate),
         <li key="remainingCheckpoints">
             Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}
         </li>,
@@ -54,17 +50,15 @@ export class CheckpointScheduleView extends Component<CheckpointScheduleViewProp
         const {
             scheduleInfo,
             canManipulate,
-            loadBalanceAtCheckpoint
         } = this.props
         return <ul>{presentCheckpointScheduleInner(
             scheduleInfo,
-            canManipulate,
-            loadBalanceAtCheckpoint)
+            canManipulate)
         }</ul>
     }
 }
 
-export interface CheckpointScheduleDetailViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleDetailViewProps {
     scheduleDetailInfo: CheckpointScheduleDetailsInfoJson
     canManipulate: boolean
 }
@@ -74,17 +68,15 @@ export class CheckpointScheduleDetailView extends Component<CheckpointScheduleDe
         const {
             scheduleDetailInfo: scheduleInfo,
             canManipulate,
-            loadBalanceAtCheckpoint
         } = this.props
         return <ul>{presentCheckpointScheduleDetailInner(
             scheduleInfo,
-            canManipulate,
-            loadBalanceAtCheckpoint)
+            canManipulate)
         }</ul>
     }
 }
 
-export interface CheckpointScheduleDetailsViewProps extends BasicCheckpointViewProps {
+export interface CheckpointScheduleDetailsViewProps {
     schedules: CheckpointScheduleDetailsInfoJson[]
     canManipulate: boolean
 }
@@ -94,7 +86,6 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
         const {
             schedules,
             canManipulate,
-            loadBalanceAtCheckpoint
         } = this.props
         if (typeof schedules === "undefined" || schedules === null || schedules.length === 0)
             return <div>There are no checkpoint schedules</div>
@@ -105,7 +96,6 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
                     <CheckpointScheduleDetailView
                         scheduleDetailInfo={schedule}
                         canManipulate={canManipulate}
-                        loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                     />
                 </li>)
         }</ul>

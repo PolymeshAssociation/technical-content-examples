@@ -20,6 +20,7 @@ import {
     InvestorUniquenessV2Claim,
     NumberedPortfolio,
     Requirement,
+    ScheduleWithDetails,
     Scope,
     ScopeType,
     SecurityToken,
@@ -67,8 +68,6 @@ export type OnRequirementChangedIdentityCreator = (path: MyInfoPath) => (e) => P
 export type FetchAndAddToPath<Type> = (path: MyInfoPath, additionKey: Type) => Promise<void>
 export type FetchDefaultAndAddToPath = (path: MyInfoPath) => Promise<void>
 export type SimpleAction = () => Promise<void>
-export type AddToPath<Type> = (path: MyInfoPath, addition: Type) => void
-export type RemoveFromPath = (path: MyInfoPath) => void
 export type Getter<ReturnType> = () => Promise<ReturnType>
 
 export type MyInfoJson = {
@@ -187,14 +186,24 @@ export type AttestationsInfoJson = {
 }
 
 export type CheckpointsInfoJson = {
-    current: CheckpointWithData[],
+    current: Checkpoint[],
     details: CheckpointInfoJson[],
     currentSchedules: CheckpointSchedule[],
     scheduleDetails: CheckpointScheduleDetailsInfoJson[],
 }
 
+export function getEmptyCheckpointsInfoJson(): CheckpointsInfoJson {
+    return {
+        current: [] as Checkpoint[],
+        details: [] as CheckpointInfoJson[],
+        currentSchedules: [] as CheckpointSchedule[],
+        scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
+    }
+}
+
 export type CheckpointInfoJson = {
     checkpoint: Checkpoint,
+    exists: boolean,
     totalSupply: BigNumber,
     createdAt: Date,
 }
@@ -269,10 +278,10 @@ export function getEmptyMyInfo(): MyInfoJson {
         myDid: "" as string,
         myAddress: "" as string,
         myTickers: [] as string[],
-        reservation: getEmptyReservation() as ReservationInfoJson,
-        token: getEmptyTokenInfoJson() as TokenInfoJson,
-        permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
-        requirements: getEmptyRequirements() as RequirementsInfoJson,
+        reservation: getEmptyReservation(),
+        token: getEmptyTokenInfoJson(),
+        permissions: getEmptyPermissionsInfoJson(),
+        requirements: getEmptyRequirements(),
         authorisations: {
             current: [] as AuthorizationRequest[],
         } as AuthorisationInfoJson,
@@ -300,12 +309,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         portfolios: {
             myDetails: [] as PortfolioInfoJson[],
         },
-        checkpoints: {
-            current: [] as CheckpointWithData[],
-            details: [] as CheckpointInfoJson[],
-            currentSchedules: [] as CheckpointSchedule[],
-            scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
-        },
+        checkpoints: getEmptyCheckpointsInfoJson(),
         corporateActions: {
             distributions: {
                 dividends: [] as DividendDistributionInfoJson[],
@@ -348,8 +352,9 @@ export const isJurisdictionClaim = (claim: Claim): claim is JurisdictionClaim =>
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
 export const isNoDataClaim = (claim: Claim): claim is NoDataClaim => (claim as NoDataClaim).type === ClaimType.NoData
 export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
-export const isCheckpointWithData = (checkpointInfo: CheckpointWithData | Checkpoint): checkpointInfo is CheckpointWithData => typeof (checkpointInfo as CheckpointWithData).createdAt !== "undefined"
+export const isCheckpointWithData = (checkpointWith: CheckpointWithData | Checkpoint): checkpointWith is CheckpointWithData => typeof (checkpointWith as CheckpointWithData).checkpoint !== "undefined"
 export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
+export const isScheduleWithDetails = (schedule: CheckpointSchedule | ScheduleWithDetails): schedule is ScheduleWithDetails => typeof (schedule as ScheduleWithDetails).schedule !== "undefined"
 
 export declare type JurisdictionClaim = {
     type: ClaimType.Jurisdiction

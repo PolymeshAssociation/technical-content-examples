@@ -2,7 +2,6 @@ import Head from "next/head"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
-  CheckpointWithData,
   Compliance,
   Requirement,
   SecurityToken,
@@ -15,7 +14,6 @@ import {
   Authorization,
   AuthorizationType,
   Permissions,
-  ScheduleWithDetails,
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
@@ -27,7 +25,7 @@ import {
   AgentsInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleDetailsInfoJson,
-  CheckpointScheduleInfoJson,
+  CheckpointsInfoJson,
   CorporateActionInfoJson,
   CustomPermissionGroupInfoJson,
   DividendDistributionInfoJson,
@@ -35,7 +33,6 @@ import {
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
   isCheckpointSchedule,
-  isCheckpointWithData,
   isCustomPermissionGroup,
   isKnownPermissionGroup,
   isNumberedPortfolio,
@@ -56,7 +53,6 @@ import {
   Checkpoint,
   CheckpointSchedule,
   CorporateAction,
-  CreateCheckpointScheduleParams,
   CustomPermissionGroup,
   DividendDistribution,
   Identity,
@@ -78,7 +74,11 @@ import {
   AddInvestorUniquenessClaimView,
   ClaimView,
 } from "../src/components/compliance/ClaimView"
-import { ComplianceCheckParams, ComplianceManagerView, RequirementsSaver } from "../src/components/compliance/ComplianceView"
+import {
+  ComplianceCheckParams,
+  ComplianceManagerView,
+  RequirementsSaver,
+} from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
@@ -89,6 +89,11 @@ import { PortfolioManagerView } from "../src/components/portfolios/PortfolioMana
 import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
 import { fetchPortfolioInfoJson } from "../src/handlers/portfolios/PortfolioHandlers"
 import { fetchTokenInfoJson } from "../src/handlers/token/TokenHandlers"
+import {
+  fetchCheckpointInfoJson,
+  fetchCheckpointScheduleInfoJson,
+  fetchCheckpointsInfo,
+} from "../src/handlers/checkpoints/CheckpointHandlers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -143,6 +148,7 @@ export default function Home() {
       ...prev,
       token: token,
     }))
+    setTimeout(async () => loadCheckpointsInfo(token), 500)
   }
 
   async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
@@ -229,7 +235,6 @@ export default function Home() {
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
     await setComplianceRequirements(token, requirements, arePaused)
-    await loadCheckpoints(token)
     return requirements
   }
 
@@ -540,84 +545,36 @@ export default function Home() {
     }))
   }
 
-  async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithData[]> {
-    // TODO handle pagination
-    const checkpoints: CheckpointWithData[] = (await token.checkpoints.get()).data
-    await setCheckpoints(checkpoints)
-    await loadCheckpointSchedules(token)
+  async function loadCheckpointsInfo(token: TokenInfoJson): Promise<CheckpointsInfoJson> {
+    const checkpoints: CheckpointsInfoJson = await fetchCheckpointsInfo(token)
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      checkpoints: checkpoints,
+    }))
     return checkpoints
   }
 
-  async function setCheckpoints(current: CheckpointWithData[]): Promise<CheckpointInfoJson[]> {
-    setMyInfo(returnUpdatedCreator(["checkpoints", "current"], current))
-    const details: CheckpointInfoJson[] = await Promise.all(current
-      .map((checkpointWith: CheckpointWithData) => getCheckpointInfo(checkpointWith)))
-    setMyInfo(returnUpdatedCreator(["checkpoints", "details"], details))
-    if (details.length > 0) setMyInfo(returnUpdatedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], details[0].checkpoint))
-    return details
+  function setCheckpointsInfo(infos: CheckpointInfoJson[]) {
+    console.log("setting checkpoints")
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      checkpoints: {
+        ...prev.checkpoints,
+        current: infos.map((info: CheckpointInfoJson) => info.checkpoint),
+        details: infos,
+      }
+    }))
   }
 
-  async function getCheckpointInfo(checkpointWith: CheckpointWithData | Checkpoint): Promise<CheckpointInfoJson> {
-    const checkpoint: Checkpoint = isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith
-    const [totalSupply, createdAt]: [BigNumber, Date] = await Promise.all([
-      checkpoint.totalSupply(),
-      isCheckpointWithData(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt()
-    ])
-    return {
-      checkpoint: checkpoint,
-      totalSupply: totalSupply,
-      createdAt: createdAt,
-    }
-  }
-
-  async function createCheckpoint(): Promise<Checkpoint> {
-    const checkpoint: Checkpoint = await (await myInfo.token.current.checkpoints.create()).run()
-    await loadCheckpoints(myInfo.token.current)
-    return checkpoint
-  }
-
-  async function loadBalanceAtCheckpoint(checkpoint: CheckpointInfoJson, whoseBalance: string): Promise<BigNumber> {
-    const balance: BigNumber = (await checkpoint.checkpoint.balance({ identity: whoseBalance }))
-    return balance
-  }
-
-  async function createScheduledCheckpoint(params: CreateCheckpointScheduleParams): Promise<CheckpointSchedule> {
-    const schedule: CheckpointSchedule = await (await myInfo.token.current.checkpoints.schedules.create(params)).run()
-    await loadCheckpointSchedules(myInfo.token.current)
-    return schedule
-  }
-
-  async function loadCheckpointSchedules(token: SecurityToken): Promise<ScheduleWithDetails[]> {
-    const schedules: ScheduleWithDetails[] = await token.checkpoints.schedules.get()
-    await setCheckpointSchedules(schedules)
-    await loadCorporateActions(token)
-    return schedules
-  }
-
-  async function setCheckpointSchedules(currentSchedules: ScheduleWithDetails[]): Promise<CheckpointScheduleDetailsInfoJson[]> {
-    setMyInfo(returnUpdatedCreator(["checkpoints", "currentSchedules"], currentSchedules))
-    const scheduleDetails: CheckpointScheduleDetailsInfoJson[] = await Promise.all(currentSchedules.map(getCheckpointScheduleDetailsInfo))
-    setMyInfo(returnUpdatedCreator(["checkpoints", "scheduleDetails"], scheduleDetails))
-    return scheduleDetails
-  }
-
-  async function getCheckpointScheduleInfo(schedule: CheckpointSchedule): Promise<CheckpointScheduleInfoJson> {
-    const createdCheckpoints: Checkpoint[] = await schedule.getCheckpoints()
-    const createdCheckpointInfos: CheckpointInfoJson[] = await Promise.all(createdCheckpoints.map(getCheckpointInfo))
-    const exists: boolean = await schedule.exists()
-    return {
-      schedule: schedule,
-      createdCheckpoints: createdCheckpointInfos,
-      exists: exists,
-    }
-  }
-
-  async function getCheckpointScheduleDetailsInfo(scheduleInfo: ScheduleWithDetails): Promise<CheckpointScheduleDetailsInfoJson> {
-    return {
-      ...await getCheckpointScheduleInfo(scheduleInfo.schedule),
-      remainingCheckpoints: scheduleInfo.details.remainingCheckpoints,
-      nextCheckpointDate: scheduleInfo.details.nextCheckpointDate,
-    }
+  function setCheckpointSchedulesInfo(infos: CheckpointScheduleDetailsInfoJson[]) {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      checkpoints: {
+        ...prev.checkpoints,
+        currentSchedules: infos.map((info: CheckpointScheduleDetailsInfoJson) => info.schedule),
+        scheduleDetails: infos,
+      }
+    }))
   }
 
   function onRequirementChangedDateCreator(path: MyInfoPath): (e) => Promise<void> {
@@ -685,8 +642,8 @@ export default function Home() {
     return {
       current: action,
       exists: await action.exists(),
-      checkpoint: checkpoint === null ? null : isSchedule ? null : await getCheckpointInfo(checkpoint as Checkpoint),
-      checkpointSchedule: checkpoint === null ? null : isSchedule ? await getCheckpointScheduleInfo(checkpoint as CheckpointSchedule) : null,
+      checkpoint: checkpoint === null ? null : isSchedule ? null : await fetchCheckpointInfoJson(checkpoint as Checkpoint),
+      checkpointSchedule: checkpoint === null ? null : isSchedule ? await fetchCheckpointScheduleInfoJson(checkpoint as CheckpointSchedule) : null,
     }
   }
 
@@ -706,13 +663,11 @@ export default function Home() {
           <CheckpointView
             checkpointInfo={action.checkpoint}
             canManipulate={canManipulate}
-            loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
           />
         </li>
         if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;<CheckpointScheduleView
           scheduleInfo={action.checkpointSchedule}
           canManipulate={canManipulate}
-          loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
         />
         </li>
         return <li key="checkpoint">No checkpoint or checkpoint schedule</li>
@@ -930,10 +885,12 @@ export default function Home() {
 
         <CheckpointManagerView
           myInfo={myInfo}
+          token={myInfo.token}
+          checkpoints={myInfo.checkpoints}
           cardStyle={styles.card}
-          createCheckpoint={createCheckpoint}
-          createScheduledCheckpoint={createScheduledCheckpoint}
-          loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
+          isWrongStyle={styles.isWrong}
+          onCheckpointsChanged={setCheckpointsInfo}
+          onCheckpointSchedulesChanged={setCheckpointSchedulesInfo}
         />
 
         <fieldset className={styles.card}>
@@ -994,7 +951,7 @@ export default function Home() {
             (() => {
               const canManipulate: boolean = myInfo.token?.current !== null && (myInfo.token?.details?.owner?.did === myInfo.myDid || myInfo.corporateActions?.agent?.did === myInfo.myDid)
               const currentCheckpointIndex = myInfo.checkpoints.current
-                .findIndex((checkpointWith: CheckpointWithData) => checkpointWith.checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
+                .findIndex((checkpoint: Checkpoint) => checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
               return <div>
                 Create new (no tax handling):
                 <ul>
@@ -1012,9 +969,9 @@ export default function Home() {
                       })}>{
                         [
                           <option key="menu" disabled={true}>Pick a checkpoint</option>,
-                          ...myInfo.checkpoints.current
-                            .map((checkpointWith: CheckpointWithData, index: number) => <option key={index} value={index}>
-                              {checkpointWith.checkpoint.id.toString(10)}&nbsp;-&nbsp;{checkpointWith.createdAt.toISOString()}
+                          ...myInfo.checkpoints.details
+                            .map((checkpoint: CheckpointInfoJson, index: number) => <option key={index} value={index}>
+                              {checkpoint.checkpoint.id.toString(10)}&nbsp;-&nbsp;{checkpoint.createdAt.toISOString()}
                             </option>)
                         ]
                       }</select>

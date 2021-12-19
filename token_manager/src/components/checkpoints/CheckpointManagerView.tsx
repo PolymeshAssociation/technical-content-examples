@@ -1,12 +1,24 @@
 import { Checkpoint, CreateCheckpointScheduleParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { CalendarUnit, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { Getter, MyInfoJson } from "../../types";
+import {
+    fetchCheckpointInfoJson,
+    fetchCheckpointScheduleInfoJson,
+    OnCheckpointsChanged,
+    OnCheckpointSchedulesChanged,
+} from "../../handlers/checkpoints/CheckpointHandlers";
+import {
+    CheckpointInfoJson,
+    CheckpointScheduleDetailsInfoJson,
+    CheckpointScheduleInfoJson,
+    CheckpointsInfoJson,
+    MyInfoJson,
+    TokenInfoJson,
+} from "../../types";
+import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { CheckpointScheduleDetailsView } from "./CheckpointScheduleView";
-import { BasicCheckpointViewProps, CheckpointsView } from "./CheckpointView";
-
-export type CreateCheckpointSchedule = (params: CreateCheckpointScheduleParams) => Promise<CheckpointSchedule>
+import { CheckpointsView } from "./CheckpointView";
 
 interface CheckpointManagerViewState {
     start: Date
@@ -15,11 +27,14 @@ interface CheckpointManagerViewState {
     repetitions: number
 }
 
-export interface CheckpointManagerViewProps extends BasicCheckpointViewProps {
+export interface CheckpointManagerViewProps {
     myInfo: MyInfoJson
+    token: TokenInfoJson
+    checkpoints: CheckpointsInfoJson
     cardStyle: any
-    createCheckpoint: Getter<Checkpoint>
-    createScheduledCheckpoint: CreateCheckpointSchedule
+    isWrongStyle: any
+    onCheckpointsChanged: OnCheckpointsChanged
+    onCheckpointSchedulesChanged: OnCheckpointSchedulesChanged
 }
 
 export class CheckpointManagerView extends Component<CheckpointManagerViewProps, CheckpointManagerViewState> {
@@ -33,12 +48,19 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
         }
     }
 
-    updateStart = (e) => this.setState({ start: new Date(e.target.value) })
+    onValidDateChanged = (newStartDate: Date) => this.setState({ start: newStartDate })
     updatePeriodValue = (e) => this.setState({ periodValue: parseInt(e.target.value) })
     updatePeriodUnit = async (e) => this.setState({ periodUnit: e.target.value })
     updateRepetitions = (e) => this.setState({ repetitions: parseInt(e.target.value) })
 
-    getScheduleParams = () => ({
+    onCreateCheckpointSchedule = async () => this.createCheckpointSchedule()
+    createCheckpointSchedule = async (): Promise<CheckpointScheduleInfoJson> => {
+        const schedule: CheckpointSchedule = await (await this.props.token.current.checkpoints.schedules.create(this.getCheckpointScheduleParams())).run()
+        const info: CheckpointScheduleDetailsInfoJson = await fetchCheckpointScheduleInfoJson(schedule)
+        this.props.onCheckpointSchedulesChanged([...this.props.checkpoints.scheduleDetails, info])
+        return info
+    }
+    getCheckpointScheduleParams = (): CreateCheckpointScheduleParams => ({
         start: this.state.start,
         period: {
             unit: this.state.periodUnit,
@@ -47,14 +69,17 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
         repetitions: this.state.repetitions,
     })
 
+    onCreateCheckpoint = async () => this.onCreateCheckpoint()
+    createCheckpoint = async (): Promise<CheckpointInfoJson> => {
+        const created: Checkpoint = await (await this.props.myInfo.token.current.checkpoints.create()).run()
+        const info: CheckpointInfoJson = await fetchCheckpointInfoJson(created)
+        this.props.onCheckpointsChanged([...this.props.checkpoints.details, info])
+        return info
+    }
+
     render() {
-        const {
-            myInfo,
-            cardStyle,
-            createCheckpoint,
-            createScheduledCheckpoint,
-            loadBalanceAtCheckpoint,
-        } = this.props
+        const { start } = this.state
+        const { myInfo, cardStyle, isWrongStyle } = this.props
         const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
         return <fieldset className={cardStyle}>
             <legend>Checkpoints for: {myInfo.token.current?.ticker}</legend>
@@ -62,30 +87,33 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
             <div className="submit">
                 <button
                     className="submit create-checkpoint"
-                    onClick={createCheckpoint}
+                    onClick={this.createCheckpoint}
                     disabled={!canManipulate}>
-                    Create 1 now
+                    Create 1 checkpoint now
                 </button>
             </div>
 
-            <div>
+            <fieldset className={cardStyle}>
+                <legend>Loaded checkpoints</legend>
+
                 <CheckpointsView
                     checkpoints={myInfo.checkpoints?.details}
                     canManipulate={true}
-                    loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                 />
-            </div>
+            </fieldset>
 
-            <div className={cardStyle}>
-                Create new:
+            <fieldset className={cardStyle}>
+                <legend>New schedule</legend>
+
                 <ul>
                     <li key="start">
                         Start at:&nbsp;
-                        <input
-                            defaultValue={this.state.start.toISOString()}
-                            placeholder={new Date().toISOString()}
-                            disabled={!canManipulate}
-                            onChange={this.updateStart}
+                        <DateTimeEntryView
+                            dateTime={start}
+                            isOptional={false}
+                            isWrongStyle={isWrongStyle}
+                            validDateChanged={this.onValidDateChanged}
+                            canManipulate={canManipulate}
                         />
                     </li>
                     <li key="periodValue">
@@ -119,22 +147,23 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                     <div className="submit">
                         <button
                             className="submit create-scheduled-checkpoint"
-                            onClick={() => createScheduledCheckpoint(this.getScheduleParams())}
+                            onClick={this.onCreateCheckpointSchedule}
                             disabled={!canManipulate}>
-                            Create scheduled
+                            Create schedule
                         </button>
                     </div>
                 </div>
 
-            </div>
+            </fieldset>
 
-            <div>
+            <fieldset className={cardStyle}>
+                <legend>Loaded checkpoint schedules</legend>
+
                 <CheckpointScheduleDetailsView
                     schedules={myInfo.checkpoints.scheduleDetails}
                     canManipulate={canManipulate}
-                    loadBalanceAtCheckpoint={loadBalanceAtCheckpoint}
                 />
-            </div>
+            </fieldset>
 
         </fieldset>
 
