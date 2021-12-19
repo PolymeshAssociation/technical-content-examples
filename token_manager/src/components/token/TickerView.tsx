@@ -110,7 +110,7 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
                     id="ticker"
                     type="text"
                     placeholder="ACME"
-                    value={this.state.ticker}
+                    defaultValue={this.state.ticker}
                     onChange={this.onUpdateTicker}
                 />&nbsp;
                 <span>{fetchTimer ? "⏳" : " "}</span>

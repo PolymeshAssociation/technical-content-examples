@@ -3,7 +3,7 @@ import { DefaultPortfolio, EventIdentifier, NumberedPortfolio } from "@polymathn
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 
 export async function fetchPortfolioInfoJson(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
-    const fetched: [EventIdentifier, boolean, Identity, string] = await Promise.all([
+    const [createdAt, exists, custodian, name]: [EventIdentifier, boolean, Identity, string] = await Promise.all([
         isNumberedPortfolio(portfolio) ? portfolio.createdAt() : null,
         portfolio.exists(),
         portfolio.getCustodian(),
@@ -11,10 +11,10 @@ export async function fetchPortfolioInfoJson(portfolio: DefaultPortfolio | Numbe
     ])
     return {
         original: portfolio,
-        createdAt: fetched[0],
-        exists: fetched[1],
-        custodian: fetched[2].did,
-        name: fetched[3],
+        createdAt: createdAt,
+        exists: exists,
+        custodian: custodian.did,
+        name: name,
     }
 }
 

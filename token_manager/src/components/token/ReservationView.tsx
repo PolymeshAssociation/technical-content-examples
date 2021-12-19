@@ -198,7 +198,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-name"
                     type="text"
                     placeholder="American CME"
-                    value={longName}
+                    defaultValue={longName}
                     disabled={!canCreate}
                     onChange={this.onLongNameChanged}
                 />
@@ -223,7 +223,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-assetType"
                     type="text"
                     placeholder={KnownTokenType.EquityCommon}
-                    value={assetType}
+                    defaultValue={assetType}
                     disabled={!canCreate}
                     onChange={this.onAssetTypeFromInputChanged}
                 />
@@ -243,7 +243,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     name="token-fundingRound"
                     type="text"
                     placeholder="Series A"
-                    value={fundingRound}
+                    defaultValue={fundingRound}
                     disabled={!canCreate}
                     onChange={this.onFundingRoundChanged}
                 />

@@ -55,7 +55,7 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
                     name="token-value"
                     type="text"
                     placeholder="ACME"
-                    value={value}
+                    defaultValue={value}
                     disabled={!canManipulate}
                     onChange={this.onValueChanged}
                 />

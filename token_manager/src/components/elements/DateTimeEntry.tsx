@@ -54,17 +54,18 @@ export class DateTimeEntryView extends Component<DateTimeEntryViewProps, DateTim
         const { isOptional, isWrongStyle, canManipulate } = this.props
         const canChangePresence: boolean = canManipulate && isOptional
         const canChangeDate = canManipulate && hasDateTime
+        const hasDateTimeElem: JSX.Element = <li key="hasDateTime">
+            Has it:&nbsp;
+            <input
+                name="has-date-time"
+                type="checkbox"
+                defaultChecked={hasDateTime}
+                disabled={!canChangePresence}
+                onChange={this.onHasDateTimeChanged}
+            />
+        </li>
         return <ul>
-            <li key="hasDateTime">
-                Has it:&nbsp;
-                <input
-                    name="has-date-time"
-                    type="checkbox"
-                    defaultChecked={hasDateTime}
-                    disabled={!canChangePresence}
-                    onChange={this.onHasDateTimeChanged}
-                />
-            </li>
+            {isOptional ? hasDateTimeElem : <span></span>}
             <li key="dateTime">
                 When:&nbsp;
                 <input
