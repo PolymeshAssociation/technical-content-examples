@@ -1,33 +1,29 @@
+import { Polymesh } from "@polymathnetwork/polymesh-sdk"
+import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
-import { PortfoliosInfoJson } from "../../types"
-import {
-    DeletePortfolio,
-    ModifyNamePortfolio,
-    PortfolioJsonInfosView,
-    QuitCustody,
-    SetCustodian,
-} from "./PortfolioInfoJsonView"
-import { CreatePortfolio, NewPortfolioView } from "./PortfolioView"
+import { fetchPortfolioInfoJsons, OnPortfolioInfosChanged } from "../../handlers/portfolios/PortfolioHandlers"
+import { PortfolioInfoJson } from "../../types"
+import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
+import { NewPortfolioView } from "./PortfolioView"
 
-export type LoadPortfolios = (whose: string) => Promise<void>
-export type LoadCustodiedPortfolios = (whose: string) => Promise<void>
+declare enum PortfolioListType {
+    Mine = "Mine",
+    Other = "Other",
+    MyCustodied = "MyCustodied"
+}
 
 interface PortfolioManagerViewState {
+    listType: PortfolioListType
     otherOwner: string
+    portfolios: PortfolioInfoJson[]
 }
 
 export interface PortfolioManagerViewProps {
-    portfolios: PortfoliosInfoJson
+    apiPromise: Promise<Polymesh>
     myDid: string
     cardStyle: any
-    loadPortfolios: LoadPortfolios,
-    loadCustodiedPortfolios: LoadPortfolios,
-    modifyName: ModifyNamePortfolio,
-    deletePortfolio: DeletePortfolio
-    setCustodian: SetCustodian
-    quitCustody: QuitCustody
-    createPortfolio: CreatePortfolio
     isWrongStyle: any
+    onMyPortfolioInfosChanged: OnPortfolioInfosChanged
     canManipulate: boolean
 }
 
@@ -35,25 +31,70 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     constructor(props: PortfolioManagerViewProps) {
         super(props)
         this.state = {
+            listType: PortfolioListType.Mine,
             otherOwner: "",
+            portfolios: [],
         }
     }
 
     updateOtherOwner = (e) => this.setState({ otherOwner: e.target.value })
-    onLoadMyPortfolios = (e) => this.props.loadPortfolios(this.props.myDid)
-    onLoadOtherPortfolios = (e) => this.props.loadPortfolios(this.state.otherOwner)
-    onLoadMyCustodiedPortfolios = (e) => this.props.loadCustodiedPortfolios(this.props.myDid)
+
+    onLoadMyPortfolios = async () => {
+        this.setState({ listType: PortfolioListType.Mine })
+        await this.loadMyPortfolios()
+    }
+    loadMyPortfolios = async (): Promise<PortfolioInfoJson[]> => {
+        const api: Polymesh = await this.props.apiPromise
+        const me: Identity = await api.getCurrentIdentity()
+        const myPortfolios: PortfolioInfoJson[] = await this.loadPortfolios(me)
+        this.props.onMyPortfolioInfosChanged(myPortfolios)
+        return myPortfolios
+    }
+    onLoadOtherPortfolios = async () => {
+        this.setState({ listType: PortfolioListType.Other })
+        await this.loadOtherPortfolios()
+    }
+    loadOtherPortfolios = async (): Promise<PortfolioInfoJson[]> => {
+        const api: Polymesh = await this.props.apiPromise
+        const other: Identity = await api.getIdentity({ did: this.state.otherOwner })
+        return this.loadPortfolios(other)
+    }
+    loadPortfolios = async (otherOwner: Identity): Promise<PortfolioInfoJson[]> => {
+        const portfolios: (DefaultPortfolio | NumberedPortfolio)[] = await otherOwner.portfolios.getPortfolios()
+        const infos: PortfolioInfoJson[] = await fetchPortfolioInfoJsons(portfolios)
+        return infos
+    }
+
+    onLoadMyCustodiedPortfolios = async () => {
+        this.setState({ listType: PortfolioListType.MyCustodied })
+        await this.loadMyCustodiedPortfolios();
+    }
+    loadMyCustodiedPortfolios = async () => {
+        const api: Polymesh = await this.props.apiPromise
+        const me: Identity = await api.getCurrentIdentity()
+        await this.loadCustodiedPortfolios(me)
+    }
+    loadCustodiedPortfolios = async (custodian: Identity): Promise<(DefaultPortfolio | NumberedPortfolio)[]> => {
+        const portfolios: (DefaultPortfolio | NumberedPortfolio)[] = (await custodian.portfolios.getCustodiedPortfolios()).data
+        return portfolios
+    }
+
+    onPortfolioInfosChanged = (changed: PortfolioInfoJson[]) => {
+        this.setState({ portfolios: changed })
+        if (this.state.listType === PortfolioListType.Mine) this.props.onMyPortfolioInfosChanged(changed)
+    }
+    onPortfolioInfoCreated = (created: PortfolioInfoJson) => this.setState((prev: PortfolioManagerViewState) => ({
+        portfolios: [
+            ...prev.portfolios,
+            created,
+        ]
+    }))
 
     render() {
+        const { portfolios } = this.state
         const {
-            portfolios,
             myDid,
             cardStyle,
-            modifyName,
-            deletePortfolio,
-            setCustodian,
-            quitCustody,
-            createPortfolio,
             isWrongStyle,
             canManipulate,
         } = this.props
@@ -89,11 +130,8 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             <fieldset className={cardStyle}>
                 <legend>Loaded portfolios</legend>
                 <PortfolioJsonInfosView
-                    portfolios={portfolios.details}
-                    modifyName={modifyName}
-                    deletePortfolio={deletePortfolio}
-                    setCustodian={setCustodian}
-                    quitCustody={quitCustody}
+                    portfolios={portfolios}
+                    onPortfolioInfosChanged={this.onPortfolioInfosChanged}
                     myDid={myDid}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
@@ -103,9 +141,10 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             <div>See in the authorisations box above<br />for the pending custody authorisation</div>
 
             <NewPortfolioView
+                apiPromise={this.props.apiPromise}
                 cardStyle={cardStyle}
                 canManipulate={canManipulate}
-                createPortfolio={createPortfolio}
+                onPortfolioInfoCreated={this.onPortfolioInfoCreated}
             />
 
         </fieldset>

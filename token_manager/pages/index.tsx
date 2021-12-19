@@ -59,15 +59,11 @@ import {
   CorporateAction,
   CreateCheckpointScheduleParams,
   CustomPermissionGroup,
-  DefaultPortfolio,
   DividendDistribution,
   Identity,
   InviteExternalAgentParams,
   KnownPermissionGroup,
-  NumberedPortfolio,
-  PolymeshError,
   RemoveExternalAgentParams,
-  RenamePortfolioParams,
   SetAssetRequirementsParams,
   TickerReservation,
 } from "@polymathnetwork/polymesh-sdk/internal"
@@ -272,7 +268,6 @@ export default function Home() {
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
     await setComplianceRequirements(token, requirements, arePaused)
-    await loadMyPortfolios()
     await loadCheckpoints(token)
     return requirements
   }
@@ -575,87 +570,13 @@ export default function Home() {
     await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
-  async function createPortfolio(params): Promise<NumberedPortfolio> {
-    const api: Polymesh = await getPolyWalletApi()
-    const me: Identity = await api.getCurrentIdentity()
-    const newPortfolio = await (await me.portfolios.create(params)).run()
-    await loadMyPortfolios()
-    return newPortfolio
-  }
-
-  async function deletePortfolio(portfolio: BigNumber | NumberedPortfolio): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    const me: Identity = await api.getCurrentIdentity()
-    await (await me.portfolios.delete({ portfolio })).run()
-    await loadMyPortfolios()
-  }
-
-  async function loadMyPortfolios(): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
-    const api: Polymesh = await getPolyWalletApi()
-    const me: Identity = await api.getCurrentIdentity()
-    const mine = await loadPortfolios(me.did)
-    setMyInfo(returnUpdatedCreator(["portfolios", "mine"], mine))
-    return mine
-  }
-
-  async function loadPortfolios(whose: string): Promise<[DefaultPortfolio, ...NumberedPortfolio[]]> {
-    const api: Polymesh = await getPolyWalletApi()
-    const who: Identity = await api.getIdentity({ did: whose })
-    setStatus(`Loading portfolios of ${whose}`)
-    const portfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
-    setStatus(`Portfolios of ${whose} retrieved`)
-    await setPortfolios(portfolios)
-    return portfolios
-  }
-
-  async function loadCustodiedPortfolios(whose: string): Promise<(DefaultPortfolio | NumberedPortfolio)[]> {
-    const api: Polymesh = await getPolyWalletApi()
-    const who: Identity = await api.getIdentity({ did: whose })
-    setStatus("Loading my custodied portfolios")
-    const result: ResultSet<DefaultPortfolio | NumberedPortfolio> = await who.portfolios.getCustodiedPortfolios()
-    setStatus("My custodied portfolios loaded")
-    await setPortfolios(result.data)
-    return result.data
-  }
-
-  async function getPortfolioInfo(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
-    return {
-      original: portfolio,
-      name: isNumberedPortfolio(portfolio) ? await portfolio.getName() : "null",
-      exists: await portfolio.exists(),
-      custodian: (await portfolio.getCustodian()).did,
-      createdAt: isNumberedPortfolio(portfolio) ? await portfolio.createdAt() : null,
-    }
-  }
-
-  async function getPortfolioInfos(portfolios: (DefaultPortfolio | NumberedPortfolio)[]): Promise<PortfolioInfoJson[]> {
-    return Promise.all(portfolios.map(getPortfolioInfo));
-  }
-
-  async function setPortfolios(portfolios: (DefaultPortfolio | NumberedPortfolio)[]): Promise<void> {
-    const portfolioInfos: PortfolioInfoJson[] = await getPortfolioInfos(portfolios)
-    setMyInfo(returnUpdatedCreator(["portfolios", "details"], portfolioInfos))
-  }
-
-  async function modifyNamePortfolio(portfolio: NumberedPortfolio, params: RenamePortfolioParams): Promise<NumberedPortfolio> {
-    setStatus("Modifying name")
-    const updated = await (await portfolio.modifyName(params)).run()
-    setStatus("Name modified")
-    return updated
-  }
-
-  async function setCustodian(portfolio: DefaultPortfolio | NumberedPortfolio, newCustodian: string): Promise<void> {
-    setStatus("Setting custodian")
-    await (await portfolio.setCustodian({ targetIdentity: newCustodian })).run()
-    setStatus("Custodian set")
-    await loadMyPortfolios()
-  }
-
-  async function quitCustody(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<void> {
-    setStatus("Relinquishing custody")
-    await (await portfolio.quitCustody()).run()
-    setStatus("Custody relinquished")
-    await loadPortfolios(portfolio.owner.did)
+  function setMyPortfolios(myDetails: PortfolioInfoJson[]) {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      portfolios: {
+        myDetails: myDetails,
+      }
+    }))
   }
 
   async function loadCheckpoints(token: SecurityToken): Promise<CheckpointWithData[]> {
@@ -791,7 +712,7 @@ export default function Home() {
     return {
       ...(await getCorporateActionInfo(action)),
       current: action,
-      origin: await getPortfolioInfo(action.origin),
+      origin: await fetchPortfolioInfoJson(action.origin),
       details: await action.details(),
       participants: await action.getParticipants(),
     }
@@ -860,9 +781,8 @@ export default function Home() {
         <PortfolioInfoJsonView
           portfolio={action.origin}
           myDid={myInfo.myDid}
-          modifyName={modifyNamePortfolio}
-          setCustodian={setCustodian}
-          quitCustody={quitCustody}
+          isWrongStyle={styles.isWrong}
+          onPortfolioInfoChanged={() => { }}
           canManipulate={canManipulate}
         />
       </li>,
@@ -1037,17 +957,11 @@ export default function Home() {
         </fieldset>
 
         <PortfolioManagerView
-          portfolios={myInfo.portfolios}
+          apiPromise={apiPromise}
           myDid={myInfo.myDid}
           cardStyle={styles.card}
-          createPortfolio={createPortfolio}
-          deletePortfolio={deletePortfolio}
-          loadPortfolios={async (whose: string) => { await loadPortfolios(whose) }}
-          loadCustodiedPortfolios={async (whose: string) => { await loadCustodiedPortfolios(whose) }}
-          modifyName={modifyNamePortfolio}
-          quitCustody={quitCustody}
-          setCustodian={setCustodian}
           isWrongStyle={styles.isWrong}
+          onMyPortfolioInfosChanged={setMyPortfolios}
           canManipulate={true}
         />
 
@@ -1150,10 +1064,10 @@ export default function Home() {
                   <li key="originPortfolio">
                     Origin portfolio:&nbsp;
                     <select defaultValue={myInfo.corporateActions.distributions.newDividend.originPortfolio?.id?.toString(10)} disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "originPortfolio"], false, (e) => Promise.resolve(myInfo.portfolios.mine[e.target.value]))}>{
-                        myInfo.portfolios.mine
-                          .map((portfolio: NumberedPortfolio, index: number) => <option key={index} value={index}>
-                            {isNumberedPortfolio(portfolio) ? portfolio.id.toString(10) : "Default"}
+                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "originPortfolio"], false, (e) => Promise.resolve(myInfo.portfolios.myDetails[e.target.value].original))}>{
+                        myInfo.portfolios.myDetails
+                          .map((portfolio: PortfolioInfoJson, index: number) => <option key={index} value={index}>
+                            {isNumberedPortfolio(portfolio.original) ? portfolio.original.id.toString(10) : "Default"}
                           </option>)
                       }</select>
                   </li>

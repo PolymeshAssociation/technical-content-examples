@@ -1,7 +1,13 @@
-import { DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
+import { Polymesh } from "@polymathnetwork/polymesh-sdk";
+import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { isNumberedPortfolio } from "../../types";
+import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 import { LongHexView } from "../LongHexView";
+import {
+    NewPortfolioParams,
+    OnPortfolioInfoChanged,
+    fetchPortfolioInfoJson,
+} from "../../handlers/portfolios/PortfolioHandlers";
 
 export interface PortfolioViewProps {
     portfolio: DefaultPortfolio | NumberedPortfolio
@@ -38,19 +44,15 @@ export class PortfoliosView extends Component<PortfoliosViewProps> {
     }
 }
 
-export interface NewPortfolioParams {
-    name: string
-}
-export type CreatePortfolio = (params: NewPortfolioParams) => Promise<NumberedPortfolio>
-
 interface NewPortfolioViewState {
     name: string
 }
 
 export interface NewPortfolioViewProps {
     cardStyle: any
+    apiPromise: Promise<Polymesh>
+    onPortfolioInfoCreated: OnPortfolioInfoChanged
     canManipulate: boolean
-    createPortfolio: CreatePortfolio
 }
 
 export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfolioViewState> {
@@ -62,7 +64,16 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
     }
 
     updateName = (e) => this.setState({ name: e.target.value })
-    onCreate = async (e) => this.props.createPortfolio({ name: this.state.name })
+    onCreatePortfolio = async () => this.createPortfolio(this.getCreateParams())
+    createPortfolio = async (newName: NewPortfolioParams): Promise<PortfolioInfoJson> => {
+        const api: Polymesh = await this.props.apiPromise
+        const me: Identity = await api.getCurrentIdentity()
+        const created: NumberedPortfolio = await (await me.portfolios.create(newName)).run()
+        const createdInfo: PortfolioInfoJson = await fetchPortfolioInfoJson(created)
+        this.props.onPortfolioInfoCreated(createdInfo)
+        return createdInfo
+    }
+    getCreateParams = () => ({ name: this.state.name })
 
     render() {
         const { cardStyle, canManipulate } = this.props
@@ -80,7 +91,7 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
                 &nbsp;
                 <button
                     className="submit create-portfolio"
-                    onClick={this.onCreate}
+                    onClick={this.onCreatePortfolio}
                     disabled={!canManipulate}>
                     Create
                 </button>

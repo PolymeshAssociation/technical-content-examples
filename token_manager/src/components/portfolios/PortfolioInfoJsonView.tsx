@@ -1,27 +1,30 @@
-import { DefaultPortfolio, NumberedPortfolio, RenamePortfolioParams } from "@polymathnetwork/polymesh-sdk/internal";
+import {
+    DefaultPortfolio,
+    NumberedPortfolio,
+    RenamePortfolioParams,
+    SetCustodianParams,
+} from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
+import {
+    OnPortfolioInfoChanged,
+    OnPortfolioInfosChanged,
+    fetchPortfolioInfoJson,
+} from "../../handlers/portfolios/PortfolioHandlers";
 import { PortfolioView } from "./PortfolioView";
 
-export type DeletePortfolio = (portfolio: NumberedPortfolio) => Promise<void>
-export type ModifyNamePortfolio = (portfolio: NumberedPortfolio, params: RenamePortfolioParams) => Promise<NumberedPortfolio>
-export type SetCustodian = (portfolio: DefaultPortfolio | NumberedPortfolio, custodian: string) => Promise<void>
-export type QuitCustody = (portfolio: DefaultPortfolio | NumberedPortfolio) => Promise<void>
-
 interface PortfolioInfoJsonViewState {
+    newName: string
     newCustodian: string
     custodianExpiry: Date | null
-    newName: string
 }
 
 export interface PortfolioInfoJsonViewProps {
     portfolio: PortfolioInfoJson
     myDid: string
-    modifyName: ModifyNamePortfolio,
-    setCustodian: SetCustodian
-    quitCustody: QuitCustody
+    onPortfolioInfoChanged: OnPortfolioInfoChanged
     isWrongStyle: any
     canManipulate: boolean
 }
@@ -36,13 +39,39 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
         }
     }
 
-    onUpdateNewCustodian = (e) => this.setState({ newCustodian: e.target.value })
     onNewName = (e) => this.setState({ newName: e.target.value })
-    onModifyName = (portfolio: DefaultPortfolio | NumberedPortfolio) =>
-        async () => isNumberedPortfolio(portfolio) ? this.props.modifyName(portfolio, { name: this.state.newName }) : Promise.resolve()
-    onSetCustodian = (portfolio: PortfolioInfoJson) => async () => this.props.setCustodian(portfolio.original, this.state.newCustodian)
+    onModifyName = async () => {
+        const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolio.original
+        isNumberedPortfolio(portfolio) ? this.modifyName(portfolio, this.getModifyNameParams()) : Promise.resolve()
+    }
+    modifyName = async (portfolio: NumberedPortfolio, params: RenamePortfolioParams): Promise<PortfolioInfoJson> => {
+        const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(await (await portfolio.modifyName(params)).run())
+        this.props.onPortfolioInfoChanged(updated)
+        return updated
+    }
+    getModifyNameParams = (): RenamePortfolioParams => ({ name: this.state.newName })
+
+    onUpdateNewCustodian = (e) => this.setState({ newCustodian: e.target.value })
     onCustodianExpiryChanged = (expiry: Date) => this.setState({ custodianExpiry: expiry })
-    onQuitCustody = (portfolio: PortfolioInfoJson) => async () => this.props.quitCustody(portfolio.original)
+    onSetCustodian = async () => this.setCustodian(this.props.portfolio.original, this.getNewCustodianParams())
+    setCustodian = async (portfolio: (DefaultPortfolio | NumberedPortfolio), params: SetCustodianParams): Promise<PortfolioInfoJson> => {
+        await (await portfolio.setCustodian(params)).run()
+        const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(portfolio)
+        this.props.onPortfolioInfoChanged(updated)
+        return updated
+    }
+    getNewCustodianParams = (): SetCustodianParams => ({
+        targetIdentity: this.state.newCustodian,
+        expiry: this.state.custodianExpiry,
+    })
+
+    onQuitCustody = async () => this.quitCustody(this.props.portfolio.original)
+    quitCustody = async (portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> => {
+        await (await portfolio.quitCustody()).run()
+        const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(portfolio)
+        this.props.onPortfolioInfoChanged(updated)
+        return updated
+    }
 
     render() {
         const { newCustodian, custodianExpiry, newName } = this.state
@@ -70,7 +99,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                 &nbsp;
                 <button
                     className="submit rename"
-                    onClick={this.onModifyName(portfolio.original)}
+                    onClick={this.onModifyName}
                     disabled={!canRename || portfolio.name === newName}>
                     Modify
                 </button>
@@ -98,14 +127,14 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                 &nbsp;
                 <button
                     className="submit set-custodian"
-                    onClick={this.onSetCustodian(portfolio)}
+                    onClick={this.onSetCustodian}
                     disabled={!canClickSetCustody}>
                     Set
                 </button>
                 &nbsp;
                 <button
                     className="submit unset-custodian"
-                    onClick={this.onQuitCustody(portfolio)}
+                    onClick={this.onQuitCustody}
                     disabled={!canQuit}>
                     Quit
                 </button>
@@ -126,26 +155,34 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
 export interface PortfolioJsonInfosViewProps {
     portfolios: PortfolioInfoJson[]
     myDid: string
-    modifyName: ModifyNamePortfolio,
-    deletePortfolio: DeletePortfolio
-    setCustodian: SetCustodian
-    quitCustody: QuitCustody
+    onPortfolioInfosChanged: OnPortfolioInfosChanged
     isWrongStyle: any
     canManipulate: boolean
 }
 
 export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProps> {
 
-    onDelete = (portfolio: DefaultPortfolio | NumberedPortfolio) =>
-        async () => (isNumberedPortfolio(portfolio) ? this.props.deletePortfolio(portfolio) : Promise.resolve())
+    onDeletePortfolio = (index: number) => () => {
+        const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolios[index].original
+        async () => (isNumberedPortfolio(portfolio) ? this.deletePortfolio(portfolio, index) : Promise.resolve())
+    }
+    deletePortfolio = async (toDelete: NumberedPortfolio, index: number) => {
+        await (await toDelete.delete()).run()
+        const list: PortfolioInfoJson[] = this.props.portfolios
+        list.splice(index, 1)
+        this.props.onPortfolioInfosChanged(list)
+    }
+
+    onPortfolioInfoChanged = (index: number) => (changed: PortfolioInfoJson) => {
+        const list: PortfolioInfoJson[] = this.props.portfolios
+        list[index] = changed
+        this.props.onPortfolioInfosChanged(list)
+    }
 
     render() {
         const {
             portfolios,
             myDid,
-            modifyName,
-            setCustodian,
-            quitCustody,
             isWrongStyle,
             canManipulate,
         } = this.props
@@ -157,19 +194,17 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
                     const original: DefaultPortfolio | NumberedPortfolio = portfolio.original
                     const isNumbered: boolean = isNumberedPortfolio(original)
                     return <li key={index}>
-                        {isNumberedPortfolio(original) ? "Numbered" : "Default"}&nbsp;Portfolio:&nbsp;
+                        {isNumbered ? "Numbered" : "Default"}&nbsp;Portfolio:&nbsp;
                         <button
                             className="submit delete-portfolio"
-                            onClick={this.onDelete(original)}
+                            onClick={this.onDeletePortfolio(index)}
                             disabled={!canManipulate || !isNumbered}>
                             Delete
                         </button>
                         <PortfolioInfoJsonView
                             portfolio={portfolio}
                             myDid={myDid}
-                            modifyName={modifyName}
-                            setCustodian={setCustodian}
-                            quitCustody={quitCustody}
+                            onPortfolioInfoChanged={this.onPortfolioInfoChanged(index)}
                             isWrongStyle={isWrongStyle}
                             canManipulate={canManipulate}
                         />
