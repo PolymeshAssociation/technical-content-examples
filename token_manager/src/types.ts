@@ -44,6 +44,7 @@ import {
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
+import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -153,9 +154,19 @@ export type PermissionsInfoJson = {
 }
 
 export type RequirementsInfoJson = {
+    original: Requirements | null
     current: Requirement[],
     arePaused: boolean,
     canManipulate: boolean,
+}
+
+export function getEmptyRequirements(): RequirementsInfoJson {
+    return {
+        original: null,
+        current: [] as Requirement[],
+        arePaused: true as boolean,
+        canManipulate: false as boolean,
+    }
 }
 
 export type AuthorisationInfoJson = {
@@ -261,14 +272,6 @@ export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
     return {
         groups: getEmptyPermissionGroupsInfoJson() as PermissionGroupsInfoJson,
         agents: getEmptyAgentsInfo() as AgentsInfoJson,
-    }
-}
-
-export function getEmptyRequirements(): RequirementsInfoJson {
-    return {
-        current: [] as Requirement[],
-        arePaused: true as boolean,
-        canManipulate: false as boolean,
     }
 }
 

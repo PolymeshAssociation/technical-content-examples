@@ -2,7 +2,6 @@ import Head from "next/head"
 import React, { useState } from "react"
 import styles from "../styles/Home.module.css"
 import {
-  Compliance,
   Requirement,
   SecurityToken,
   Claim,
@@ -44,7 +43,6 @@ import {
   PermissionsInfoJson,
   PortfolioInfoJson,
   ReservationInfoJson,
-  SimpleAction,
   TokenInfoJson,
 } from "../src/types"
 import {
@@ -59,26 +57,14 @@ import {
   InviteExternalAgentParams,
   KnownPermissionGroup,
   RemoveExternalAgentParams,
-  SetAssetRequirementsParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
-import {
-  findValue,
-  getBasicPolyWalletApi,
-  returnUpdatedCreator,
-} from "../src/ui-helpers"
+import { findValue, getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionView"
-import {
-  AddInvestorUniquenessClaimView,
-  ClaimView,
-} from "../src/components/compliance/ClaimView"
-import {
-  ComplianceCheckParams,
-  ComplianceManagerView,
-  RequirementsSaver,
-} from "../src/components/compliance/ComplianceView"
+import { AddInvestorUniquenessClaimView, ClaimView } from "../src/components/compliance/ClaimView"
+import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
@@ -86,9 +72,7 @@ import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
-import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
 import { fetchPortfolioInfoJson } from "../src/handlers/portfolios/PortfolioHandlers"
-import { fetchTokenInfoJson } from "../src/handlers/token/TokenHandlers"
 import {
   fetchCheckpointInfoJson,
   fetchCheckpointScheduleInfoJson,
@@ -148,7 +132,12 @@ export default function Home() {
       ...prev,
       token: token,
     }))
-    setTimeout(async () => loadCheckpointsInfo(token), 500)
+    setTimeout(
+      async () => Promise.all([
+        loadComplianceRequirements(token.current),
+        loadCheckpointsInfo(token),
+      ]),
+      500)
   }
 
   async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
@@ -230,26 +219,32 @@ export default function Home() {
     setStatus("Agent removed")
   }
 
-  async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
+  async function loadComplianceRequirements(token: SecurityToken | null): Promise<Requirement[] | null> {
     setStatus("Loading compliance requirements")
+    if (token === null) {
+      setComplianceRequirements(null, null, false)
+      return null
+    }
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
-    await setComplianceRequirements(token, requirements, arePaused)
+    setComplianceRequirements(token, requirements, arePaused)
     return requirements
   }
 
-  async function setComplianceRequirements(token: SecurityToken | null, requirements: Requirement[] | null, arePaused: boolean) {
+  function setComplianceRequirements(token: SecurityToken | null, requirements: Requirement[] | null, arePaused: boolean) {
     if (token === null || requirements === null) {
-      setMyInfo(returnUpdatedCreator(["requirements"], getEmptyRequirements()))
+      setMyInfo((prevInfo: MyInfoJson) => ({
+        ...prevInfo,
+        requirements: getEmptyRequirements(),
+      }))
     } else {
-      setMyInfo((prevInfo) => ({
+      setMyInfo((prevInfo: MyInfoJson) => ({
         ...prevInfo,
         requirements: {
-          ...prevInfo.requirements,
+          original: token.compliance.requirements,
           current: requirements,
           arePaused,
           canManipulate: prevInfo.token?.details?.owner?.did == prevInfo.myDid,
-          modified: false,
         },
       }))
     }
@@ -261,28 +256,6 @@ export default function Home() {
       setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
     }
   }
-
-  const saveRequirements = (requirements: Requirements): RequirementsSaver =>
-    async (params: SetAssetRequirementsParams): Promise<void> => {
-      const updatedToken: SecurityToken = await (await requirements.set(params)).run()
-      setTokenInfo(await fetchTokenInfoJson(updatedToken))
-    }
-
-  const pauseCompliance = (requirements: Requirements): SimpleAction =>
-    async (): Promise<void> => {
-      const updatedToken: SecurityToken = await (await requirements.pause()).run()
-      setTokenInfo(await fetchTokenInfoJson(updatedToken))
-    }
-
-  const resumeCompliance = (requirements: Requirements): SimpleAction =>
-    async (): Promise<void> => {
-      const updatedToken: SecurityToken = await (await requirements.unpause()).run()
-      setTokenInfo(await fetchTokenInfoJson(updatedToken))
-    }
-
-  const simulateCompliance = (requirements: Requirements) =>
-    async (args: ComplianceCheckParams): Promise<Compliance> =>
-      requirements.checkSettle(args)
 
   async function loadAuthorisations(): Promise<void> {
     const api: Polymesh = await getPolyWalletApi();
@@ -443,9 +416,11 @@ export default function Home() {
       </li>
       <li key="claim">Claim:&nbsp;
         <ClaimView
+          apiPromise={apiPromise}
           claim={claimData.claim}
           myInfo={myInfo}
           fetchCddId={fetchCddId}
+          onClaimChanged={() => { }}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
         />
@@ -470,9 +445,11 @@ export default function Home() {
       </li>
       <li key="claim">Claim:&nbsp;
         <ClaimView
+          apiPromise={apiPromise}
           claim={claimTarget.claim}
           myInfo={myInfo}
           fetchCddId={fetchCddId}
+          onClaimChanged={() => { }}
           location={[...location, "claim"]}
           canManipulate={canManipulate}
         />
@@ -555,7 +532,6 @@ export default function Home() {
   }
 
   function setCheckpointsInfo(infos: CheckpointInfoJson[]) {
-    console.log("setting checkpoints")
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       checkpoints: {
@@ -804,15 +780,14 @@ export default function Home() {
         />
 
         <ComplianceManagerView
+          token={myInfo.token}
           requirements={myInfo.requirements}
           cardStyle={styles.card}
+          myDid={myInfo.myDid}
           myInfo={myInfo}
+          apiPromise={apiPromise}
           identityGetter={getIdentity}
-          onComplianceChanged={() => { }}
-          saveRequirements={saveRequirements(myInfo.token.current?.compliance?.requirements)}
-          pauseCompliance={pauseCompliance(myInfo.token.current?.compliance?.requirements)}
-          resumeCompliance={resumeCompliance(myInfo.token.current?.compliance?.requirements)}
-          simulateCompliance={simulateCompliance(myInfo.token.current?.compliance?.requirements)}
+          onTokenInfoChanged={setTokenInfo}
           fetchCddId={fetchCddId}
           getMyDid={getMyDid}
           location={["requirements"]}

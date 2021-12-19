@@ -1,44 +1,39 @@
+import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/internal";
 import {
-    CddClaim,
     Claim,
     ClaimData,
     ClaimTarget,
     ClaimType,
     CountryCode,
     Identity,
-    InvestorUniquenessClaim,
-    InvestorUniquenessV2Claim,
     isInvestorUniquenessClaim,
     isScopedClaim,
     Scope,
-    ScopedClaim,
     ScopeType,
 } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import {
+    ClaimFlat,
+    convertClaimFlatToClaim,
+    convertClaimToFlat,
+    getDummyClaim,
+    OnClaimChanged,
+    OnClaimsChanged,
+    OnScopeChanged,
+} from "../../handlers/compliance/ClaimHandlers";
 import {
     FetchAndAddToPath,
     FetchDefaultAndAddToPath,
     isCddClaim,
     isClaimData,
-    isInvestorUniquenessV2Claim,
     isJurisdictionClaim,
     isScopeClaimProof,
-    JurisdictionClaim,
     MyInfoJson,
-    NoDataClaim,
 } from "../../types";
 import { findValue } from "../../ui-helpers";
 import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
-
-export type OnScopeChanged = (scope: Scope) => void
-
-export interface ScopeViewState {
-    type: ScopeType
-    value: string
-    modified: boolean
-}
 
 export interface ScopeViewProps {
     scope: Scope
@@ -46,45 +41,20 @@ export interface ScopeViewProps {
     canManipulate: boolean
 }
 
-export class ScopeView extends Component<ScopeViewProps, ScopeViewState> {
-    constructor(props: ScopeViewProps) {
-        super(props)
-        this.state = ScopeView.ScopeToState(props.scope)
-    }
+export class ScopeView extends Component<ScopeViewProps> {
 
-    static DummyScopeViewState = (): ScopeViewState => ({
-        type: ScopeType.Custom,
-        value: "",
-        modified: false,
+    onTypeChanged = async (e) => this.props.onScopeChanged({
+        ...this.props.scope,
+        type: e.target.value,
     })
-    static ScopeToState = (scope: Scope): ScopeViewState => ({
-        type: scope.type ?? ScopeType.Custom,
-        value: scope.value ?? "",
-        modified: false,
-    })
-
-    onTypeChanged = async (e) => this.setState((prev: ScopeViewState) => {
-        const updated: ScopeViewState = {
-            ...prev,
-            type: e.target.value,
-            modified: true,
-        }
-        this.props.onScopeChanged(updated)
-        return updated
-    })
-    onValueChanged = (e) => this.setState((prev: ScopeViewState) => {
-        const updated: ScopeViewState = {
-            ...prev,
-            value: e.target.value,
-            modified: true,
-        }
-        this.props.onScopeChanged(updated)
-        return updated
+    onValueChanged = (e) => this.props.onScopeChanged({
+        ...this.props.scope,
+        value: e.target.value,
     })
 
     render() {
-        const { type, value } = this.state
-        const { canManipulate } = this.props
+        const { scope, canManipulate } = this.props
+        const { type, value } = scope
         return <ul>
             <li key="type">Type: &nbsp;
                 <EnumSelectView<ScopeType>
@@ -106,129 +76,49 @@ export class ScopeView extends Component<ScopeViewProps, ScopeViewState> {
     }
 }
 
-export type OnClaimChanged = (claim: ClaimViewState) => void
-
-export interface ClaimViewState {
-    type: ClaimType
-    id: string
-    scope: ScopeViewState
-    cddId: string
-    scopeId: string
-    code: CountryCode
-    modified: boolean
-}
-
 export interface ClaimViewProps extends BasicProps {
-    claim: ClaimViewState
+    claim: Claim
     myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
     onClaimChanged: OnClaimChanged
     fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
-export class ClaimView extends Component<ClaimViewProps, ClaimViewState> {
-    constructor(props: ClaimViewProps) {
-        super(props)
-        this.state = props.claim
-    }
+export class ClaimView extends Component<ClaimViewProps> {
 
-    static DummyClaimViewState = (): ClaimViewState => ({
-        type: ClaimType.NoData,
-        id: "",
-        scope: ScopeView.DummyScopeViewState(),
-        cddId: "",
-        scopeId: "",
-        code: CountryCode.Ad,
-        modified: false,
-    })
-    static ClaimToState = (claim: Claim): ClaimViewState => ({
-        type: claim.type,
-        id: isCddClaim(claim) ? claim.id : "",
-        scope: ScopeView.ScopeToState(isScopedClaim(claim) ? claim.scope : {
-            type: ScopeType.Custom,
-            value: "",
-        }),
-        cddId: isInvestorUniquenessClaim(claim) || isInvestorUniquenessV2Claim(claim) ? claim.cddId : "",
-        scopeId: isInvestorUniquenessClaim(claim) ? claim.scopeId : "",
-        code: isJurisdictionClaim(claim) ? claim.code : CountryCode.Ad,
-        modified: true,
-    })
-    static StateToClaim = (state: ClaimViewState): Claim => {
-        switch (state.type) {
-            case ClaimType.CustomerDueDiligence: return {
-                type: state.type,
-                id: state.id,
-            } as CddClaim
-            case ClaimType.InvestorUniqueness: return {
-                type: state.type,
-                scope: state.scope,
-                cddId: state.cddId,
-                scopeId: state.scopeId,
-            } as InvestorUniquenessClaim
-            case ClaimType.InvestorUniquenessV2: return {
-                type: state.type,
-                cddId: state.cddId,
-            } as InvestorUniquenessV2Claim
-            case ClaimType.Jurisdiction: return {
-                type: state.type,
-                code: state.code,
-                scope: state.scope,
-            } as JurisdictionClaim
-            case ClaimType.NoData: return {
-                type: state.type
-            } as NoDataClaim
-            default: return {
-                type: state.type,
-                scope: state.scope,
-            } as ScopedClaim
-        }
-    }
+    onClaimTypeChanged = async (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+        ...convertClaimToFlat(this.props.claim),
+        type: e.target.value,
+    }))
+    onStringChanged = (key: keyof ClaimFlat) => (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+        ...convertClaimToFlat(this.props.claim),
+        [key]: e.target.value,
+    }))
+    onScopeChanged = (scope: Scope) => this.props.onClaimChanged(convertClaimFlatToClaim({
+        ...convertClaimToFlat(this.props.claim),
+        scope: scope,
+    }))
+    onCountryCodeChanged = async (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+        ...convertClaimToFlat(this.props.claim),
+        code: e.target.value,
+    }))
 
-    onClaimTypeChanged = async (e) => this.setState((prev: ClaimViewState) => {
-        const updated: ClaimViewState = {
-            ...prev,
-            type: e.target.value,
-            modified: true,
-        }
-        this.props.onClaimChanged(updated)
-        return updated
-    })
-    onStringChanged = (key: keyof ClaimViewState) => (e) => this.setState((prev: ClaimViewState) => {
-        const updated: ClaimViewState = {
-            ...prev,
-            [key]: e.target.value,
-            modified: true,
-        }
-        this.props.onClaimChanged(updated)
-        return updated
-    })
-    onScopeChanged = (scope: ScopeViewState) => this.setState((prev: ClaimViewState) => {
-        const updated: ClaimViewState = {
-            ...prev,
-            scope: scope,
-            modified: true,
-        }
-        this.props.onClaimChanged(updated)
-        return updated
-    })
-    onCountryCodeChanged = async (e) => this.setState((prev: ClaimViewState) => {
-        const updated: ClaimViewState = {
-            ...prev,
-            code: e.target.value,
-            modified: true,
-        }
-        this.props.onClaimChanged(updated)
-        return updated
-    })
+    fetchCddId = async (target: string | Identity): Promise<ClaimData<Claim>[]> => {
+        const api: Polymesh = await this.props.apiPromise
+        const targetDid: string = typeof target === "string" ? target : target.did
+        if (typeof targetDid === "undefined" || targetDid === null || targetDid === "")
+            throw new Error(`You need to put a valid target first, not ${targetDid}`)
+        const claims: ClaimData<Claim>[] = await api.claims.getCddClaims({
+            target: target,
+            includeExpired: false,
+        })
+        if (claims.length === 0) throw new Error(`No CDD claims attached to ${targetDid}`)
+        return claims
+    }
 
     render() {
-        const claim: Claim = ClaimView.StateToClaim(this.state)
-        const { type, id, scope, cddId, scopeId, code, } = this.state
-        const {
-            myInfo,
-            fetchCddId,
-            location,
-            canManipulate
-        } = this.props
+        const { claim, myInfo, location, canManipulate } = this.props
+        const { type, id, scope, cddId, scopeId, code, } = convertClaimToFlat(claim)
         const elements: JSX.Element[] = [
             <li key="type">Type:&nbsp;
                 <EnumSelectView<ClaimType>
@@ -276,7 +166,7 @@ export class ClaimView extends Component<ClaimViewProps, ClaimViewState> {
                         if (typeof target === "undefined" || isClaimData(claimData)) return ""
                         return <button
                             className="submit load-cdd-id"
-                            onClick={() => fetchCddId([...location, "cddId"], target)}
+                            onClick={() => this.fetchCddId(target)}
                             disabled={!canManipulate || !hasTarget}>
                             Load it
                         </button>
@@ -306,68 +196,33 @@ export class ClaimView extends Component<ClaimViewProps, ClaimViewState> {
     }
 }
 
-export type OnClaimsChanged = (claims: ClaimsViewState) => void
-
-export interface ClaimsViewState {
-    claims: ClaimViewState[]
-    modified: boolean
-}
-
 export interface ClaimsViewProps extends BasicProps {
-    claims: ClaimsViewState
+    claims: Claim[]
     myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
     onClaimsChanged: OnClaimsChanged
     fetchAndAddToPath: FetchAndAddToPath<string | Identity>
 }
 
-export class ClaimsView extends Component<ClaimsViewProps, ClaimsViewState> {
-    constructor(props: ClaimsViewProps) {
-        super(props)
-        this.state = props.claims
+export class ClaimsView extends Component<ClaimsViewProps> {
+
+    addClaim = () => this.props.onClaimsChanged([
+        getDummyClaim(),
+        ...this.props.claims,
+    ])
+    onClaimChangedAt = (index: number) => (claim: Claim) => {
+        const claims: Claim[] = this.props.claims
+        claims[index] = claim
+        this.props.onClaimsChanged(claims)
     }
 
-    static DummyClaimsViewState = (): ClaimsViewState => ({
-        claims: [],
-        modified: false,
-    })
-    static ClaimsToState = (claims: Claim[]): ClaimsViewState => ({
-        claims: claims.map(ClaimView.ClaimToState),
-        modified: false,
-    })
-    static StateToClaims = (state: ClaimsViewState): Claim[] => state.claims.map(ClaimView.StateToClaim)
-
-    addClaim = () => this.setState((prev: ClaimsViewState) => {
-        const updated: ClaimsViewState = {
-            ...prev,
-            claims: [
-                ClaimView.DummyClaimViewState(),
-                ...prev.claims,
-            ],
-            modified: true,
-        }
-        this.props.onClaimsChanged(updated)
-        return updated
-    })
-    onClaimChangedAt = (index: number) => (claim: ClaimViewState) => this.setState((prev: ClaimsViewState) => {
-        const claims: ClaimViewState[] = prev.claims
-        claims[index] = claim
-        const updated: ClaimsViewState = {
-            ...prev,
-            claims: claims,
-            modified: true,
-        }
-        this.props.onClaimsChanged(updated)
-        return updated
-    })
-
     render() {
-        const { claims } = this.state
-        const { myInfo, fetchAndAddToPath, location, canManipulate } = this.props
+        const { claims, myInfo, apiPromise, fetchAndAddToPath, location, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-claim"
             onClick={this.addClaim}
             disabled={!canManipulate}>
-            Add
+            Add 1 claim
         </button>
         if (claims.length === 0) return <div>
             No claims&nbsp;{addButton}
@@ -380,8 +235,9 @@ export class ClaimsView extends Component<ClaimsViewProps, ClaimsViewState> {
                         <li key={index}>
                             Claim {index}:
                             <ClaimView
-                                claim={ClaimView.ClaimToState(claim)}
+                                claim={convertClaimToFlat(claim)}
                                 myInfo={myInfo}
+                                apiPromise={apiPromise}
                                 onClaimChanged={this.onClaimChangedAt(index)}
                                 fetchCddId={fetchAndAddToPath}
                                 location={[...location, index]}
@@ -394,7 +250,7 @@ export class ClaimsView extends Component<ClaimsViewProps, ClaimsViewState> {
     }
 }
 
-export interface AddInvestorUniquenessClaimViewState {
+interface AddInvestorUniquenessClaimViewState {
     scope: Scope,
     claimParams: AddInvestorUniquenessClaimParams,
     expiry: string

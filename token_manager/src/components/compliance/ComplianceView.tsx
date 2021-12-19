@@ -1,28 +1,32 @@
+import { isEqual } from "lodash"
+import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { SetAssetRequirementsParams } from "@polymathnetwork/polymesh-sdk/api/procedures/setAssetRequirements";
-import { Compliance, Identity, Requirement } from "@polymathnetwork/polymesh-sdk/types";
-import React, { Component } from "react";
+import { Compliance, Identity, Requirement, SecurityToken } from "@polymathnetwork/polymesh-sdk/types";
+import { Component } from "react";
+import { IdentityGetter } from "../../handlers/compliance/ComplianceHandlers";
+import {
+    convertRequirementFlatToRequirement,
+    convertRequirementToFlat,
+    RequirementFlat,
+} from "../../handlers/compliance/RequirementHandlers";
+import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import {
     FetchAndAddToPath,
     Getter,
     MyInfoJson,
     RequirementsInfoJson,
-    SimpleAction,
+    TokenInfoJson,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
-import { RequirementsView, RequirementsViewState } from "./RequirementView";
-
-export type IdentityGetter = (did: string) => Promise<Identity>
-export type OnComplianceChanged = (complianceState: ComplianceManagerViewState) => void
-export type RequirementsSaver = (params: SetAssetRequirementsParams) => Promise<void>
-export type ComplianceSimulator = (params: ComplianceCheckParams) => Promise<Compliance>
+import { RequirementsView } from "./RequirementView";
 
 export interface ComplianceCheckParams {
     from?: string | Identity
     to: string | Identity
 }
 
-export interface ComplianceManagerViewState {
-    requirements: RequirementsViewState
+interface ComplianceManagerViewState {
+    requirements: RequirementFlat[]
     modified: boolean
     simulationFrom: string
     simulationTo: string
@@ -30,15 +34,14 @@ export interface ComplianceManagerViewState {
 }
 
 export interface ComplianceManagerViewProps extends BasicProps {
+    token: TokenInfoJson
     requirements: RequirementsInfoJson
+    myDid: string
     myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
     cardStyle: any
     identityGetter: IdentityGetter
-    onComplianceChanged: OnComplianceChanged,
-    saveRequirements: RequirementsSaver
-    pauseCompliance: SimpleAction
-    resumeCompliance: SimpleAction
-    simulateCompliance: ComplianceSimulator,
+    onTokenInfoChanged: OnTokenInfoChanged
     fetchCddId: FetchAndAddToPath<string | Identity>
     getMyDid: Getter<string>
 }
@@ -46,74 +49,90 @@ export interface ComplianceManagerViewProps extends BasicProps {
 export class ComplianceManagerView extends Component<ComplianceManagerViewProps, ComplianceManagerViewState> {
     constructor(props: ComplianceManagerViewProps) {
         super(props)
-        this.state = ComplianceManagerView.RequirementsToState(props.requirements)
+        this.state = ComplianceManagerView.PropsToState(props.requirements.current)
     }
 
-    static DummyComplianceManagerViewState = (): ComplianceManagerViewState => ({
-        requirements: RequirementsView.DummyRequirementsViewState(),
-        modified: false,
-        simulationFrom: "",
-        simulationTo: "",
-        compliance: null,
-    })
-    static RequirementsToState = (requirements: RequirementsInfoJson): ComplianceManagerViewState => ({
-        requirements: RequirementsView.RequirementsToState(requirements.current),
-        modified: false,
-        simulationFrom: "",
-        simulationTo: "",
-        compliance: null,
-    })
-    static StateToParams = (getter: IdentityGetter) => async (state: ComplianceManagerViewState): Promise<SetAssetRequirementsParams> =>
-    ({
-        requirements: (await RequirementsView.StateToRequirements(getter)(state.requirements))
-            .map((requirement: Requirement) => requirement.conditions)
-    })
+    componentDidUpdate(prevProps: Readonly<ComplianceManagerViewProps>, _: Readonly<ComplianceManagerViewState>): void {
+        const prevReq = ComplianceManagerView.PropsToState(prevProps.requirements.current)
+        const nextReq = ComplianceManagerView.PropsToState(this.props.requirements.current)
+        if (!isEqual(prevReq, nextReq) || prevProps.token.current?.ticker !== this.props.token.current?.ticker) this.setState(nextReq)
+    }
 
-    onRequirementsChanged = (requirements: RequirementsViewState) => this.setState((prev: ComplianceManagerViewState) => {
-        const updated: ComplianceManagerViewState = {
-            ...prev,
-            requirements: requirements,
-            modified: true,
+    static PropsToState(requirements: Requirement[]): ComplianceManagerViewState {
+        return {
+            requirements: requirements.map(convertRequirementToFlat),
+            modified: false,
+            simulationFrom: "",
+            simulationTo: "",
+            compliance: null,
         }
-        this.props.onComplianceChanged(updated)
-        return updated
+    }
+
+    onRequirementsChanged = (requirements: RequirementFlat[]) => this.setState({
+        requirements: requirements,
+        modified: true,
     })
     onFromChanged = (e) => this.setState({ simulationFrom: e.target.value })
     onFromPicked = async () => this.setState({ simulationFrom: await this.props.getMyDid() })
     onToChanged = (e) => this.setState({ simulationTo: e.target.value })
     onToPicked = async () => this.setState({ simulationTo: await this.props.getMyDid() })
-    onSaveRequirements = async () =>
-        this.props.saveRequirements(await ComplianceManagerView.StateToParams(this.props.identityGetter)(this.state))
-    onSimulateCompliance = async () => this.setState({
-        compliance: await this.props.simulateCompliance({
-            from: this.state.simulationFrom === "" ? undefined : this.state.simulationFrom,
-            to: this.state.simulationTo,
-        })
+
+    onSaveRequirements = async (): Promise<void> => {
+        const updatedToken: SecurityToken = await (await this.props.requirements.original.set(await this.getParams())).run()
+        const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        this.props.onTokenInfoChanged(updatedInfo)
+    }
+    getParams = async (): Promise<SetAssetRequirementsParams> => ({
+        requirements: (await Promise
+            .all(this.state.requirements
+                .map(convertRequirementFlatToRequirement(this.props.identityGetter))))
+            .map((requirement: Requirement) => requirement.conditions)
     })
+
+    onSimulateCompliance = async () => this.setState({
+        compliance: await this.props.requirements.original.checkSettle(this.getSimulateParams())
+    })
+    getSimulateParams = () => ({
+        from: this.state.simulationFrom === "" ? undefined : this.state.simulationFrom,
+        to: this.state.simulationTo,
+    })
+
+    onPauseCompliance = async (): Promise<void> => {
+        const updatedToken: SecurityToken = await (await this.props.requirements.original.pause()).run()
+        const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        this.props.onTokenInfoChanged(updatedInfo)
+    }
+    onResumeCompliance = async (): Promise<void> => {
+        const updatedToken: SecurityToken = await (await this.props.requirements.original.unpause()).run()
+        const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        this.props.onTokenInfoChanged(updatedInfo)
+    }
 
     render() {
         const { requirements, modified, simulationFrom, simulationTo, compliance } = this.state
         const {
+            token,
             requirements: reqs,
+            myDid,
             myInfo,
+            apiPromise,
             cardStyle,
-            pauseCompliance,
-            resumeCompliance,
             fetchCddId,
             location,
             canManipulate,
         } = this.props
-        const canSaveAll: boolean = myInfo.token.current !== null
-            && myInfo.token.details?.owner?.did === myInfo.myDid
+        const canSaveAll: boolean = token.current !== null
+            && token.details?.owner?.did === myDid
             && modified
-        const canSimulate: boolean = myInfo.token.current !== null
+        const canSimulate: boolean = token.current !== null
         return <fieldset className={cardStyle}>
-            <legend>Compliance Requirements For: {myInfo.token.current?.ticker}</legend>
+            < legend > Compliance Requirements For: {token.current?.ticker}</legend >
 
             <div>
                 <RequirementsView
                     requirements={requirements}
                     myInfo={myInfo}
+                    apiPromise={apiPromise}
                     onRequirementsChanged={this.onRequirementsChanged}
                     fetchCddId={fetchCddId}
                     location={[...location, "current"]}
@@ -133,21 +152,21 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             <div className="submit">
                 <button
                     className="submit pause-compliance"
-                    onClick={pauseCompliance}
+                    onClick={this.onPauseCompliance}
                     disabled={!canManipulate || reqs.arePaused}>
                     Pause compliance
                 </button>
                 &nbsp;
                 <button
                     className="submit resume-compliance"
-                    onClick={resumeCompliance}
+                    onClick={this.onResumeCompliance}
                     disabled={!canManipulate || !reqs.arePaused}>
                     Resume compliance
                 </button>
             </div>
 
             <div className={cardStyle}>
-                <div>Would a transfer of {myInfo.token.current?.ticker} work</div>
+                <div>Would a transfer of {token.current?.ticker} work</div>
                 <div>From:&nbsp;
                     <input
                         defaultValue={simulationFrom}
@@ -186,7 +205,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                 </div>
             </div>
 
-        </fieldset>
+        </fieldset >
 
     }
 }

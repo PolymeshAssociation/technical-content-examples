@@ -1,155 +1,53 @@
-import {
-    Condition,
-    ConditionBase,
-    ConditionTarget,
-    ConditionType,
-    ExternalAgentCondition,
-    Identity,
-    IdentityCondition,
-    isMultiClaimCondition,
-    isSingleClaimCondition,
-    MultiClaimCondition,
-    SingleClaimCondition,
-} from "@polymathnetwork/polymesh-sdk/types";
+import { Polymesh } from "@polymathnetwork/polymesh-sdk";
+import { Claim, ConditionTarget, ConditionType, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
+import { TrustedClaimIssuerFlat } from "../../handlers/compliance/ClaimHandlers";
+import {
+    ConditionFlat,
+    getDummyConditionFlat,
+    OnConditionChanged,
+    OnConditionsChanged,
+} from "../../handlers/compliance/ConditionHandlers";
 import {
     assertUnreachable,
     FetchAndAddToPath,
-    isIdentityCondition,
     MyInfoJson,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { EnumSelectView } from "../EnumView";
-import { ClaimsView, ClaimsViewState, ClaimView, ClaimViewState } from "./ClaimView";
-import { IdentityGetter } from "./ComplianceView";
-import {
-    TrustedClaimIssuersView,
-    TrustedClaimIssuersViewState,
-    TrustedClaimIssuerView,
-    TrustedClaimIssuerViewState,
-} from "./TrustedClaimIssuerView";
-
-export type OnConditionChanged = (condition: ConditionViewState) => void
-
-export interface ConditionViewState {
-    target: ConditionTarget
-    trustedClaimIssuers: TrustedClaimIssuerViewState[]
-    type: ConditionType
-    claim: ClaimViewState | null
-    claims: ClaimsViewState
-    identity: string
-    modified: boolean
-}
+import { ClaimsView, ClaimView } from "./ClaimView";
+import { TrustedClaimIssuersView } from "./TrustedClaimIssuerView";
 
 export interface ConditionViewProps extends BasicProps {
-    condition: ConditionViewState
+    condition: ConditionFlat
     myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
     onConditionChanged: OnConditionChanged
     fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
-export class ConditionView extends Component<ConditionViewProps, ConditionViewState> {
-    constructor(props: ConditionViewProps) {
-        super(props)
-        this.state = props.condition
-    }
+export class ConditionView extends Component<ConditionViewProps> {
 
-    static DummyConditionViewState = (): ConditionViewState => ({
-        target: ConditionTarget.Both,
-        trustedClaimIssuers: [],
-        type: ConditionType.IsPresent,
-        claim: ClaimView.DummyClaimViewState(),
-        claims: ClaimsView.ClaimsToState([]),
-        identity: "",
-        modified: false,
+    onStringChanged = (key: keyof ConditionFlat) => async (e) => this.props.onConditionChanged({
+        ...this.props.condition,
+        [key]: e.target.value,
     })
-    static ConditionToState = (condition: Condition): ConditionViewState => ({
-        target: condition.target,
-        trustedClaimIssuers: TrustedClaimIssuersView.TrustedIssuersToState(condition.trustedClaimIssuers).trustedIssuers,
-        type: condition.type,
-        claim: isSingleClaimCondition(condition) ? ClaimView.ClaimToState(condition.claim) : null,
-        claims: ClaimsView.ClaimsToState(isMultiClaimCondition(condition) ? condition.claims : []),
-        identity: isIdentityCondition(condition) ? condition.identity.did : "",
-        modified: false,
+    onTrustedClaimIssuersChanged = (trustedClaimIssuers: TrustedClaimIssuerFlat[]) => this.props.onConditionChanged({
+        ...this.props.condition,
+        trustedClaimIssuers: trustedClaimIssuers,
     })
-    static StateToCondition = (getter: IdentityGetter) => async (state: ConditionViewState): Promise<Condition> => {
-        const base: ConditionBase = {
-            target: state.target,
-            trustedClaimIssuers: await Promise.all(state.trustedClaimIssuers.map(TrustedClaimIssuerView.StateToTrustedIssuer(getter))),
-        }
-        switch (state.type) {
-            case ConditionType.IsPresent:
-            case ConditionType.IsAbsent: return {
-                ...base,
-                type: state.type,
-                target: state.target,
-                claim: ClaimView.StateToClaim(state.claim),
-            } as SingleClaimCondition
-            case ConditionType.IsAnyOf:
-            case ConditionType.IsNoneOf: return {
-                ...base,
-                type: state.type,
-                target: state.target,
-                claims: ClaimsView.StateToClaims(state.claims),
-            } as MultiClaimCondition
-            case ConditionType.IsIdentity: return {
-                ...base,
-                type: state.type,
-                identity: await getter(state.identity),
-            } as IdentityCondition
-            case ConditionType.IsExternalAgent: return {
-                ...base,
-                type: state.type,
-            } as ExternalAgentCondition
-            default: return assertUnreachable(state.type)
-        }
-    }
-
-    onStringChanged = (key: keyof ConditionViewState) => async (e) => this.setState((prev: ConditionViewState) => {
-        const updated: ConditionViewState = {
-            ...prev,
-            [key]: e.target.value,
-            modified: true,
-        }
-        this.props.onConditionChanged(updated)
-        return updated
+    onClaimChanged = (claim: Claim) => this.props.onConditionChanged({
+        ...this.props.condition,
+        claim: claim,
     })
-    onTrustedClaimIssuersChanged = (trustedClaimIssuers: TrustedClaimIssuersViewState) => this.setState((prev: ConditionViewState) => {
-        const updated: ConditionViewState = {
-            ...prev,
-            trustedClaimIssuers: trustedClaimIssuers.trustedIssuers,
-            modified: true,
-        }
-        this.props.onConditionChanged(updated)
-        return updated
-    })
-    onClaimChanged = (claim: ClaimViewState) => this.setState((prev: ConditionViewState) => {
-        const updated: ConditionViewState = {
-            ...prev,
-            claim: claim,
-            modified: true,
-        }
-        this.props.onConditionChanged(updated)
-        return updated
-    })
-    onClaimsChanged = (claims: ClaimsViewState) => this.setState((prev: ConditionViewState) => {
-        const updated: ConditionViewState = {
-            ...prev,
-            claims: claims,
-            modified: true,
-        }
-        this.props.onConditionChanged(updated)
-        return updated
+    onClaimsChanged = (claims: Claim[]) => this.props.onConditionChanged({
+        ...this.props.condition,
+        claims: claims,
     })
 
     render() {
-        const { target, trustedClaimIssuers, type, claim, claims, identity } = this.state
-        const {
-            myInfo,
-            fetchCddId,
-            location,
-            canManipulate
-        } = this.props
+        const { condition, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
+        const { target, trustedClaimIssuers, type, claim, claims, identity } = condition
         const elements: JSX.Element[] = [
             <li key="target">Target:
                 <EnumSelectView<ConditionTarget>
@@ -183,6 +81,7 @@ export class ConditionView extends Component<ConditionViewProps, ConditionViewSt
                     <ClaimView
                         claim={claim}
                         myInfo={myInfo}
+                        apiPromise={apiPromise}
                         onClaimChanged={this.onClaimChanged}
                         fetchCddId={fetchCddId}
                         location={[...location, "claim"]}
@@ -196,6 +95,7 @@ export class ConditionView extends Component<ConditionViewProps, ConditionViewSt
                     <ClaimsView
                         claims={claims}
                         myInfo={myInfo}
+                        apiPromise={apiPromise}
                         onClaimsChanged={this.onClaimsChanged}
                         fetchAndAddToPath={fetchCddId}
                         location={[...location, "claims"]}
@@ -223,80 +123,38 @@ export class ConditionView extends Component<ConditionViewProps, ConditionViewSt
     }
 }
 
-export type OnConditionsChanged = (conditions: ConditionsViewState) => void
-
-export interface ConditionsViewState {
-    conditions: ConditionViewState[]
-    modified: boolean
-}
-
 export interface ConditionsViewProps extends BasicProps {
-    conditions: ConditionsViewState
+    conditions: ConditionFlat[]
     myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
     onConditionsChanged: OnConditionsChanged
     fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
-export class ConditionsView extends Component<ConditionsViewProps, ConditionsViewState> {
-    constructor(props: ConditionsViewProps) {
-        super(props)
-        this.state = props.conditions
+export class ConditionsView extends Component<ConditionsViewProps> {
+
+    addCondition = () => this.props.onConditionsChanged([
+        getDummyConditionFlat(),
+        ...this.props.conditions,
+    ])
+    onConditionChangedAt = (index: number) => (condition: ConditionFlat) => {
+        const conditions: ConditionFlat[] = this.props.conditions
+        conditions[index] = condition
+        this.props.onConditionsChanged(conditions)
+    }
+    onRemoveConditionAt = (index: number) => () => {
+        const conditions: ConditionFlat[] = this.props.conditions
+        conditions.splice(index, 1)
+        this.props.onConditionsChanged(conditions)
     }
 
-    static DummyConditionsViewState = (): ConditionsViewState => ({
-        conditions: [],
-        modified: false,
-    })
-    static ConditionsToState = (conditions: Condition[]) => ({
-        conditions: conditions.map(ConditionView.ConditionToState)
-    }) as ConditionsViewState
-    static StateToConditions = (getter: IdentityGetter) =>
-        async (state: ConditionsViewState): Promise<Condition[]> =>
-            Promise.all(state.conditions.map(ConditionView.StateToCondition(getter)))
-
-    addCondition = () => this.setState((prev: ConditionsViewState) => {
-        const updated: ConditionsViewState = {
-            ...prev,
-            conditions: [
-                ConditionView.DummyConditionViewState(),
-                ...prev.conditions,
-            ],
-            modified: true,
-        }
-        this.props.onConditionsChanged(updated)
-        return updated
-    })
-    onConditionChangedAt = (index: number) => (condition: ConditionViewState) => this.setState((prev: ConditionsViewState) => {
-        const conditions: ConditionViewState[] = prev.conditions
-        conditions[index] = condition
-        const updated: ConditionsViewState = {
-            ...prev,
-            conditions: conditions,
-            modified: true,
-        }
-        this.props.onConditionsChanged(updated)
-        return updated
-    })
-    onRemoveConditionAt = (index: number) => () => this.setState((prev: ConditionsViewState) => {
-        const conditions: ConditionViewState[] = prev.conditions
-        conditions.splice(index, 1)
-        const updated: ConditionsViewState = {
-            ...prev,
-            conditions: conditions,
-            modified: true,
-        }
-        this.props.onConditionsChanged(updated)
-        return updated
-    })
-
     render() {
-        const { conditions } = this.state
-        const { myInfo, fetchCddId, location, canManipulate } = this.props
+        const { conditions, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-condition"
             onClick={this.addCondition}
             disabled={!canManipulate}>
-            Add
+            Add 1 condition
         </button>
         if (conditions === null || conditions.length === 0) return <div>
             No conditions&nbsp;{addButton}
@@ -305,7 +163,7 @@ export class ConditionsView extends Component<ConditionsViewProps, ConditionsVie
             {addButton}
             <ul>{
                 conditions
-                    .map((condition: ConditionViewState, index: number) => <li key={index}>
+                    .map((condition: ConditionFlat, index: number) => <li key={index}>
                         Condition {index}:&nbsp;
                         <button
                             className="submit remove-condition"
@@ -316,6 +174,7 @@ export class ConditionsView extends Component<ConditionsViewProps, ConditionsVie
                         <ConditionView
                             condition={condition}
                             myInfo={myInfo}
+                            apiPromise={apiPromise}
                             onConditionChanged={this.onConditionChangedAt(index)}
                             fetchCddId={fetchCddId}
                             location={[...location, index]}
