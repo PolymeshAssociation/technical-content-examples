@@ -34,7 +34,6 @@ import {
   getEmptyMyInfo,
   getEmptyPermissionsInfoJson,
   getEmptyRequirements,
-  getEmptyTokenInfoJson,
   isCheckpointSchedule,
   isCheckpointWithData,
   isCustomPermissionGroup,
@@ -65,7 +64,6 @@ import {
   KnownPermissionGroup,
   RemoveExternalAgentParams,
   SetAssetRequirementsParams,
-  TickerReservation,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import {
   findValue,
@@ -84,11 +82,13 @@ import { ComplianceCheckParams, ComplianceManagerView, RequirementsSaver } from 
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
-import { TickerManagerView, TickerManagerViewState } from "../src/components/token/TickerView"
+import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
 import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
+import { fetchPortfolioInfoJson } from "../src/handlers/portfolios/PortfolioHandlers"
+import { fetchTokenInfoJson } from "../src/handlers/token/TokenHandlers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -124,16 +124,11 @@ export default function Home() {
     }
   }
 
-  function setTicker(info: TickerManagerViewState): void {
+  function setTicker(newTicker: string): void {
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
-      ticker: info.ticker,
+      ticker: newTicker,
     }))
-  }
-
-  async function setTickerReservation(reservation: TickerReservation | null): Promise<void> {
-    if (reservation === null) setReservationInfo({ current: null, details: null })
-    else setReservationInfo({ current: reservation, details: await reservation.details() })
   }
 
   function setReservationInfo(reservation: ReservationInfoJson): void {
@@ -141,38 +136,6 @@ export default function Home() {
       ...prev,
       reservation: reservation,
     }))
-  }
-
-  async function loadToken(ticker: string): Promise<SecurityToken> {
-    const api: Polymesh = await getPolyWalletApi()
-    let token: SecurityToken = null
-    try {
-      setStatus("Fetching token")
-      token = await api.getSecurityToken({ ticker })
-    } catch (e) {
-      if (!(e instanceof PolymeshError)) {
-        throw e
-      }
-    }
-    await setSecurityToken(token)
-    return token
-  }
-
-  async function setSecurityToken(token: SecurityToken | null): Promise<void> {
-    if (token === null) {
-      setTokenInfo(getEmptyTokenInfoJson())
-      setPermissions(null, null)
-      setComplianceRequirements(null, null, true)
-    } else {
-      setTokenInfo({
-        current: token,
-        createdAt: await token.createdAt(),
-        details: await token.details(),
-        currentFundingRound: await token.currentFundingRound(),
-        tokenIdentifiers: await token.getIdentifiers(),
-      })
-      await loadPermissions(token)
-    }
   }
 
   function setTokenInfo(token: TokenInfoJson): void {
@@ -253,14 +216,12 @@ export default function Home() {
     setStatus("Inviting agent")
     await (await myInfo.permissions.current.inviteAgent(params)).run()
     setStatus("Agent invited")
-    await loadToken(myInfo.ticker)
   }
 
   async function removeAgent(params: RemoveExternalAgentParams): Promise<void> {
     setStatus("Removing agent")
     await (await myInfo.permissions.current.removeAgent(params)).run()
     setStatus("Agent removed")
-    await loadToken(myInfo.ticker)
   }
 
   async function loadComplianceRequirements(token: SecurityToken): Promise<Requirement[]> {
@@ -299,19 +260,19 @@ export default function Home() {
   const saveRequirements = (requirements: Requirements): RequirementsSaver =>
     async (params: SetAssetRequirementsParams): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.set(params)).run()
-      setSecurityToken(updatedToken)
+      setTokenInfo(await fetchTokenInfoJson(updatedToken))
     }
 
   const pauseCompliance = (requirements: Requirements): SimpleAction =>
     async (): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.pause()).run()
-      setSecurityToken(updatedToken)
+      setTokenInfo(await fetchTokenInfoJson(updatedToken))
     }
 
   const resumeCompliance = (requirements: Requirements): SimpleAction =>
     async (): Promise<void> => {
       const updatedToken: SecurityToken = await (await requirements.unpause()).run()
-      setSecurityToken(updatedToken)
+      setTokenInfo(await fetchTokenInfoJson(updatedToken))
     }
 
   const simulateCompliance = (requirements: Requirements) =>
@@ -842,11 +803,13 @@ export default function Home() {
         </h1>
 
         <TickerManagerView
+          reservation={myInfo.reservation}
           token={myInfo.token}
           cardStyle={styles.card}
           apiPromise={apiPromise}
           onTickerChanged={setTicker}
-          onTickerReservationChanged={setTickerReservation}
+          onReservationInfoChanged={setReservationInfo}
+          onTokenInfoChanged={setTokenInfo}
         />
 
         <div id="status" className={styles.status}>
@@ -860,8 +823,8 @@ export default function Home() {
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
-          onTickerReservationChanged={setTickerReservation}
-          onSecurityTokenChanged={setSecurityToken}
+          onReservationInfoChanged={setReservationInfo}
+          onTokenInfoChanged={setTokenInfo}
         />
 
         <SecurityTokenManagerView
@@ -870,7 +833,7 @@ export default function Home() {
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
-          onSecurityTokenChanged={setSecurityToken}
+          onTokenInfoChanged={setTokenInfo}
         />
 
         <PermissionManagerView

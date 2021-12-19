@@ -1,26 +1,27 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { PolymeshError } from "@polymathnetwork/polymesh-sdk/base/PolymeshError";
+import { ReserveTickerParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { Identity, SecurityToken, TickerReservation } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { TokenInfoJson } from "../../types";
+import { fetchReservationInfoJson, OnReservationInfoChanged, OnTickerChanged } from "../../handlers/token/ReservationHandlers";
+import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
+import { getEmptyReservation, getEmptyTokenInfoJson, ReservationInfoJson, TokenInfoJson } from "../../types";
 
-export type OnTickerChanged = (ticker: TickerManagerViewState) => void
-export type OnTickerReservationChanged = (reservation: TickerReservation | null) => void
-
-export interface TickerManagerViewState {
+interface TickerManagerViewState {
     ticker: string
     myReservedTickers: string[]
     myTokenTickers: string[]
-    reservation: TickerReservation | null
     fetchTimer: NodeJS.Timeout
 }
 
 export interface TickerManagerViewProps {
+    reservation: ReservationInfoJson
     token: TokenInfoJson
     cardStyle: any
     apiPromise: Promise<Polymesh>
     onTickerChanged: OnTickerChanged
-    onTickerReservationChanged: OnTickerReservationChanged
+    onReservationInfoChanged: OnReservationInfoChanged
+    onTokenInfoChanged: OnTokenInfoChanged
 }
 
 export class TickerManagerView extends Component<TickerManagerViewProps, TickerManagerViewState> {
@@ -28,14 +29,12 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
         super(props)
         this.state = {
             ticker: "",
-            reservation: null,
             myReservedTickers: [],
             myTokenTickers: [],
             fetchTimer: setTimeout(this.onLoadMyTickers, 100),
         }
     }
 
-    onStateChanged = () => this.props.onTickerChanged(this.state)
     updateTicker = (ticker: string) => {
         const { loadReservation } = this
         this.setState(
@@ -49,6 +48,7 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             },
             this.onStateChanged)
     }
+    onStateChanged = () => this.props.onTickerChanged(this.state.ticker)
     onUpdateTicker = (e) => this.updateTicker(e.target.value)
     onLoadMyTickers = async () => {
         const api: Polymesh = await this.props.apiPromise
@@ -64,25 +64,43 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             ticker: ticker,
         })
     }
-    onReserveTicker = async () => {
+    onReserveTicker = async () => this.reserveTicker()
+    reserveTicker = async (): Promise<ReservationInfoJson> => {
         const api: Polymesh = await this.props.apiPromise
-        await this.props.onTickerReservationChanged(await (await api.reserveTicker({ ticker: this.state.ticker })).run())
+        const reserved: TickerReservation = await (await api.reserveTicker(this.getReserveTickerParams())).run()
+        const reservedInfo: ReservationInfoJson = await fetchReservationInfoJson(reserved)
+        this.props.onReservationInfoChanged(reservedInfo)
+        return reservedInfo
     }
+    getReserveTickerParams = (): ReserveTickerParams => ({ ticker: this.state.ticker })
     loadReservation = async () => {
         this.setState({ fetchTimer: null })
         const api: Polymesh = await this.props.apiPromise
         try {
-            await this.props.onTickerReservationChanged(await api.getTickerReservation({ ticker: this.state.ticker }))
+            const reservation: TickerReservation = await api.getTickerReservation({ ticker: this.state.ticker })
+            this.props.onReservationInfoChanged(await fetchReservationInfoJson(reservation))
+            this.props.onTokenInfoChanged(getEmptyTokenInfoJson())
         } catch (e) {
             if (!(e instanceof PolymeshError)) throw e
-            await this.props.onTickerReservationChanged(null)
+            this.props.onReservationInfoChanged(getEmptyReservation())
+            await this.loadToken()
+        }
+    }
+    loadToken = async () => {
+        const api: Polymesh = await this.props.apiPromise
+        try {
+            const securityToken: SecurityToken = await api.getSecurityToken({ ticker: this.state.ticker })
+            this.props.onTokenInfoChanged(await fetchTokenInfoJson(securityToken))
+        } catch (e) {
+            if (!(e instanceof PolymeshError)) throw e
+            this.props.onTokenInfoChanged(getEmptyTokenInfoJson())
         }
     }
 
     render() {
-        const { myReservedTickers, myTokenTickers, reservation, fetchTimer } = this.state
-        const { token, cardStyle } = this.props
-        const canReserve = reservation === null && token.current === null
+        const { myReservedTickers, myTokenTickers, fetchTimer } = this.state
+        const { reservation, token, cardStyle } = this.props
+        const canReserve = reservation.current === null && token.current === null
         return <fieldset className={cardStyle}>
             <legend>What ticker do you want to manage?</legend>
 

@@ -1,8 +1,5 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
-import {
-    CreateSecurityTokenParams,
-    TransferTickerOwnershipParams,
-} from "@polymathnetwork/polymesh-sdk/internal";
+import { CreateSecurityTokenParams, TransferTickerOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
 import {
     KnownTokenType,
     SecurityToken,
@@ -11,12 +8,13 @@ import {
     TokenIdentifier,
 } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import { fetchReservationInfoJson, OnReservationInfoChanged } from "../../handlers/token/ReservationHandlers";
+import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { ReservationInfoJson, TokenInfoJson } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
-import { OnTickerReservationChanged } from "./TickerView";
-import { TokenIdentifiersView, TokenIdentifiersViewState, } from "./TokenIdentifierView";
+import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
     reservation: ReservationInfoJson
@@ -41,7 +39,7 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
 }
 
 interface TickerReservationTransferViewState {
-    target: string
+    transferTarget: string
     transferExpiry: Date | null
 }
 
@@ -51,32 +49,32 @@ export interface TickerReservationTransferViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    onTickerReservationChanged: OnTickerReservationChanged
+    onReservationInfoChanged: OnReservationInfoChanged
 }
 
 export class TickerReservationTransferView extends Component<TickerReservationTransferViewProps, TickerReservationTransferViewState> {
     constructor(props: TickerReservationTransferViewProps) {
         super(props)
         this.state = {
-            target: "",
+            transferTarget: "",
             transferExpiry: null,
         }
     }
 
-    onTargetChanged = (e) => this.setState({ target: e.target.value })
+    onTargetChanged = (e) => this.setState({ transferTarget: e.target.value })
     onTransferExpiryChanged = (expiry: Date) => this.setState({ transferExpiry: expiry })
     getTransferParams = () => ({
-        target: this.state.target,
+        target: this.state.transferTarget,
         expiry: this.state.transferExpiry,
     }) as TransferTickerOwnershipParams
     onTransferReservationOwnership = async () => await this.transferOwnership()
     transferOwnership = async () => {
         const updated: TickerReservation = await (await this.props.reservation.current.transferOwnership(this.getTransferParams())).run()
-        this.props.onTickerReservationChanged(updated)
+        this.props.onReservationInfoChanged(await fetchReservationInfoJson(updated))
     }
 
     render() {
-        const { target, transferExpiry } = this.state
+        const { transferTarget: target, transferExpiry } = this.state
         const { reservation, myDid, cardStyle, hasTitleStyle, isWrongStyle } = this.props
         const canCreate: boolean = reservation.current !== null
             && reservation.details?.status === TickerReservationStatus.Reserved
@@ -125,8 +123,6 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
     }
 }
 
-export type OnSecurityTokenChanged = (token: SecurityToken) => void
-
 interface TokenCreatorViewState {
     canCreate: boolean
     longName: string
@@ -143,7 +139,7 @@ export interface TokenCreatorViewProps {
     myDid: string
     cardStyle: any
     hasTitleStyle: any
-    onSecurityTokenChanged: OnSecurityTokenChanged
+    onSecurityTokenChanged: OnTokenInfoChanged
 }
 
 export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCreatorViewState> {
@@ -169,9 +165,12 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
     onAssetTypeFromDropDownChanged = async (e) => this.setState({ assetType: e.target.value })
     onFundingRoundChanged = (e) => this.setState({ fundingRound: e.target.value })
     onUniquenessChanged = (e) => this.setState({ requiresUniqueness: e.target.checked })
-    onTokenIdentifiersChanged = (identifiers: TokenIdentifiersViewState) => this.setState({ tokenIdentifiers: identifiers.identifiers })
-    onCreateToken = async () =>
-        this.props.onSecurityTokenChanged(await (await this.props.reservation.current.createToken(this.getTokenParams())).run())
+    onTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
+    onCreateToken = async () => {
+        const securityToken: SecurityToken = await (await this.props.reservation.current.createToken(this.getTokenParams())).run()
+        const tokenInfo: TokenInfoJson = await fetchTokenInfoJson(securityToken)
+        this.props.onSecurityTokenChanged(tokenInfo)
+    }
     getTokenParams = () => ({
         name: this.state.longName,
         totalSupply: new BigNumber("0"),
@@ -291,8 +290,8 @@ export interface TickerReservationManagerProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    onTickerReservationChanged: OnTickerReservationChanged
-    onSecurityTokenChanged: OnSecurityTokenChanged
+    onReservationInfoChanged: OnReservationInfoChanged
+    onTokenInfoChanged: OnTokenInfoChanged
 }
 
 export class TickerReservationManagerView extends Component<TickerReservationManagerProps> {
@@ -304,8 +303,8 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
             cardStyle,
             hasTitleStyle,
             isWrongStyle,
-            onTickerReservationChanged,
-            onSecurityTokenChanged
+            onReservationInfoChanged,
+            onTokenInfoChanged: onSecurityTokenChanged
         } = this.props
         return <fieldset className={cardStyle}>
             <legend>Ticker Reservation: {reservation.current?.ticker}</legend>
@@ -321,7 +320,7 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}
                 isWrongStyle={isWrongStyle}
-                onTickerReservationChanged={onTickerReservationChanged}
+                onReservationInfoChanged={onReservationInfoChanged}
             />
 
             <TokenCreatorView

@@ -1,11 +1,11 @@
 import { TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
-import { SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
+import { SecurityToken, SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView } from "../identity/IdentityView";
 import { LongHexView } from "../LongHexView";
-import { OnSecurityTokenChanged } from "./ReservationView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface SecurityTokenFieldsViewProps {
@@ -86,8 +86,6 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
     }
 }
 
-export type TransferTokenOwnership = (token: TokenInfoJson, params: TransferTokenOwnershipParams) => Promise<void>
-
 interface SecurityTokenOwnerTransferViewState {
     ownershipTarget: string
     hasOwnershipExpiry: boolean
@@ -101,7 +99,7 @@ export interface SecurityTokenOwnerTransferViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    onSecurityTokenChanged: OnSecurityTokenChanged
+    onSecurityTokenChanged: OnTokenInfoChanged
 }
 
 export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwnerTransferViewProps, SecurityTokenOwnerTransferViewState> {
@@ -124,8 +122,11 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         })
     }
     updateHasExpiry = (e) => this.setState({ hasOwnershipExpiry: e.target.checked })
-    onTransferReservationOwnership = async (e) =>
-        this.props.onSecurityTokenChanged(await (await this.props.token.current.transferOwnership(this.getTransferParams())).run())
+    onTransferReservationOwnership = async (e) => {
+        const securityToken: SecurityToken = await (await this.props.token.current.transferOwnership(this.getTransferParams())).run()
+        const tokenInfo: TokenInfoJson = await fetchTokenInfoJson(securityToken)
+        this.props.onSecurityTokenChanged(tokenInfo)
+    }
     getTransferParams = () => ({
         target: this.state.ownershipTarget,
         expiry: this.state.hasOwnershipExpiry ? new Date(this.state.ownershipExpiry) : undefined
@@ -203,7 +204,7 @@ export interface SecurityTokenManagerViewProps {
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    onSecurityTokenChanged: OnSecurityTokenChanged
+    onTokenInfoChanged: OnTokenInfoChanged
 }
 
 export class SecurityTokenManagerView extends Component<SecurityTokenManagerViewProps> {
@@ -214,7 +215,7 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
             cardStyle,
             hasTitleStyle,
             isWrongStyle,
-            onSecurityTokenChanged,
+            onTokenInfoChanged: onSecurityTokenChanged,
         } = this.props
         return <fieldset className={cardStyle}>
             <legend>Security Token: {token.current?.ticker}</legend>

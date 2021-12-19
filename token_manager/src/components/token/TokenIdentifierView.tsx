@@ -1,8 +1,7 @@
 import { TokenIdentifier, TokenIdentifierType } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
+import { OnTokenIdentifierChanged, OnTokenIdentifiersChanged } from "../../handlers/token/TokenHandlers";
 import { EnumSelectView } from "../EnumView";
-
-export type OnTokenIdentifierChanged = (identifier: TokenIdentifier) => void
 
 interface TokenIdentifierViewState {
     type: TokenIdentifierType
@@ -65,9 +64,7 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
     }
 }
 
-export type OnTokenIdentifiersChanged = (identifiers: TokenIdentifiersViewState) => void
-
-export interface TokenIdentifiersViewState {
+interface TokenIdentifiersViewState {
     identifiers: TokenIdentifier[]
 }
 
@@ -84,7 +81,7 @@ export class TokenIdentifiersView extends Component<TokenIdentifiersViewProps, T
         this.state = { identifiers: props.identifiers }
     }
 
-    onStateChanged = () => this.props.onChange(this.state)
+    onStateChanged = () => this.props.onChange(this.state.identifiers)
     onAddTokenIdentifier = () => this.setState(
         (prev: TokenIdentifiersViewState) => ({
             ...prev,

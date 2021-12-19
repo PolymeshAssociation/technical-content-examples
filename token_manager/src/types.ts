@@ -92,6 +92,13 @@ export type ReservationInfoJson = {
     details: TickerReservationDetails,
 }
 
+export function getEmptyReservation(): ReservationInfoJson {
+    return {
+        current: null,
+        details: null,
+    }
+}
+
 export type TokenInfoJson = {
     current: SecurityToken
     createdAt: EventIdentifier | null
@@ -262,11 +269,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         myDid: "" as string,
         myAddress: "" as string,
         myTickers: [] as string[],
-        reservation: {
-            fetchTimer: null as NodeJS.Timeout,
-            current: null as TickerReservation,
-            details: null as TickerReservationDetails,
-        } as ReservationInfoJson,
+        reservation: getEmptyReservation() as ReservationInfoJson,
         token: getEmptyTokenInfoJson() as TokenInfoJson,
         permissions: getEmptyPermissionsInfoJson() as PermissionsInfoJson,
         requirements: getEmptyRequirements() as RequirementsInfoJson,
