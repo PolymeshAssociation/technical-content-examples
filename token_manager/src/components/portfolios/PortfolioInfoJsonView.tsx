@@ -129,7 +129,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                     className="submit set-custodian"
                     onClick={this.onSetCustodian}
                     disabled={!canClickSetCustody}>
-                    Set
+                    Invite
                 </button>
                 &nbsp;
                 <button
@@ -162,21 +162,25 @@ export interface PortfolioJsonInfosViewProps {
 
 export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProps> {
 
-    onDeletePortfolio = (index: number) => () => {
+    onDeletePortfolio = (index: number) => async () => {
         const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolios[index].original
-        async () => (isNumberedPortfolio(portfolio) ? this.deletePortfolio(portfolio, index) : Promise.resolve())
+        await ((isNumberedPortfolio(portfolio) ? this.deletePortfolio(portfolio, index) : Promise.resolve()))
     }
     deletePortfolio = async (toDelete: NumberedPortfolio, index: number) => {
-        await (await toDelete.delete()).run()
         const list: PortfolioInfoJson[] = this.props.portfolios
+        const onPortfolioInfosChanged: OnPortfolioInfosChanged = this.props.onPortfolioInfosChanged
+        await (await toDelete.delete()).run()
         list.splice(index, 1)
-        this.props.onPortfolioInfosChanged(list)
+        onPortfolioInfosChanged(list)
     }
 
-    onPortfolioInfoChanged = (index: number) => (changed: PortfolioInfoJson) => {
+    onPortfolioInfoChanged = (index: number) => {
         const list: PortfolioInfoJson[] = this.props.portfolios
-        list[index] = changed
-        this.props.onPortfolioInfosChanged(list)
+        const onPortfolioInfosChanged: OnPortfolioInfosChanged = this.props.onPortfolioInfosChanged
+        return (changed: PortfolioInfoJson) => {
+            list[index] = changed
+            onPortfolioInfosChanged(list)
+        }
     }
 
     render() {
@@ -193,12 +197,13 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
                 .map((portfolio: PortfolioInfoJson, index: number) => {
                     const original: DefaultPortfolio | NumberedPortfolio = portfolio.original
                     const isNumbered: boolean = isNumberedPortfolio(original)
+                    const canDelete: boolean = canManipulate && isNumbered && portfolio.original.owner.did === myDid
                     return <li key={index}>
                         {isNumbered ? "Numbered" : "Default"}&nbsp;Portfolio:&nbsp;
                         <button
                             className="submit delete-portfolio"
                             onClick={this.onDeletePortfolio(index)}
-                            disabled={!canManipulate || !isNumbered}>
+                            disabled={!canDelete}>
                             Delete
                         </button>
                         <PortfolioInfoJsonView
