@@ -210,7 +210,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 <input
                     name="token-divisible"
                     type="checkbox"
-                    checked={isDivisible}
+                    defaultChecked={isDivisible}
                     disabled={!canCreate}
                     onChange={this.onIsDivisibleChanged}
                 />
@@ -255,7 +255,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 <input
                     name="token-requiresUniqueness"
                     type="checkbox"
-                    checked={requiresUniqueness}
+                    defaultChecked={requiresUniqueness}
                     disabled={!canCreate}
                     onChange={this.onUniquenessChanged}
                 />

@@ -91,7 +91,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
             <li key="name">
                 Name:&nbsp;
                 <input
-                    value={newName}
+                    defaultValue={newName}
                     placeholder="My portfolio"
                     onChange={this.onNewName}
                     disabled={!canRename}

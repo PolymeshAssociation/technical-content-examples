@@ -15,7 +15,7 @@ function presentCheckpointScheduleInner(
             Exists:&nbsp;
             <input
                 type="checkbox"
-                checked={scheduleInfo.exists}
+                defaultChecked={scheduleInfo.exists}
                 disabled={true}
             />
         </li>,

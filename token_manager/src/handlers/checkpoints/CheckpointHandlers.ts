@@ -25,7 +25,6 @@ export interface CheckpointLoadBalanceParams {
 }
 
 export async function fetchCheckpointInfoJson(checkpointWith: CheckpointWithData | Checkpoint): Promise<CheckpointInfoJson> {
-    console.log(checkpointWith)
     const [checkpoint, exists, totalSupply, createdAt]: [Checkpoint, boolean, BigNumber, Date] = await Promise.all([
         isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith,
         isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint.exists() : checkpointWith.exists(),

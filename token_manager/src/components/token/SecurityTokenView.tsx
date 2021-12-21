@@ -65,7 +65,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                     Divisible:&nbsp;
                     <input
                         type="checkbox"
-                        checked={details?.isDivisible}
+                        defaultChecked={details?.isDivisible}
                         disabled={true}
                     />
                 </li>
@@ -74,7 +74,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                     Requires investor uniqueness:&nbsp;
                     <input
                         type="checkbox"
-                        checked={details?.requiresInvestorUniqueness}
+                        defaultChecked={details?.requiresInvestorUniqueness}
                         disabled={true}
                     />
                 </li>

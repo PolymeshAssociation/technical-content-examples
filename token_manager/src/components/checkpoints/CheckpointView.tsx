@@ -36,7 +36,7 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
                 Exists:&nbsp;
                 <input
                     type="checkbox"
-                    checked={checkpointInfo.exists}
+                    defaultChecked={checkpointInfo.exists}
                     disabled={true}
                 />
             </li>
