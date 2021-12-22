@@ -11,7 +11,7 @@ interface TickerManagerViewState {
     ticker: string
     myReservedTickers: string[]
     myTokenTickers: string[]
-    fetchTimer: NodeJS.Timeout
+    fetchTimer: NodeJS.Timeout | null
 }
 
 export interface TickerManagerViewProps {
@@ -31,7 +31,7 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             ticker: "",
             myReservedTickers: [],
             myTokenTickers: [],
-            fetchTimer: setTimeout(this.onLoadMyTickers, 100),
+            fetchTimer: null,
         }
     }
 
