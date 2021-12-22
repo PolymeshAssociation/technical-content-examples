@@ -1,5 +1,6 @@
 import countries from "i18n-iso-countries"
 import {
+    AgentWithGroup,
     CddClaim,
     CheckpointWithData,
     Claim,
@@ -18,6 +19,7 @@ import {
     IdentityCondition,
     InvestorUniquenessClaim,
     InvestorUniquenessV2Claim,
+    ModuleName,
     NumberedPortfolio,
     Requirement,
     ScheduleWithDetails,
@@ -28,6 +30,7 @@ import {
     TickerReservation,
     TickerReservationDetails,
     TokenIdentifier,
+    TxTag,
     UnscopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
 import {
@@ -45,6 +48,7 @@ import {
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
 import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
+import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -102,7 +106,7 @@ export function getEmptyReservation(): ReservationInfoJson {
 export type TokenInfoJson = {
     current: SecurityToken
     createdAt: EventIdentifier | null
-    details: SecurityTokenDetails
+    details: SecurityTokenDetails | null
     currentFundingRound: string
     tokenIdentifiers: TokenIdentifier[]
 }
@@ -117,40 +121,55 @@ export function getEmptyTokenInfoJson(): TokenInfoJson {
     }
 }
 
-export type KnownPermissionGroupInfoJson = {
-    current: KnownPermissionGroup,
-    permissions: GroupPermissions,
-    exists: boolean,
-}
-
-export type CustomPermissionGroupInfoJson = {
-    current: CustomPermissionGroup,
-    permissions: GroupPermissions,
-    exists: boolean,
+export type PermissionGroupInfoJson<GroupType extends KnownPermissionGroup | CustomPermissionGroup> = {
+    current: GroupType
+    permissions: GroupPermissions
+    exists: boolean
 }
 
 export type PermissionGroupsInfo = {
-    known: KnownPermissionGroup[],
-    custom: CustomPermissionGroup[],
+    known: KnownPermissionGroup[]
+    custom: CustomPermissionGroup[]
 }
 
 export type PermissionGroupsInfoJson = {
-    known: KnownPermissionGroupInfoJson[],
-    custom: CustomPermissionGroupInfoJson[],
+    known: PermissionGroupInfoJson<KnownPermissionGroup>[]
+    custom: PermissionGroupInfoJson<CustomPermissionGroup>[]
+}
+
+export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
+    return {
+        known: [] as PermissionGroupInfoJson<KnownPermissionGroup>[],
+        custom: [] as PermissionGroupInfoJson<CustomPermissionGroup>[],
+    }
 }
 
 export type AgentInfoJson = {
-    current: Identity,
-    group: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
+    current: AgentWithGroup
 }
 
 export type AgentsInfoJson = {
-    current: AgentInfoJson[],
+    current: AgentInfoJson[]
+}
+
+export function getEmptyAgentsInfo(): AgentsInfoJson {
+    return {
+        current: [] as AgentInfoJson[],
+    }
 }
 
 export type PermissionsInfoJson = {
-    groups: PermissionGroupsInfoJson,
-    agents: AgentsInfoJson,
+    original: Permissions | null
+    groups: PermissionGroupsInfoJson
+    agents: AgentsInfoJson
+}
+
+export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
+    return {
+        original: null,
+        groups: getEmptyPermissionGroupsInfoJson() as PermissionGroupsInfoJson,
+        agents: getEmptyAgentsInfo() as AgentsInfoJson,
+    }
 }
 
 export type RequirementsInfoJson = {
@@ -255,26 +274,6 @@ export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "curren
     participants: DistributionParticipant[],
 }
 
-export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
-    return {
-        known: [] as KnownPermissionGroupInfoJson[],
-        custom: [] as CustomPermissionGroupInfoJson[],
-    }
-}
-
-export function getEmptyAgentsInfo(): AgentsInfoJson {
-    return {
-        current: [] as AgentInfoJson[],
-    }
-}
-
-export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
-    return {
-        groups: getEmptyPermissionGroupsInfoJson() as PermissionGroupsInfoJson,
-        agents: getEmptyAgentsInfo() as AgentsInfoJson,
-    }
-}
-
 export function getEmptyMyInfo(): MyInfoJson {
     return {
         ticker: "" as string,
@@ -358,6 +357,8 @@ export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is Cl
 export const isCheckpointWithData = (checkpointWith: CheckpointWithData | Checkpoint): checkpointWith is CheckpointWithData => typeof (checkpointWith as CheckpointWithData).checkpoint !== "undefined"
 export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
 export const isScheduleWithDetails = (schedule: CheckpointSchedule | ScheduleWithDetails): schedule is ScheduleWithDetails => typeof (schedule as ScheduleWithDetails).schedule !== "undefined"
+export const isTxTagNotModuleName = (tag: TxTag | ModuleName): tag is TxTag => (tag.indexOf(".") > -1)
+export const isModuleNameNotTxTag = (tag: TxTag | ModuleName): tag is ModuleName => (tag.indexOf(".") <= -1)
 
 export declare type JurisdictionClaim = {
     type: ClaimType.Jurisdiction

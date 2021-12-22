@@ -16,8 +16,6 @@ import {
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
-  AgentWithGroup,
-  GroupPermissions,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
 import {
@@ -26,20 +24,13 @@ import {
   CheckpointScheduleDetailsInfoJson,
   CheckpointsInfoJson,
   CorporateActionInfoJson,
-  CustomPermissionGroupInfoJson,
   DividendDistributionInfoJson,
   getEmptyMyInfo,
-  getEmptyPermissionsInfoJson,
   getEmptyRequirements,
   isCheckpointSchedule,
-  isCustomPermissionGroup,
-  isKnownPermissionGroup,
   isNumberedPortfolio,
-  KnownPermissionGroupInfoJson,
   MyInfoJson,
   MyInfoPath,
-  PermissionGroupsInfo,
-  PermissionGroupsInfoJson,
   PermissionsInfoJson,
   PortfolioInfoJson,
   ReservationInfoJson,
@@ -51,12 +42,8 @@ import {
   Checkpoint,
   CheckpointSchedule,
   CorporateAction,
-  CustomPermissionGroup,
   DividendDistribution,
   Identity,
-  InviteExternalAgentParams,
-  KnownPermissionGroup,
-  RemoveExternalAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { findValue, getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
 import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
@@ -140,83 +127,11 @@ export default function Home() {
       500)
   }
 
-  async function loadPermissions(token: SecurityToken): Promise<PermissionsInfoJson> {
-    const groups = await loadPermissionGroups(token)
-    const agents = await loadPermissionAgents(token)
-    const permissions: PermissionsInfoJson = {
-      current: token.permissions,
-      groups: groups,
-      agents: agents,
-    }
-    await setPermissions(token, permissions)
-    await loadComplianceRequirements(token)
-    return permissions
-  }
-
-  async function setPermissions(token: SecurityToken | null, permissions: PermissionsInfoJson | null) {
-    if (token === null || permissions === null) {
-      setMyInfo(returnUpdatedCreator(["permissions"], getEmptyPermissionsInfoJson()))
-    } else {
-      setMyInfo(returnUpdatedCreator(["permissions"], permissions))
-    }
-  }
-
-  async function loadKnownPermissionGroup(group: KnownPermissionGroup): Promise<KnownPermissionGroupInfoJson> {
-    return Promise.all([group.getPermissions(), group.exists()])
-      .then((results: [GroupPermissions, boolean]) => ({
-        current: group,
-        permissions: results[0],
-        exists: results[1]
-      }))
-  }
-
-  async function loadCustomPermissionGroup(group: CustomPermissionGroup): Promise<CustomPermissionGroupInfoJson> {
-    return Promise.all([group.getPermissions(), group.exists()])
-      .then((results: [GroupPermissions, boolean]) => ({
-        current: group,
-        permissions: results[0],
-        exists: results[1]
-      }))
-  }
-
-  async function loadPermissionGroupInfo(group: KnownPermissionGroup | CustomPermissionGroup): Promise<KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson> {
-    if (isKnownPermissionGroup(group)) return loadKnownPermissionGroup(group)
-    if (isCustomPermissionGroup(group)) return loadCustomPermissionGroup(group)
-    throw new Error("Permission group is neither custom nor known: " + group)
-  }
-
-  async function loadPermissionGroups(token: SecurityToken): Promise<PermissionGroupsInfoJson> {
-    const groups: PermissionGroupsInfo = await token.permissions.getGroups()
-    return {
-      known: await Promise.all(groups.known.map(loadKnownPermissionGroup)),
-      custom: await Promise.all(groups.custom.map(loadCustomPermissionGroup)),
-    }
-  }
-
-  async function loadPermissionAgents(token: SecurityToken): Promise<AgentsInfoJson> {
-    setStatus("Loading permission groups")
-    const agentWithGroups: AgentWithGroup[] = await token.permissions.getAgents()
-    return {
-      current: await Promise.all(agentWithGroups.map(async (agentWithGroup: AgentWithGroup) => {
-        const groupInfo = await loadPermissionGroupInfo(agentWithGroup.group)
-        return {
-          current: agentWithGroup.agent,
-          group: groupInfo,
-        }
-      }))
-    }
-  }
-
-  async function inviteAgent(params: InviteExternalAgentParams): Promise<void> {
-    setStatus("Inviting agent")
-    await (await myInfo.permissions.current.inviteAgent(params)).run()
-    setStatus("Agent invited")
-  }
-
-  async function removeAgent(params: RemoveExternalAgentParams): Promise<void> {
-    setStatus("Removing agent")
-    await (await myInfo.permissions.current.removeAgent(params)).run()
-    setStatus("Agent removed")
+  async function setPermissionsInfo(permissions: PermissionsInfoJson) {
+    setMyInfo((prevInfo: MyInfoJson) => ({
+      ...prevInfo,
+      permissions: permissions,
+    }))
   }
 
   async function loadComplianceRequirements(token: SecurityToken | null): Promise<Requirement[] | null> {
@@ -769,14 +684,12 @@ export default function Home() {
 
         <PermissionManagerView
           myDid={myInfo.myDid}
-          permissions={myInfo.permissions}
           token={myInfo.token}
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
-          removeAgent={removeAgent}
-          inviteAgent={inviteAgent}
-          canManipulate={true}
+          onAgentChanged={() => { }}
+          onPermissionsChanged={setPermissionsInfo}
         />
 
         <ComplianceManagerView

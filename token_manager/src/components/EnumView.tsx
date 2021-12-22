@@ -2,7 +2,7 @@ import { Component } from "react"
 
 export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
     const selects: JSX.Element[] = []
-    for (const element in theEnum) selects.push(<option value={element} key={element}>{element}</option>)
+    for (const element in theEnum) selects.push(<option value={element} key={element}>{theEnum[element]}</option>)
     return selects
 }
 
@@ -17,7 +17,7 @@ export class EnumSelectView<EnumType> extends Component<EnumSelectViewProps<Enum
     render() {
         const { theEnum, defaultValue, onChange, canManipulate } = this.props
         return <select
-            defaultValue={defaultValue.toString()}
+            value={defaultValue.toString()}
             onChange={onChange}
             disabled={!canManipulate}>
             {presentEnumOptions(theEnum)}

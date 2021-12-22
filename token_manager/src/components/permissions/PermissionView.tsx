@@ -1,53 +1,116 @@
+import { CustomPermissionGroup } from "@polymathnetwork/polymesh-sdk/api/entities/CustomPermissionGroup";
+import { KnownPermissionGroup } from "@polymathnetwork/polymesh-sdk/api/entities/KnownPermissionGroup";
+import { InviteExternalAgentParams } from "@polymathnetwork/polymesh-sdk/api/procedures/inviteExternalAgent";
+import { AgentWithGroup, GroupPermissions, Identity, SecurityToken } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import { OnAgentChanged } from "../../handlers/permissions/AgentHandlers";
+import { OnPermissionsChanged } from "../../handlers/permissions/PermissionsHandlers";
 import {
-    CustomPermissionGroupInfoJson,
-    KnownPermissionGroupInfoJson,
+    AgentInfoJson,
+    AgentsInfoJson,
+    getEmptyPermissionsInfoJson,
+    PermissionGroupInfoJson,
+    PermissionGroupsInfo,
+    PermissionGroupsInfoJson,
     PermissionsInfoJson,
     TokenInfoJson,
 } from "../../types";
-import { InviteAgent, NewPermissionAgentView, PermissionAgentsView, RemoveAgent } from "./PermissionAgentView";
-import { PermissionGroupsInfoView } from "./PermissionGroupView";
+import { NewPermissionAgentView, PermissionAgentsView } from "./PermissionAgentView";
+import { NewCustomPermissionGroupView, PermissionGroupsInfoView } from "./PermissionGroupView";
 
 interface PermissionManagerViewState {
-    pickedGroup: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson
+    pickedGroup: PermissionGroupInfoJson<KnownPermissionGroup | CustomPermissionGroup> | null
+    permissions: PermissionsInfoJson
 }
 
 export interface PermissionManagerViewProps {
     myDid: string
-    permissions: PermissionsInfoJson
     token: TokenInfoJson
     cardStyle: any
     hasTitleStyle: any
     isWrongStyle: any
-    canManipulate: boolean
-    removeAgent: RemoveAgent
-    inviteAgent: InviteAgent
+    onAgentChanged: OnAgentChanged
+    onPermissionsChanged: OnPermissionsChanged
 }
 
 export class PermissionManagerView extends Component<PermissionManagerViewProps, PermissionManagerViewState> {
     constructor(props: PermissionManagerViewProps) {
         super(props)
         this.state = {
-            pickedGroup: props.permissions.groups.known[0],
+            pickedGroup: null,
+            permissions: getEmptyPermissionsInfoJson(),
+        }
+        this.loadPermissionsDelayed()
+    }
+
+    componentDidUpdate(prevProps: Readonly<PermissionManagerViewProps>, prevState: Readonly<PermissionManagerViewState>, snapshot?: any): void {
+        if (this.props.token.current?.ticker !== prevProps.token.current?.ticker) {
+            this.loadPermissionsDelayed()
+        } else if (this.props.token.current?.ticker === prevProps.token.current?.ticker) {
+            if (this.props.token.details?.owner !== prevProps.token.details?.owner) {
+                this.loadPermissionsDelayed()
+            }
         }
     }
 
-    onGroupPicked = (group: KnownPermissionGroupInfoJson | CustomPermissionGroupInfoJson) => this.setState({
+    loadPermissionsDelayed = () => setTimeout(this.loadPermissions, 100)
+    loadPermissions = async (): Promise<PermissionsInfoJson> => {
+        const token: SecurityToken = this.props.token.current
+        const permissionsInfo = token === null
+            ? getEmptyPermissionsInfoJson()
+            : {
+                original: token.permissions,
+                groups: await this.fetchPermissionGroups(await token.permissions.getGroups()),
+                agents: await this.fetchPermissionAgents(await token.permissions.getAgents()),
+            }
+        this.setState({
+            permissions: permissionsInfo,
+        })
+        this.props.onPermissionsChanged(permissionsInfo)
+        return permissionsInfo
+    }
+    fetchPermissionGroup = async <GroupType extends KnownPermissionGroup | CustomPermissionGroup>(group: GroupType): Promise<PermissionGroupInfoJson<GroupType>> => {
+        console.log(group)
+        const [permissions, exists]: [GroupPermissions, boolean] = await Promise.all([group.getPermissions(), group.exists()])
+        return {
+            current: group,
+            permissions: permissions,
+            exists: exists,
+        }
+    }
+    fetchPermissionGroups = async (groups: PermissionGroupsInfo): Promise<PermissionGroupsInfoJson> => {
+        const [known, custom]: [PermissionGroupInfoJson<KnownPermissionGroup>[], PermissionGroupInfoJson<CustomPermissionGroup>[]] = await Promise.all([
+            Promise.all(groups.known.map(this.fetchPermissionGroup)),
+            Promise.all(groups.custom.map(this.fetchPermissionGroup)),
+        ])
+        return {
+            known: known,
+            custom: custom,
+        }
+    }
+    fetchPermissionAgents = async (agentWithGroups: AgentWithGroup[]): Promise<AgentsInfoJson> => ({
+        current: agentWithGroups.map((agentWithGroup: AgentWithGroup): AgentInfoJson => ({
+            current: agentWithGroup,
+        }))
+    })
+    onGroupPicked = (group: PermissionGroupInfoJson<KnownPermissionGroup | CustomPermissionGroup>): void => this.setState({
         pickedGroup: group,
     })
 
+    onAgentChanged = (agent: Identity): void => {
+        this.loadPermissionsDelayed()
+        this.props.onAgentChanged(agent)
+    }
+    onInviteAgent = async (params: InviteExternalAgentParams): Promise<void> => {
+        await (await this.state.permissions.original.inviteAgent(params)).run()
+    }
+
+
     render() {
-        const {
-            myDid,
-            permissions,
-            token,
-            cardStyle,
-            hasTitleStyle,
-            isWrongStyle,
-            removeAgent,
-            inviteAgent,
-            canManipulate,
-        } = this.props
+        const { permissions, pickedGroup } = this.state
+        const { myDid, token, cardStyle, hasTitleStyle, isWrongStyle } = this.props
+        const canManipulate: boolean = token.details?.owner?.did === myDid
+        const canInvite: boolean = canManipulate && permissions.original !== null
         return <fieldset className={cardStyle}>
             <legend>Permissions For: {token.current?.ticker}</legend>
 
@@ -56,25 +119,35 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
 
                 <div className="submit">
                     <PermissionGroupsInfoView
+                        permissions={permissions.original}
                         groups={permissions.groups}
                         onGroupPicked={this.onGroupPicked}
+                        onGroupsInfoUpdated={this.loadPermissionsDelayed}
                         canManipulate={canManipulate}
                     />
                 </div>
 
             </fieldset>
 
+            <NewCustomPermissionGroupView
+                cardStyle={cardStyle}
+                permissions={permissions.original}
+                onGroupCreated={this.loadPermissionsDelayed}
+                canManipulate={canManipulate}
+            />
+
             <fieldset className={cardStyle}>
                 <legend>External Agents</legend>
 
                 <div className="submit">
                     <PermissionAgentsView
+                        permissions={permissions.original}
                         agents={permissions.agents.current}
                         myDid={myDid}
                         knownGroups={permissions.groups.known}
                         customGroups={permissions.groups.custom}
-                        removeAgent={removeAgent}
                         canManipulate={canManipulate}
+                        onAgentChanged={this.onAgentChanged}
                     />
                 </div>
 
@@ -84,9 +157,9 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}
                 isWrongStyle={isWrongStyle}
-                inviteAgent={inviteAgent}
-                defaultGroup={this.state.pickedGroup}
-                canManipulate={canManipulate}
+                onInviteAgent={this.onInviteAgent}
+                defaultGroup={pickedGroup}
+                canManipulate={canInvite}
             />
 
         </fieldset>
