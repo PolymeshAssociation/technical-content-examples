@@ -28,12 +28,10 @@ export interface TxGroupsViewProps {
 
 export class TxGroupsView extends Component<TxGroupsViewProps> {
 
-    onAddTxGroup = () => {
-        this.props.onTxGroupsChanged([
-            TxGroup.AdvancedTokenManagement,
-            ...this.props.txGroups,
-        ])
-    }
+    onAddTxGroup = () => this.props.onTxGroupsChanged([
+        TxGroup.AdvancedTokenManagement,
+        ...this.props.txGroups,
+    ])
     onRemoveTxGroup = (index: number) => () => {
         const list: TxGroup[] = this.props.txGroups
         list.splice(index, 1)
@@ -58,17 +56,18 @@ export class TxGroupsView extends Component<TxGroupsViewProps> {
             {addButton}
             <ol>{txGroups
                 .map((txGroup: TxGroup, index: number) => <li key={index}>
-                    <EnumSelectView<TxGroup>
-                        theEnum={TxGroup}
-                        defaultValue={txGroup}
-                        onChange={this.onTxGroupChanged(index)}
-                        canManipulate={canManipulate}
-                    />&nbsp;
                     <button className="submit remove-tx-group"
                         onClick={this.onRemoveTxGroup(index)}
                         disabled={!canManipulate}>
                         Remove
                     </button>
+                    &nbsp;
+                    <EnumSelectView<TxGroup>
+                        theEnum={TxGroup}
+                        defaultValue={txGroup}
+                        onChange={this.onTxGroupChanged(index)}
+                        canManipulate={canManipulate}
+                    />
                 </li>)
             }</ol>
         </div>
@@ -137,6 +136,7 @@ export class TxTagView extends Component<TxTagViewProps, TxTagViewState> {
                 disabled={!canManipulate}>
                 {txTagsKeys.map((group: string) => <option key={group}>{group}</option>)}
             </select>
+            &nbsp;
             <EnumSelectView
                 theEnum={groupEnum}
                 defaultValue={actionName}
@@ -146,7 +146,6 @@ export class TxTagView extends Component<TxTagViewProps, TxTagViewState> {
         </div>
     }
 }
-
 
 export interface TxTagsViewProps {
     values: TxTag[]
@@ -183,17 +182,18 @@ export class TxTagsView extends Component<TxTagsViewProps> {
             {addButton}&nbsp;
             <ol>{values
                 .map((tag: TxTag, index: number) => <li key={index}>
+                    <button
+                        className="submit delete-tx-tag"
+                        onClick={this.onRemoveTxTag(index)}
+                        disabled={!canManipulate}>
+                        Remove
+                    </button>
+                    &nbsp;
                     <TxTagView
                         value={tag}
                         onTxTagChanged={this.onTxTagChanged(index)}
                         canManipulate={canManipulate}
-                    />&nbsp;
-                    <button
-                        className="submit delete-tx-tag"
-                        onClick={this.onRemoveTxTag(index)}
-                        disabled={!canManipulate}                    >
-                        Remove
-                    </button>
+                    />
                 </li>)
             }</ol>
         </div>
@@ -276,31 +276,33 @@ export class TxTagOrModulesNameView extends Component<TxTagOrModuleNamesViewProp
         if (values.length === 0) return <div>There are no TxTags or ModuleNames&nbsp;{addButton}</div>
         return <div>
             {addButton}
-            <ul>
+            <ol>
                 {values.map((value: ModuleName | TxTag, index: number) => {
                     const type: string = isModuleNameNotTxTag(value) ? "ModuleName" : isTxTagNotModuleName(value) ? "TxTag" : assertUnreachable(value)
                     return <li key={index}>
+                        <button
+                            className="submit delete-tx-tag-or-module-name"
+                            onClick={this.onRemoveTxTagOrModuleName(index)}
+                            disabled={!canManipulate}>
+                            Remove
+                        </button>
+                        &nbsp;
                         <EnumSelectView
                             theEnum={ModuleNameOrTxTag}
                             defaultValue={type}
                             onChange={this.onTypeChanged(index)}
                             canManipulate={canManipulate}
                         />
+                        &nbsp;
                         <TxTagOrModuleNameView
                             value={value}
                             onModuleNameChanged={this.onModuleNameChanged(index)}
                             onTxTagChanged={this.onModuleNameChanged(index)}
                             canManipulate={canManipulate}
                         />
-                        <button
-                            className="submit delete-tx-tag-or-module-name"
-                            onClick={this.onRemoveTxTagOrModuleName(index)}
-                            disabled={!canManipulate}                    >
-                            Remove
-                        </button>
                     </li>
                 })}
-            </ul>
+            </ol>
         </div>
     }
 }

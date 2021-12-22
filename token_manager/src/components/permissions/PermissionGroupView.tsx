@@ -12,6 +12,7 @@ import {
     PermissionGroupType,
     PermissionType,
     TransactionPermissions,
+    TransactionQueue,
     TxGroup,
 } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
@@ -24,6 +25,9 @@ import {
 } from "../../handlers/permissions/GroupHandlers";
 import { OnGroupPermissionsChanged } from "../../handlers/permissions/PermissionsHandlers";
 import {
+    assertUnreachable,
+    isCustomPermissionGroup,
+    isKnownPermissionGroup,
     PermissionGroupInfoJson,
     PermissionGroupsInfoJson
 } from "../../types";
@@ -47,18 +51,21 @@ export class GroupPermissionsView extends Component<GroupPermissionsViewProps> {
         ...this.props.permissions,
         transactions: perms,
     })
+
     render() {
         const { permissions, canManipulate } = this.props
         return <ul>
             <li key="transactionGroups">
-                Transaction Groups: <TxGroupsView
+                Transaction Groups:&nbsp;
+                <TxGroupsView
                     txGroups={permissions.transactionGroups}
                     onTxGroupsChanged={this.onTxGroupsChanged}
                     canManipulate={canManipulate}
                 />
             </li>
             <li key="transactions">
-                Transactions: <TransactionPermissionsView
+                Transactions:&nbsp;
+                <TransactionPermissionsView
                     transactions={permissions.transactions}
                     onTransactionPermissionsChanged={this.onTransactionPermissionsChanged}
                     canManipulate={canManipulate}
@@ -76,15 +83,19 @@ export class KnownPermissionGroupView extends Component<KnownPermissionGroupView
     render() {
         const { group } = this.props
         return <ul>
-            <li key="type"><EnumSelectView<PermissionGroupType>
-                theEnum={PermissionGroupType}
-                defaultValue={group.type}
-                onChange={undefined}
-                canManipulate={false}
-            /></li>
-            <li key="ticker">Ticker: {group.ticker}</li>
+            <li key="type">
+                Type:&nbsp;
+                <EnumSelectView<PermissionGroupType>
+                    theEnum={PermissionGroupType}
+                    defaultValue={group.type}
+                    onChange={async () => { }}
+                    canManipulate={false}
+                />
+            </li>
+            <li key="ticker">Ticker:&nbsp;{group.ticker}</li>
             <li key="uuid">
-                Uuid: <LongHexView value={group.uuid} lut={null} />
+                Uuid:&nbsp;
+                <LongHexView value={group.uuid} lut={null} />
             </li>
         </ul>
     }
@@ -99,13 +110,22 @@ export class KnownPermissionGroupInfoView extends Component<KnownPermissionGroup
         const { group } = this.props
         return <ul>
             <li key="current">
-                Group: <KnownPermissionGroupView
+                Group:&nbsp;
+                <KnownPermissionGroupView
                     group={group.current}
                 />
             </li>
-            <li key="exists">Exists: {group.exists ? "true" : "false"}</li>
+            <li key="exists">
+                Exists:&nbsp;
+                <input
+                    checked={group.exists}
+                    type="checkbox"
+                    disabled={true}
+                />
+            </li>
             <li key="permissions">
-                Permissions: <GroupPermissionsView
+                Permissions:&nbsp;
+                <GroupPermissionsView
                     permissions={group.permissions}
                     onPermissionsChanged={undefined}
                     canManipulate={false}
@@ -117,29 +137,32 @@ export class KnownPermissionGroupInfoView extends Component<KnownPermissionGroup
 
 export interface KnownPermissionGroupInfosViewProps {
     groups: PermissionGroupInfoJson<KnownPermissionGroup>[]
-    groupPicked: PermissionGroup
+    groupPicked: PermissionGroup | null
     onGroupPicked: OnPermissionGroupPicked
     canManipulate: boolean
 }
 
 export class KnownPermissionGroupInfosView extends Component<KnownPermissionGroupInfosViewProps> {
-    onGroupPicked = (group: PermissionGroupInfoJson<KnownPermissionGroup>) => (e) => this.props.onGroupPicked(group)
+    onGroupPicked = (group: PermissionGroupInfoJson<KnownPermissionGroup>) => () => this.props.onGroupPicked(group)
 
     render() {
         const { groups, groupPicked, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
-        else return <ol>{
+        return <ol>{
             groups
-                .map((group: PermissionGroupInfoJson<KnownPermissionGroup>, groupIndex: number) => <li key={groupIndex}>
-                    <button
-                        className="submit"
-                        onClick={this.onGroupPicked(group)}
-                        disabled={!canManipulate || group.current === groupPicked}>
-                        Pick it
-                    </button>
-                    <KnownPermissionGroupInfoView
-                        group={group} />
-                </li>)
+                .map((group: PermissionGroupInfoJson<KnownPermissionGroup>, index: number) => {
+                    const canPick: boolean = canManipulate && !groupPicked?.isEqual(group.current)
+                    return <li key={index}>
+                        <button
+                            className="submit"
+                            onClick={this.onGroupPicked(group)}
+                            disabled={!canPick}>
+                            Pick it
+                        </button>
+                        <KnownPermissionGroupInfoView
+                            group={group} />
+                    </li>
+                })
         }</ol>
     }
 }
@@ -162,7 +185,6 @@ export class CustomPermissionGroupView extends Component<CustomPermissionGroupVi
 }
 
 interface CustomPermissionGroupInfoViewState {
-    groupId: BigNumber
     params: GroupPermissions
     modified: boolean
 }
@@ -180,15 +202,15 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
         this.state = this.getStateFromProps(props)
     }
 
-    componentDidUpdate(prevProps: Readonly<CustomPermissionGroupInfoViewProps>, prevState: Readonly<CustomPermissionGroupInfoViewState>, snapshot?: any): void {
-        if (prevProps.group.current.id.toString(10) !== prevState.groupId.toString(10)) this.setState(this.getStateFromProps(this.props))
+    componentDidUpdate(prevProps: Readonly<CustomPermissionGroupInfoViewProps>, _: Readonly<CustomPermissionGroupInfoViewState>): void {
+        if (!prevProps.group.current.isEqual(this.props.group.current)) this.setState(this.getStateFromProps(this.props))
     }
 
-    getStateFromProps = (props: CustomPermissionGroupInfoViewProps) => ({
-        groupId: props.group.current.id,
+    getStateFromProps = (props: CustomPermissionGroupInfoViewProps) => this.getStateFromNewPerms(props.group.permissions)
+    getStateFromNewPerms = (perms: GroupPermissions) => ({
         params: {
-            transactionGroups: props.group.permissions.transactionGroups,
-            transactions: props.group.permissions.transactions,
+            transactionGroups: perms.transactionGroups,
+            transactions: perms.transactions,
 
         },
         modified: false,
@@ -199,18 +221,22 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
         modified: true,
     })
     onUpdatePerms = async () => {
-        const groupId: BigNumber = this.state.groupId
-        await (await this.props.group.current.setPermissions(this.getUpdatePermParams())).run()
-        this.props.onGroupUpdated(await this.props.permissions.getGroup({ id: groupId }))
+        const groupId: BigNumber = this.props.group.current.id
+        const queue: TransactionQueue = await this.props.group.current.setPermissions(this.getUpdatePermParams())
+        this.setState({ modified: false })
+        await queue.run()
+        const updatedGroup = await this.props.permissions.getGroup({ id: groupId })
+        this.setState(this.getStateFromNewPerms(await updatedGroup.getPermissions()))
+        this.props.onGroupUpdated(updatedGroup)
     }
     getUpdatePermParams = (): SetGroupPermissionsParams => ({
         permissions: this.state.params,
     })
 
     render() {
-        const { params } = this.state
-        const { transactions, transactionGroups } = params
+        const { params, modified } = this.state
         const { group, canManipulate } = this.props
+        const canUpdate: boolean = canManipulate && modified
         return <ul>
             <li key="current">
                 Group: <CustomPermissionGroupView
@@ -223,14 +249,11 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
                 <button
                     className="submit update-permissions"
                     onClick={this.onUpdatePerms}
-                    disabled={!canManipulate}>
+                    disabled={!canUpdate}>
                     Update
                 </button>
                 <GroupPermissionsView
-                    permissions={{
-                        transactionGroups: transactionGroups,
-                        transactions: transactions,
-                    }}
+                    permissions={params}
                     onPermissionsChanged={this.onPermissionsChanged}
                     canManipulate={canManipulate}
                 />
@@ -242,7 +265,7 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
 export interface CustomPermissionGroupInfosViewProps {
     permissions: Permissions
     groups: PermissionGroupInfoJson<CustomPermissionGroup>[]
-    groupPicked: PermissionGroup
+    groupPicked: PermissionGroup | null
     onGroupPicked: OnPermissionGroupPicked
     onGroupsUpdated: OnCustomGroupsUpdated
     canManipulate: boolean
@@ -261,22 +284,42 @@ export class CustomPermissionGroupInfosView extends Component<CustomPermissionGr
     render() {
         const { permissions, groups, groupPicked, canManipulate } = this.props
         if (groups.length === 0) return <span> None</span>
-        else return <ol>{
+        return <ol>{
             groups
-                .map((group: PermissionGroupInfoJson<CustomPermissionGroup>, index: number) => <li key={index}>
-                    <button
-                        className="submit"
-                        onClick={this.onGroupPicked(group)}
-                        disabled={!canManipulate || !group.exists || group.current === groupPicked}>
-                        Pick it
-                    </button>
-                    <CustomPermissionGroupInfoView
-                        permissions={this.props.permissions}
-                        group={group}
-                        onGroupUpdated={this.onGroupUpdated(index)}
-                        canManipulate={canManipulate} />
-                </li>)
+                .map((group: PermissionGroupInfoJson<CustomPermissionGroup>, index: number) => {
+                    const canPick: boolean = canManipulate && group.exists && !groupPicked?.isEqual(group.current)
+                    return <li key={index}>
+                        <button
+                            className="submit"
+                            onClick={this.onGroupPicked(group)}
+                            disabled={!canPick}>
+                            Pick it
+                        </button>
+                        <CustomPermissionGroupInfoView
+                            permissions={permissions}
+                            group={group}
+                            onGroupUpdated={this.onGroupUpdated(index)}
+                            canManipulate={canManipulate} />
+                    </li>
+                })
         }</ol>
+    }
+}
+
+export interface PermissionGroupViewProps {
+    group: KnownPermissionGroup | CustomPermissionGroup
+}
+
+export class PermissionGroupView extends Component<PermissionGroupViewProps> {
+    render() {
+        const { group } = this.props
+        if (isKnownPermissionGroup(group)) return <KnownPermissionGroupView
+            group={group}
+        />
+        if (isCustomPermissionGroup(group)) return <CustomPermissionGroupView
+            group={group}
+        />
+        assertUnreachable(group)
     }
 }
 
@@ -322,7 +365,7 @@ export class PermissionGroupsInfoView extends Component<PermissionGroupsInfoView
                     groups={groups.known}
                     groupPicked={groupPicked}
                     onGroupPicked={this.onGroupPicked}
-                    canManipulate={false} />
+                    canManipulate={canManipulate} />
             </li>
             <li key="custom">
                 Custom:
@@ -341,6 +384,7 @@ export class PermissionGroupsInfoView extends Component<PermissionGroupsInfoView
 interface NewCustomPermissionGroupViewState {
     txGroups: TxGroup[]
     transactions: TransactionPermissions
+    modified: boolean
 }
 
 export interface NewCustomPermissionGroupViewProps {
@@ -359,16 +403,25 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
                 type: PermissionType.Include,
                 values: [],
                 exceptions: [],
-            }
+            },
+            modified: false,
         }
     }
 
-    onTxGroupsChanged = (groups: TxGroup[]): void => this.setState({ txGroups: groups })
-    onTxPermissionsChanged = (perms: TransactionPermissions) => this.setState({ transactions: perms })
+    onTxGroupsChanged = (groups: TxGroup[]): void => this.setState({
+        txGroups: groups,
+        modified: true,
+    })
+    onTxPermissionsChanged = (perms: TransactionPermissions): void => this.setState({
+        transactions: perms,
+        modified: true,
+    })
 
     onCreateCustomGroup = async (): Promise<void> => {
         const params: CreateGroupParams = this.getCreateParams()
-        const group: CustomPermissionGroup = await (await this.props.permissions.createGroup(params)).run()
+        const queue = await this.props.permissions.createGroup(params)
+        this.setState({ modified: false })
+        const group: CustomPermissionGroup = await queue.run()
         this.props.onGroupCreated(group)
     }
     getCreateParams = (): CreateGroupParams => ({
@@ -379,8 +432,9 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
     })
 
     render() {
-        const { txGroups, transactions } = this.state
+        const { txGroups, transactions, modified } = this.state
         const { cardStyle, canManipulate } = this.props
+        const canCreate: boolean = canManipulate && modified
         return <fieldset className={cardStyle}>
             <legend>Custom group to create</legend>
 
@@ -407,7 +461,7 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
             <button
                 className="submit create-custom-group"
                 onClick={this.onCreateCustomGroup}
-                disabled={!canManipulate}>
+                disabled={!canCreate}>
                 Create custom group
             </button>
 
