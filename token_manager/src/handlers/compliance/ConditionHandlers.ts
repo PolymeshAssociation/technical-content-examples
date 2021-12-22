@@ -8,12 +8,12 @@ import {
     isSingleClaimCondition,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { assertUnreachable, isIdentityCondition } from "../../types"
+import { getDummyClaim } from "../claims/ClaimHandlers"
 import {
     convertTrustedClaimIssuerFlatToCorrect,
     convertTrustedClaimIssuerToFlat,
-    getDummyClaim,
     TrustedClaimIssuerFlat,
-} from "./ClaimHandlers"
+} from "../claims/TrustedClaimIssuerHandlers"
 import { IdentityGetter } from "./ComplianceHandlers"
 
 export type OnConditionChanged = (condition: ConditionFlat) => void

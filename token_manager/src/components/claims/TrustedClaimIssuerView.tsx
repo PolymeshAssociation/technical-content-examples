@@ -4,7 +4,7 @@ import {
     OnTrustedIssuerChanged,
     OnTrustedIssuersChanged,
     TrustedClaimIssuerFlat,
-} from "../../handlers/compliance/ClaimHandlers";
+} from "../../handlers/claims/TrustedClaimIssuerHandlers";
 import { EnumSelectView } from "../EnumView";
 
 export interface TrustedClaimIssuerViewProps {

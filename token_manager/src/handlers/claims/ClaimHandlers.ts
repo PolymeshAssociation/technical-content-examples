@@ -6,7 +6,6 @@ import {
     isScopedClaim,
     Scope,
     ScopeType,
-    TrustedClaimIssuer,
 } from "@polymathnetwork/polymesh-sdk/types";
 import {
     assertUnreachable,
@@ -14,31 +13,14 @@ import {
     isInvestorUniquenessV2Claim,
     isJurisdictionClaim,
 } from "../../types";
-import { IdentityGetter } from "./ComplianceHandlers";
 
 export type OnScopeChanged = (scope: Scope) => void
 export type OnClaimChanged = (claim: Claim) => void
 export type OnClaimsChanged = (claims: Claim[]) => void
-export type OnTrustedIssuerChanged = (trustedClaimIssuer: TrustedClaimIssuerFlat) => void
-export type OnTrustedIssuersChanged = (trustedClaimIssuers: TrustedClaimIssuerFlat[]) => void
 
-export interface TrustedClaimIssuerFlat {
-    identity: string
-    trustedFor: ClaimType[]
-}
 
 export const getDummyClaim = (): Claim => ({
     type: ClaimType.NoData
-})
-
-export const convertTrustedClaimIssuerToFlat = (trustedClaimIssuer: TrustedClaimIssuer): TrustedClaimIssuerFlat => ({
-    identity: trustedClaimIssuer.identity.did,
-    trustedFor: trustedClaimIssuer.trustedFor ?? [],
-})
-
-export const convertTrustedClaimIssuerFlatToCorrect = (getter: IdentityGetter) => async (flat: TrustedClaimIssuerFlat): Promise<TrustedClaimIssuer> => ({
-    identity: await getter(flat.identity),
-    trustedFor: flat.trustedFor,
 })
 
 export interface ClaimFlat {

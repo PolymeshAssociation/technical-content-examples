@@ -1,7 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { Claim, ConditionTarget, ConditionType, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
-import { TrustedClaimIssuerFlat } from "../../handlers/compliance/ClaimHandlers";
+import { TrustedClaimIssuerFlat } from "../../handlers/claims/TrustedClaimIssuerHandlers";
 import {
     ConditionFlat,
     getDummyConditionFlat,
@@ -14,9 +14,9 @@ import {
     MyInfoJson,
 } from "../../types";
 import { BasicProps } from "../BasicProps";
+import { ClaimsView, ClaimView } from "../claims/ClaimView";
+import { TrustedClaimIssuersView } from "../claims/TrustedClaimIssuerView";
 import { EnumSelectView } from "../EnumView";
-import { ClaimsView, ClaimView } from "./ClaimView";
-import { TrustedClaimIssuersView } from "./TrustedClaimIssuerView";
 
 export interface ConditionViewProps extends BasicProps {
     condition: ConditionFlat

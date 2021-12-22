@@ -50,7 +50,6 @@ import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
 import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionView"
-import { AddInvestorUniquenessClaimView, ClaimView } from "../src/components/compliance/ClaimView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
 import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
@@ -65,6 +64,7 @@ import {
   fetchCheckpointScheduleInfoJson,
   fetchCheckpointsInfo,
 } from "../src/handlers/checkpoints/CheckpointHandlers"
+import { AddInvestorUniquenessClaimView, ClaimView } from "../src/components/claims/ClaimView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
