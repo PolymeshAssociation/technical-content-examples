@@ -21,7 +21,7 @@ import {
     OnClaimChanged,
     OnClaimsChanged,
     OnScopeChanged,
-} from "../../handlers/compliance/ClaimHandlers";
+} from "../../handlers/claims/ClaimHandlers";
 import {
     FetchAndAddToPath,
     FetchDefaultAndAddToPath,
@@ -393,4 +393,3 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
         </ul>
     }
 }
-

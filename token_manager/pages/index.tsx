@@ -65,6 +65,7 @@ import {
   fetchCheckpointsInfo,
 } from "../src/handlers/checkpoints/CheckpointHandlers"
 import { AddInvestorUniquenessClaimView, ClaimView } from "../src/components/claims/ClaimView"
+import { ClaimDatasView } from "../src/components/claims/ClaimDataView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -304,45 +305,6 @@ export default function Home() {
     setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
   }
 
-  function presentClaimData(claimData: ClaimData<Claim>, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    canManipulate = claimData.issuer.did === myInfo.myDid
-    return <ul>
-      <li key="target">Target:&nbsp;
-        <input defaultValue={claimData.target.did} placeholder="0x123" disabled={!canManipulate}
-          onChange={onRequirementChangedCreator(
-            [...location, "target"],
-            false,
-            async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
-      </li>
-      <li key="issuer">Issuer:&nbsp;
-        <input defaultValue={claimData.issuer.did} placeholder="0x123" disabled={!canManipulate}
-          onChange={onRequirementChangedCreator(
-            [...location, "issuer"],
-            false,
-            async (e) => Promise.resolve((await getPolyWalletApi()).getIdentity({ did: e.target.value })))} />
-      </li>
-      <li key="issuedAt">Issued at: {claimData.issuedAt.toISOString()}</li>
-      <li key="expiry">Expiry:&nbsp;
-        <input defaultValue={claimData.expiry?.toISOString() || ""} placeholder="2020-12-01" disabled={!canManipulate}
-          onChange={onRequirementChangedCreator(
-            [...location, "expiry"],
-            false,
-            async (e) => Promise.resolve(new Date(e.target.value)))} />
-      </li>
-      <li key="claim">Claim:&nbsp;
-        <ClaimView
-          apiPromise={apiPromise}
-          claim={claimData.claim}
-          myInfo={myInfo}
-          fetchCddId={fetchCddId}
-          onClaimChanged={() => { }}
-          location={[...location, "claim"]}
-          canManipulate={canManipulate}
-        />
-      </li>
-    </ul>
-  }
-
   function presentClaimTarget(claimTarget: ClaimTarget, location: MyInfoPath, canManipulate: boolean): JSX.Element {
     return <ul>
       <li key="target">Target:&nbsp;
@@ -370,29 +332,6 @@ export default function Home() {
         />
       </li>
     </ul>
-  }
-
-  function presentClaimDatas(claimDatas: ClaimData<Claim>[] | null, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof claimDatas === "undefined" || claimDatas === null || claimDatas.length === 0) return <div>No attestations</div>
-    return <ul>{
-      claimDatas
-        .map((claimData: ClaimData, claimIndex: number) => {
-          const canManipulateIt = canManipulate && claimData.issuer.did === myInfo.myDid
-          return <li key={claimIndex}>
-            Attestation {claimIndex}:&nbsp;
-            <button className="submit revoke-claim-data" onClick={() => revokeAttestation([...location, claimIndex])} disabled={!canManipulateIt}>Revoke</button>
-            {presentClaimData(claimData, [...location, claimIndex], canManipulateIt)}
-          </li>
-        })
-    }</ul>
-  }
-
-  async function revokeAttestation(location: MyInfoPath): Promise<void> {
-    const toRevoke = findValue(myInfo, location)
-    const api: Polymesh = await getPolyWalletApi()
-    await (await api.claims.revokeClaims({
-      claims: [toRevoke]
-    })).run()
   }
 
   async function addAttestation(location: MyInfoPath): Promise<void> {
@@ -730,7 +669,18 @@ export default function Home() {
             <input defaultValue={myInfo.attestations.otherTarget} placeholder="0x123" onChange={onRequirementChangedCreator(["attestations", "otherTarget"])} />
           </div>
 
-          <div>{presentClaimDatas(myInfo.attestations.current, ["attestations", "current"], true)}</div>
+          <div>
+            <ClaimDatasView
+              claimDatas={myInfo.attestations.current}
+              canManipulate={true}
+              isWrongStyle={styles.isWrong}
+              location={["attestations", "current"]}
+              myInfo={myInfo}
+              apiPromise={apiPromise}
+              fetchCddId={fetchCddId}
+              onClaimDatasChanged={() => { }}
+            />
+          </div>
 
           <div className={styles.card}>
             <div>Attestation to add:</div>

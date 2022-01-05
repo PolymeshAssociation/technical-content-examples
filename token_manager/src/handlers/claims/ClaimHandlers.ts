@@ -18,7 +18,6 @@ export type OnScopeChanged = (scope: Scope) => void
 export type OnClaimChanged = (claim: Claim) => void
 export type OnClaimsChanged = (claims: Claim[]) => void
 
-
 export const getDummyClaim = (): Claim => ({
     type: ClaimType.NoData
 })
