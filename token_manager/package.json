@@ -11,7 +11,7 @@
   "dependencies": {
     "@polkadot/extension-dapp": "0.41.2",
     "@polymathnetwork/confidential-identity": "1.1.1",
-    "@polymathnetwork/polymesh-sdk": "12.0.0",
+    "@polymathnetwork/polymesh-sdk": "12.0.2",
     "@types/lodash": "4.14.178",
     "i18n-iso-countries": "7.1.0",
     "lodash": "4.17.21",
