@@ -1,8 +1,16 @@
-import { Claim, ClaimData } from "@polymathnetwork/polymesh-sdk/types";
+import { Claim, ClaimData, ClaimTarget } from "@polymathnetwork/polymesh-sdk/types";
 import { IdentityGetter } from "../compliance/ComplianceHandlers";
+import { getDummyClaim } from "./ClaimHandlers";
 
+export type OnClaimTargetChanged = (claimTarget: ClaimTarget) => void
 export type OnClaimDataChanged = (claimData: ClaimDataFlat) => void
 export type OnClaimDatasChanged = (claimDatas: ClaimDataFlat[]) => void
+
+export const getDummyClaimTarget = (): ClaimTarget => ({
+    target: "",
+    claim: getDummyClaim(),
+    expiry: null,
+})
 
 export interface ClaimDataFlat {
     target: string

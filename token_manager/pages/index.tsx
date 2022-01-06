@@ -5,10 +5,7 @@ import {
   Requirement,
   SecurityToken,
   Claim,
-  ResultSet,
   ClaimData,
-  ClaimTarget,
-  IdentityWithClaims,
   CddClaim,
   Authorization,
   AuthorizationType,
@@ -64,8 +61,7 @@ import {
   fetchCheckpointScheduleInfoJson,
   fetchCheckpointsInfo,
 } from "../src/handlers/checkpoints/CheckpointHandlers"
-import { AddInvestorUniquenessClaimView, ClaimView } from "../src/components/claims/ClaimView"
-import { ClaimDatasView } from "../src/components/claims/ClaimDataView"
+import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -266,27 +262,6 @@ export default function Home() {
     await loadAuthorisations()
   }
 
-  async function loadAttestationsReceived(): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    const me: Identity = await api.getCurrentIdentity()
-    setStatus("Fetching attestations I received")
-    setMyInfo(returnUpdatedCreator(["myDid"], me.did))
-    await setAttestations((await api.claims.getIssuedClaims({ target: me.did })).data)
-    setStatus("Attestations I received, fetched")
-  }
-
-  async function loadAttestationsReceivedBy(): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    setStatus(`Fetching attestations received by ${myInfo.attestations.otherTarget}`)
-    const result: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({ targets: [myInfo.attestations.otherTarget] })
-    await setAttestations(result.data[0].claims)
-    setStatus(`Attestations received by ${myInfo.attestations.otherTarget}, fetched`)
-  }
-
-  async function setAttestations(myClaims: ClaimData<Claim>[]): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["attestations", "current"], myClaims))
-  }
-
   async function fetchMyCddId(location: MyInfoPath): Promise<void> {
     const api: Polymesh = await getPolyWalletApi()
     return fetchCddId(location, await api.getCurrentIdentity())
@@ -303,43 +278,6 @@ export default function Home() {
     }))
     if (claims.length === 0) throw new Error(`No CDD claims attached to ${targetDid}`)
     setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
-  }
-
-  function presentClaimTarget(claimTarget: ClaimTarget, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>
-      <li key="target">Target:&nbsp;
-        <input defaultValue={typeof claimTarget.target === "string" ? claimTarget.target : claimTarget.target.did} placeholder="0x123"
-          onChange={onRequirementChangedCreator([...location, "target"])}
-          disabled={!canManipulate}
-        />
-      </li>
-      <li key="expiry">Expiry:&nbsp;
-        <input defaultValue={claimTarget.expiry?.toISOString() || null} placeholder="2020-12-01" disabled={!canManipulate}
-          onChange={onRequirementChangedCreator(
-            [...location, "expiry"],
-            false,
-            async (e) => Promise.resolve(e.target.value === "" ? null : new Date(e.target.value)))} />
-      </li>
-      <li key="claim">Claim:&nbsp;
-        <ClaimView
-          apiPromise={apiPromise}
-          claim={claimTarget.claim}
-          myInfo={myInfo}
-          fetchCddId={fetchCddId}
-          onClaimChanged={() => { }}
-          location={[...location, "claim"]}
-          canManipulate={canManipulate}
-        />
-      </li>
-    </ul>
-  }
-
-  async function addAttestation(location: MyInfoPath): Promise<void> {
-    const toAdd: ClaimTarget = findValue(myInfo, location)
-    const api: Polymesh = await getPolyWalletApi()
-    setStatus("Adding attestation")
-    await (await api.claims.addClaims({ claims: [toAdd] })).run()
-    setStatus("Attestation added")
   }
 
   async function addUniquenessAttestation(location: MyInfoPath): Promise<void> {
@@ -657,60 +595,18 @@ export default function Home() {
 
         </fieldset>
 
-        <fieldset className={styles.card}>
-          <legend>Attestations</legend>
-
-          <div className="submit">
-            <button className="submit load-attestations-received" onClick={loadAttestationsReceived}>Load attestations I received</button>
-          </div>
-          <div className="submit">
-            <button className="submit load-attestations-received-by" onClick={loadAttestationsReceivedBy}>Load attestations received by</button>
-            &nbsp;
-            <input defaultValue={myInfo.attestations.otherTarget} placeholder="0x123" onChange={onRequirementChangedCreator(["attestations", "otherTarget"])} />
-          </div>
-
-          <div>
-            <ClaimDatasView
-              claimDatas={myInfo.attestations.current}
-              canManipulate={true}
-              isWrongStyle={styles.isWrong}
-              location={["attestations", "current"]}
-              myInfo={myInfo}
-              apiPromise={apiPromise}
-              fetchCddId={fetchCddId}
-              onClaimDatasChanged={() => { }}
-            />
-          </div>
-
-          <div className={styles.card}>
-            <div>Attestation to add:</div>
-            <div>{presentClaimTarget(myInfo.attestations.toAdd, ["attestations", "toAdd"], true)}</div>
-            <div className="submit">
-              <button className="submit add-attestation" onClick={() => addAttestation(["attestations", "toAdd"])}>Add KYC attestation</button>
-            </div>
-            <div>It takes some time for the added attestation<br />to show in the list above because the<br />middleware first needs to be updated</div>
-          </div>
-
-          <div className={styles.card}>
-            <div>Investor uniqueness to add to yourself:</div>
-
-            <div>
-              <AddInvestorUniquenessClaimView
-                claimParams={myInfo.attestations.uniquenessToAdd}
-                fetchMyCddId={fetchMyCddId}
-                location={["attestations", "uniquenessToAdd"]}
-                isWrongStyle={styles.isWrong}
-                canManipulate={true}
-              />
-            </div>
-
-            <div className="submit">
-              <button className="submit add-unique-attestation" onClick={() => addUniquenessAttestation(["attestations", "uniquenessToAdd"])}>Add uniqueness attestation</button>
-            </div>
-            <div>It takes some time for the added attestation<br />to show in the list above because the<br />middleware needs to be updated</div>
-          </div>
-
-        </fieldset>
+        <ClaimsManagerView
+          cardStyle={styles.card}
+          isWrongStyle={styles.isWrong}
+          myInfo={myInfo}
+          location={["attestations"]}
+          canManipulate={true}
+          apiPromise={apiPromise}
+          onClaimDataChanged={() => { }}
+          fetchCddId={fetchCddId}
+          fetchMyCddId={fetchMyCddId}
+          addUniquenessAttestation={addUniquenessAttestation}
+        />
 
         <PortfolioManagerView
           apiPromise={apiPromise}

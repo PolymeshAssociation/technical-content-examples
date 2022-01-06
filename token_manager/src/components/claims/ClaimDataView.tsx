@@ -1,16 +1,78 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
-import { Claim, ClaimData, Identity } from "@polymathnetwork/polymesh-sdk/types";
+import { Claim, ClaimData, ClaimTarget, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import {
     ClaimDataFlat,
     convertClaimDataToFlat,
     OnClaimDataChanged,
     OnClaimDatasChanged,
+    OnClaimTargetChanged,
 } from "../../handlers/claims/ClaimDataHandlers";
-import { FetchAndAddToPath, MyInfoJson } from "../../types";
+import { FetchAndAddToPath, isIdentity, MyInfoJson } from "../../types";
 import { BasicProps } from "../BasicProps";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { ClaimView } from "./ClaimView";
+
+export interface ClaimTargetViewProps extends BasicProps {
+    claimTarget: ClaimTarget
+    myInfo: MyInfoJson
+    apiPromise: Promise<Polymesh>
+    isWrongStyle: any
+    onClaimTargetChanged: OnClaimTargetChanged
+    fetchCddId: FetchAndAddToPath<string | Identity>
+}
+
+export class ClaimTargetView extends Component<ClaimTargetViewProps> {
+
+    onTargetChanged = (e) => this.props.onClaimTargetChanged({
+        ...this.props.claimTarget,
+        target: e.target.value,
+    })
+    onExpiryChanged = (newExpiry: Date | null) => this.props.onClaimTargetChanged({
+        ...this.props.claimTarget,
+        expiry: newExpiry,
+    })
+    onClaimChanged = (newClaim: Claim) => this.props.onClaimTargetChanged({
+        ...this.props.claimTarget,
+        claim: newClaim,
+    })
+
+
+    render() {
+        const { claimTarget, myInfo, canManipulate, location, isWrongStyle, apiPromise, fetchCddId } = this.props
+        const { target, expiry } = claimTarget
+        return <ul>
+            <li key="target">Target:&nbsp;
+                <input
+                    defaultValue={isIdentity(target) ? target.did : target}
+                    placeholder="0x123"
+                    onChange={this.onTargetChanged}
+                    disabled={!canManipulate}
+                />
+            </li>
+            <li key="expiry">Expiry:&nbsp;
+                <DateTimeEntryView
+                    dateTime={expiry}
+                    isOptional={true}
+                    isWrongStyle={isWrongStyle}
+                    validDateChanged={this.onExpiryChanged}
+                    canManipulate={canManipulate}
+                />
+            </li>
+            <li key="claim">Claim:&nbsp;
+                <ClaimView
+                    apiPromise={apiPromise}
+                    claim={claimTarget.claim}
+                    myInfo={myInfo}
+                    fetchCddId={fetchCddId}
+                    onClaimChanged={this.onClaimChanged}
+                    location={[...location, "claim"]}
+                    canManipulate={canManipulate}
+                />
+            </li>
+        </ul>
+    }
+}
 
 export interface ClaimDataViewProps extends BasicProps {
     claimData: ClaimData<Claim>
@@ -51,7 +113,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
         return <ul>
             <li key="target">Target:&nbsp;
                 <input
-                    defaultValue={target}
+                    value={target}
                     placeholder="0x123"
                     disabled={!canManipulate}
                     onChange={this.onStringChanged("target")}
@@ -59,7 +121,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
             </li>
             <li key="issuer">Issuer:&nbsp;
                 <input
-                    defaultValue={issuer}
+                    value={issuer}
                     placeholder="0x123"
                     disabled={!canManipulate}
                     onChange={this.onStringChanged("issuer")}
@@ -122,18 +184,18 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
         return <ul>{
             claimDatas
                 .map((claimData: ClaimData, index: number) => {
-                    const canManipulateIt = canManipulate && claimData.issuer.did === myInfo.myDid
+                    const canRevokeIt = canManipulate && claimData.issuer.did === myInfo.myDid
                     return <li key={index}>
                         Attestation {index}:&nbsp;
                         <button
                             className="submit revoke-claim-data"
                             onClick={this.onRevokeAttestation(claimData)}
-                            disabled={!canManipulateIt}>
+                            disabled={!canRevokeIt}>
                             Revoke
                         </button>
                         <ClaimDataView
                             claimData={claimData}
-                            canManipulate={canManipulateIt}
+                            canManipulate={false}
                             myInfo={myInfo}
                             isWrongStyle={isWrongStyle}
                             apiPromise={apiPromise}
