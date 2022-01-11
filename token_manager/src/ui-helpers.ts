@@ -1,6 +1,7 @@
 import getConfig from "next/config"
+import type { InjectedExtension } from '@polkadot/extension-inject/types';
 import { Keyring, Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { HasFetchTimer, MyInfoPath } from "./types"
+import { MyInfoPath } from "./types"
 
 export async function getBasicPolyWalletApi(setStatus: (content: string) => void): Promise<Polymesh> {
     setStatus("Getting your Polymesh Wallet")
@@ -22,13 +23,13 @@ export async function getBasicPolyWalletApi(setStatus: (content: string) => void
             polymesh: { middlewareLink, middlewareKey }
         }
     } = getConfig()
-    const polkaDotExtensions = await web3Enable(appName)
-    const polyWallets = polkaDotExtensions.filter(injected => injected.name === "polywallet")
+    const polkaDotExtensions: InjectedExtension[] = await web3Enable(appName)
+    const polyWallets: InjectedExtension[] = polkaDotExtensions.filter(injected => injected.name === "polywallet")
     if (polyWallets.length == 0) {
         setStatus("You need to install the Polymesh Wallet extension")
         throw new Error("No Polymesh Wallet")
     }
-    const polyWallet = polyWallets[0]
+    const polyWallet: InjectedExtension = polyWallets[0]
     setStatus("Verifying network")
     const network = await polyWallet.network.get()
     polyWallet.network.subscribe(() => window.location.reload())
