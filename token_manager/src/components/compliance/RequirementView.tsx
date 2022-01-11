@@ -1,5 +1,4 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
-import { Identity } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
 import { ConditionFlat } from "../../handlers/compliance/ConditionHandlers";
 import {
@@ -8,16 +7,13 @@ import {
     OnRequirementsChanged,
     RequirementFlat,
 } from "../../handlers/compliance/RequirementHandlers";
-import { FetchAndAddToPath, MyInfoJson, } from "../../types";
-import { BasicProps } from "../BasicProps";
 import { ConditionsView } from "./ConditionView";
 
-export interface RequirementViewProps extends BasicProps {
+export interface RequirementViewProps {
     requirement: RequirementFlat
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onRequirementChanged: OnRequirementChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class RequirementView extends Component<RequirementViewProps> {
@@ -28,7 +24,7 @@ export class RequirementView extends Component<RequirementViewProps> {
     })
 
     render() {
-        const { requirement, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
+        const { requirement, apiPromise, canManipulate } = this.props
         const { id, conditions } = requirement
         return <ul>
             <li key="id">Id: {id}</li>
@@ -36,11 +32,8 @@ export class RequirementView extends Component<RequirementViewProps> {
                 Conditions:&nbsp;
                 <ConditionsView
                     conditions={conditions}
-                    myInfo={myInfo}
                     apiPromise={apiPromise}
                     onConditionsChanged={this.onConditionsChange}
-                    fetchCddId={fetchCddId}
-                    location={[...location, "conditions"]}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -48,12 +41,11 @@ export class RequirementView extends Component<RequirementViewProps> {
     }
 }
 
-export interface RequirementsViewProps extends BasicProps {
+export interface RequirementsViewProps {
     requirements: RequirementFlat[]
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onRequirementsChanged: OnRequirementsChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class RequirementsView extends Component<RequirementsViewProps> {
@@ -74,7 +66,7 @@ export class RequirementsView extends Component<RequirementsViewProps> {
     }
 
     render() {
-        const { requirements, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
+        const { requirements, apiPromise, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-requirement"
             onClick={this.addRequirement}
@@ -98,11 +90,8 @@ export class RequirementsView extends Component<RequirementsViewProps> {
                     </button>
                     <RequirementView
                         requirement={requirement}
-                        myInfo={myInfo}
                         apiPromise={apiPromise}
                         onRequirementChanged={this.onRequirementChangedAt(index)}
-                        fetchCddId={fetchCddId}
-                        location={[...location, index]}
                         canManipulate={canManipulate}
                     />
                 </li>)

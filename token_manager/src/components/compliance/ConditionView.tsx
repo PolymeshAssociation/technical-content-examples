@@ -1,5 +1,5 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
-import { Claim, ConditionTarget, ConditionType, Identity } from "@polymathnetwork/polymesh-sdk/types";
+import { Claim, ConditionTarget, ConditionType } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
 import { TrustedClaimIssuerFlat } from "../../handlers/claims/TrustedClaimIssuerHandlers";
 import {
@@ -8,22 +8,16 @@ import {
     OnConditionChanged,
     OnConditionsChanged,
 } from "../../handlers/compliance/ConditionHandlers";
-import {
-    assertUnreachable,
-    FetchAndAddToPath,
-    MyInfoJson,
-} from "../../types";
-import { BasicProps } from "../BasicProps";
+import { assertUnreachable } from "../../types";
 import { ClaimsView, ClaimView } from "../claims/ClaimView";
 import { TrustedClaimIssuersView } from "../claims/TrustedClaimIssuerView";
 import { EnumSelectView } from "../EnumView";
 
-export interface ConditionViewProps extends BasicProps {
+export interface ConditionViewProps {
     condition: ConditionFlat
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onConditionChanged: OnConditionChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ConditionView extends Component<ConditionViewProps> {
@@ -46,7 +40,7 @@ export class ConditionView extends Component<ConditionViewProps> {
     })
 
     render() {
-        const { condition, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
+        const { condition, apiPromise, canManipulate } = this.props
         const { target, trustedClaimIssuers, type, claim, claims, identity } = condition
         const elements: JSX.Element[] = [
             <li key="target">Target:
@@ -80,11 +74,8 @@ export class ConditionView extends Component<ConditionViewProps> {
                     Claim:
                     <ClaimView
                         claim={claim}
-                        myInfo={myInfo}
                         apiPromise={apiPromise}
                         onClaimChanged={this.onClaimChanged}
-                        fetchCddId={fetchCddId}
-                        location={[...location, "claim"]}
                         canManipulate={canManipulate}
                     />
                 </li>)
@@ -94,11 +85,8 @@ export class ConditionView extends Component<ConditionViewProps> {
                 elements.push(<li key="claims">Claims:
                     <ClaimsView
                         claims={claims}
-                        myInfo={myInfo}
                         apiPromise={apiPromise}
                         onClaimsChanged={this.onClaimsChanged}
-                        fetchAndAddToPath={fetchCddId}
-                        location={[...location, "claims"]}
                         canManipulate={canManipulate}
                     />
                 </li>)
@@ -123,12 +111,11 @@ export class ConditionView extends Component<ConditionViewProps> {
     }
 }
 
-export interface ConditionsViewProps extends BasicProps {
+export interface ConditionsViewProps {
     conditions: ConditionFlat[]
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onConditionsChanged: OnConditionsChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ConditionsView extends Component<ConditionsViewProps> {
@@ -149,7 +136,7 @@ export class ConditionsView extends Component<ConditionsViewProps> {
     }
 
     render() {
-        const { conditions, myInfo, apiPromise, fetchCddId, location, canManipulate } = this.props
+        const { conditions, apiPromise, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-condition"
             onClick={this.addCondition}
@@ -173,11 +160,8 @@ export class ConditionsView extends Component<ConditionsViewProps> {
                         </button>
                         <ConditionView
                             condition={condition}
-                            myInfo={myInfo}
                             apiPromise={apiPromise}
                             onConditionChanged={this.onConditionChangedAt(index)}
-                            fetchCddId={fetchCddId}
-                            location={[...location, index]}
                             canManipulate={canManipulate}
                         />
                     </li>)

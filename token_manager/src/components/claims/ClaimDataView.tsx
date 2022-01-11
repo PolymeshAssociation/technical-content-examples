@@ -1,5 +1,5 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
-import { Claim, ClaimData, ClaimTarget, Identity } from "@polymathnetwork/polymesh-sdk/types";
+import { Claim, ClaimData, ClaimTarget } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import {
     ClaimDataFlat,
@@ -8,18 +8,16 @@ import {
     OnClaimDatasChanged,
     OnClaimTargetChanged,
 } from "../../handlers/claims/ClaimDataHandlers";
-import { FetchAndAddToPath, isIdentity, MyInfoJson } from "../../types";
-import { BasicProps } from "../BasicProps";
+import { isIdentity } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { ClaimView } from "./ClaimView";
 
-export interface ClaimTargetViewProps extends BasicProps {
+export interface ClaimTargetViewProps {
     claimTarget: ClaimTarget
-    myInfo: MyInfoJson
-    apiPromise: Promise<Polymesh>
     isWrongStyle: any
+    canManipulate: boolean
+    apiPromise: Promise<Polymesh>
     onClaimTargetChanged: OnClaimTargetChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimTargetView extends Component<ClaimTargetViewProps> {
@@ -39,7 +37,7 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
 
 
     render() {
-        const { claimTarget, myInfo, canManipulate, location, isWrongStyle, apiPromise, fetchCddId } = this.props
+        const { claimTarget, canManipulate, isWrongStyle, apiPromise } = this.props
         const { target, expiry } = claimTarget
         return <ul>
             <li key="target">Target:&nbsp;
@@ -63,10 +61,7 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
                 <ClaimView
                     apiPromise={apiPromise}
                     claim={claimTarget.claim}
-                    myInfo={myInfo}
-                    fetchCddId={fetchCddId}
                     onClaimChanged={this.onClaimChanged}
-                    location={[...location, "claim"]}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -74,13 +69,12 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
     }
 }
 
-export interface ClaimDataViewProps extends BasicProps {
+export interface ClaimDataViewProps {
     claimData: ClaimData<Claim>
-    myInfo: MyInfoJson
-    apiPromise: Promise<Polymesh>
     isWrongStyle: any
+    canManipulate: boolean
+    apiPromise: Promise<Polymesh>
     onClaimDataChanged: OnClaimDataChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimDataView extends Component<ClaimDataViewProps> {
@@ -101,12 +95,9 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
     render() {
         const {
             claimData,
-            myInfo,
             canManipulate,
             apiPromise,
             isWrongStyle,
-            fetchCddId,
-            location,
         } = this.props
         const { target, issuer, expiry, issuedAt, claim } = convertClaimDataToFlat(claimData)
 
@@ -141,10 +132,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
                 <ClaimView
                     apiPromise={apiPromise}
                     claim={claim}
-                    myInfo={myInfo}
-                    fetchCddId={fetchCddId}
                     onClaimChanged={this.onClaimChanged}
-                    location={[...location, "claim"]}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -152,13 +140,13 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
     }
 }
 
-export interface ClaimDatasViewProps extends BasicProps {
+export interface ClaimDatasViewProps {
+    myDid: string
     claimDatas: ClaimData<Claim>[]
-    myInfo: MyInfoJson
-    apiPromise: Promise<Polymesh>
     isWrongStyle: any
+    canManipulate: boolean
+    apiPromise: Promise<Polymesh>
     onClaimDatasChanged: OnClaimDatasChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimDatasView extends Component<ClaimDatasViewProps> {
@@ -179,12 +167,12 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
     }
 
     render() {
-        const { claimDatas, myInfo, apiPromise, isWrongStyle, location, canManipulate, fetchCddId } = this.props
+        const { myDid, claimDatas, apiPromise, isWrongStyle, canManipulate } = this.props
         if (claimDatas.length === 0) return <div>No attestations</div>
         return <ul>{
             claimDatas
                 .map((claimData: ClaimData, index: number) => {
-                    const canRevokeIt = canManipulate && claimData.issuer.did === myInfo.myDid
+                    const canRevokeIt = canManipulate && claimData.issuer.did === myDid
                     return <li key={index}>
                         Attestation {index}:&nbsp;
                         <button
@@ -196,11 +184,8 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
                         <ClaimDataView
                             claimData={claimData}
                             canManipulate={false}
-                            myInfo={myInfo}
                             isWrongStyle={isWrongStyle}
                             apiPromise={apiPromise}
-                            location={[...location, index]}
-                            fetchCddId={fetchCddId}
                             onClaimDataChanged={this.onClaimDataChangedAt(index)}
                         />
                     </li>

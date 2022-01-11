@@ -1,3 +1,4 @@
+import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/api/procedures/addInvestorUniquenessClaim";
 import {
     Claim,
     ClaimType,
@@ -17,9 +18,21 @@ import {
 export type OnScopeChanged = (scope: Scope) => void
 export type OnClaimChanged = (claim: Claim) => void
 export type OnClaimsChanged = (claims: Claim[]) => void
+export type OnAddInvestorUniquenessClaimParamsChanged = (params: AddInvestorUniquenessClaimParams) => void
 
 export const getDummyClaim = (): Claim => ({
     type: ClaimType.NoData
+})
+
+export const getDummyAddInvestorUniquenessClaimParams = (): AddInvestorUniquenessClaimParams => ({
+    scope: {
+        type: ScopeType.Ticker,
+        value: "",
+    },
+    cddId: "",
+    proof: "",
+    scopeId: "",
+    expiry: null,
 })
 
 export interface ClaimFlat {

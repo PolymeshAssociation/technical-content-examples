@@ -1,9 +1,9 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AddInvestorUniquenessClaimParams } from "@polymathnetwork/polymesh-sdk/internal";
 import {
+    CddClaim,
     Claim,
     ClaimData,
-    ClaimTarget,
     ClaimType,
     CountryCode,
     Identity,
@@ -18,21 +18,17 @@ import {
     convertClaimFlatToClaim,
     convertClaimToFlat,
     getDummyClaim,
+    OnAddInvestorUniquenessClaimParamsChanged,
     OnClaimChanged,
     OnClaimsChanged,
     OnScopeChanged,
 } from "../../handlers/claims/ClaimHandlers";
 import {
-    FetchAndAddToPath,
-    FetchDefaultAndAddToPath,
     isCddClaim,
-    isClaimData,
     isJurisdictionClaim,
     isScopeClaimProof,
-    MyInfoJson,
 } from "../../types";
-import { findValue } from "../../ui-helpers";
-import { BasicProps } from "../BasicProps";
+import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 
 export interface ScopeViewProps {
@@ -76,12 +72,11 @@ export class ScopeView extends Component<ScopeViewProps> {
     }
 }
 
-export interface ClaimViewProps extends BasicProps {
+export interface ClaimViewProps {
     claim: Claim
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onClaimChanged: OnClaimChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimView extends Component<ClaimViewProps> {
@@ -103,21 +98,8 @@ export class ClaimView extends Component<ClaimViewProps> {
         code: e.target.value,
     }))
 
-    fetchCddId = async (target: string | Identity): Promise<ClaimData<Claim>[]> => {
-        const api: Polymesh = await this.props.apiPromise
-        const targetDid: string = typeof target === "string" ? target : target.did
-        if (typeof targetDid === "undefined" || targetDid === null || targetDid === "")
-            throw new Error(`You need to put a valid target first, not ${targetDid}`)
-        const claims: ClaimData<Claim>[] = await api.claims.getCddClaims({
-            target: target,
-            includeExpired: false,
-        })
-        if (claims.length === 0) throw new Error(`No CDD claims attached to ${targetDid}`)
-        return claims
-    }
-
     render() {
-        const { claim, myInfo, location, canManipulate } = this.props
+        const { claim, canManipulate } = this.props
         const { type, id, scope, cddId, scopeId, code, } = convertClaimToFlat(claim)
         const elements: JSX.Element[] = [
             <li key="type">Type:&nbsp;
@@ -150,37 +132,23 @@ export class ClaimView extends Component<ClaimViewProps> {
             </li>)
         }
         if (isInvestorUniquenessClaim(claim)) {
-            const claimData: ClaimData | ClaimTarget = findValue(myInfo, location.slice(0, -1))
-            const target: string | Identity = claimData?.target
-            const targetDid: string = typeof target === "string" ? target : target.did
-            const hasTarget: boolean = typeof targetDid !== "undefined" && targetDid !== null && targetDid !== ""
-            elements.push(<li key="cddId">CDD id:
-                <input
-                    defaultValue={cddId}
-                    placeholder="123"
-                    onChange={this.onStringChanged("cddId")}
-                    disabled={!canManipulate}
-                />&nbsp;
-                {
-                    (() => {
-                        if (typeof target === "undefined" || isClaimData(claimData)) return ""
-                        return <button
-                            className="submit load-cdd-id"
-                            onClick={() => this.fetchCddId(target)}
-                            disabled={!canManipulate || !hasTarget}>
-                            Load it
-                        </button>
-                    })()
-                }
-            </li>)
-            elements.push(<li key="scopeId">Scope id:&nbsp;
-                <input
-                    defaultValue={scopeId}
-                    placeholder="123"
-                    onChange={this.onStringChanged("scopeId")}
-                    disabled={!canManipulate}
-                />
-            </li>)
+            elements.push(
+                <li key="cddId">CDD id:
+                    <input
+                        defaultValue={cddId}
+                        placeholder="123"
+                        onChange={this.onStringChanged("cddId")}
+                        disabled={!canManipulate}
+                    />&nbsp;
+                </li>,
+                <li key="scopeId">Scope id:&nbsp;
+                    <input
+                        defaultValue={scopeId}
+                        placeholder="123"
+                        onChange={this.onStringChanged("scopeId")}
+                        disabled={!canManipulate}
+                    />
+                </li>)
         }
         if (isJurisdictionClaim(claim)) {
             elements.push(<li key="countryCode">Country code:&nbsp;
@@ -196,12 +164,11 @@ export class ClaimView extends Component<ClaimViewProps> {
     }
 }
 
-export interface ClaimsViewProps extends BasicProps {
+export interface ClaimsViewProps {
     claims: Claim[]
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     onClaimsChanged: OnClaimsChanged
-    fetchAndAddToPath: FetchAndAddToPath<string | Identity>
 }
 
 export class ClaimsView extends Component<ClaimsViewProps> {
@@ -217,7 +184,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
     }
 
     render() {
-        const { claims, myInfo, apiPromise, fetchAndAddToPath, location, canManipulate } = this.props
+        const { claims, apiPromise, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-claim"
             onClick={this.addClaim}
@@ -236,11 +203,8 @@ export class ClaimsView extends Component<ClaimsViewProps> {
                             Claim {index}:
                             <ClaimView
                                 claim={convertClaimToFlat(claim)}
-                                myInfo={myInfo}
                                 apiPromise={apiPromise}
                                 onClaimChanged={this.onClaimChangedAt(index)}
-                                fetchCddId={fetchAndAddToPath}
-                                location={[...location, index]}
                                 canManipulate={canManipulate}
                             />
                         </li>
@@ -250,79 +214,39 @@ export class ClaimsView extends Component<ClaimsViewProps> {
     }
 }
 
-interface AddInvestorUniquenessClaimViewState {
-    scope: Scope,
-    claimParams: AddInvestorUniquenessClaimParams,
-    expiry: string
-    hasExpiry: boolean
-    isExpiryValid: boolean
-    modified: boolean
-}
-
-export interface AddInvestorUniquenessClaimViewProps extends BasicProps {
-    claimParams: AddInvestorUniquenessClaimParams | null
+export interface AddInvestorUniquenessClaimViewProps {
+    claimParams: AddInvestorUniquenessClaimParams
     isWrongStyle: any
-    fetchMyCddId: FetchDefaultAndAddToPath
+    canManipulate: boolean
+    apiPromise: Promise<Polymesh>
+    onAddInvestorUniquenessClaimParamsChanged: OnAddInvestorUniquenessClaimParamsChanged
 }
 
-export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquenessClaimViewProps, AddInvestorUniquenessClaimViewState> {
-    constructor(props: AddInvestorUniquenessClaimViewProps) {
-        super(props)
-        this.state = {
-            scope: props.claimParams.scope,
-            claimParams: props.claimParams ?? {
-                cddId: "",
-                proof: "",
-                scope: {
-                    type: ScopeType.Identity,
-                    value: "",
-                },
-                scopeId: "",
-            },
-            expiry: new Date().toISOString(),
-            hasExpiry: false,
-            isExpiryValid: true,
-            modified: false,
-        }
-    }
+export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquenessClaimViewProps> {
 
-    onScopeChanged = (scope: Scope) => this.setState((prev: AddInvestorUniquenessClaimViewState) => {
-        const updated: AddInvestorUniquenessClaimViewState = {
-            ...prev,
-            scope: scope,
-            modified: true,
-        }
-
-        return updated
-    })
-    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e) => this.setState((prev: AddInvestorUniquenessClaimViewState) => {
-        const updated: AddInvestorUniquenessClaimViewState = {
-            ...prev,
-            claimParams: {
-                ...prev.claimParams,
-                [key]: e.target.value,
-            },
-            modified: true,
-        }
-        return updated
-    })
-    updateExpiry = (e) => {
-        const newExpiry = e.target.value
-        this.setState({
-            expiry: newExpiry,
-            isExpiryValid: new Date(newExpiry).toString() !== "Invalid Date",
-            modified: true,
+    setClaimParamValue = <Type,>(key: keyof AddInvestorUniquenessClaimParams, value: Type) =>
+        this.props.onAddInvestorUniquenessClaimParamsChanged({
+            ...this.props.claimParams,
+            [key]: value,
         })
+    onScopeChanged = (scope: Scope) => this.setClaimParamValue<Scope>("scope", scope)
+    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e) => this.setClaimParamValue<string>(key, e.target.value)
+    onFetchMyCddId = async (): Promise<void> => {
+        const api: Polymesh = await this.props.apiPromise
+        const me: Identity = await api.getCurrentIdentity()
+        const claims: ClaimData<CddClaim>[] = (await api.claims.getCddClaims({
+            target: me,
+            includeExpired: false,
+        }))
+        // TODO Handle more than the first.
+        this.setClaimParamValue<string>("cddId", claims[0].claim.id)
     }
-    updateHasExpiry = (e) => this.setState({ hasExpiry: e.target.checked })
-
+    onValidDateChanged = (newDate: Date) => this.setClaimParamValue<Date>("expiry", newDate)
 
     render() {
-        const { scope, claimParams, expiry, hasExpiry, isExpiryValid } = this.state
-        const { fetchMyCddId, isWrongStyle, location, canManipulate } = this.props
-        const proofToShow = isScopeClaimProof(claimParams.proof)
-            ? claimParams.proof.proofScopeIdWellformed
-            : claimParams.proof
+        const { claimParams, isWrongStyle, canManipulate } = this.props
+        const { scope, cddId, expiry, proof, scopeId } = claimParams
+        const proofToShow = isScopeClaimProof(proof) ? proof.proofScopeIdWellformed : proof
         return <ul>
             <li key="scope">
                 Scope:&nbsp;
@@ -331,11 +255,11 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
                     onScopeChanged={this.onScopeChanged}
                     canManipulate={canManipulate}
                 />
-            </li>
+            </li >
             <li key="cddId">
                 CDD id:&nbsp;
                 <input
-                    defaultValue={claimParams.cddId}
+                    value={cddId}
                     placeholder="123"
                     onChange={this.onParamsStringChanged("cddId")}
                     disabled={!canManipulate}
@@ -343,9 +267,9 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
                 &nbsp;
                 <button
                     className="submit load-cdd-id"
-                    onClick={() => fetchMyCddId([...location, "cddId"])}
+                    onClick={this.onFetchMyCddId}
                     disabled={!canManipulate}>
-                    Load it
+                    Load my first
                 </button>
             </li>
             <li key="proof">
@@ -360,36 +284,22 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
             <li key="scopeId">
                 Scope id:&nbsp;
                 <input
-                    defaultValue={claimParams.scopeId}
+                    defaultValue={scopeId}
                     placeholder="123"
                     onChange={this.onParamsStringChanged("scopeId")}
                     disabled={true}
                 />
             </li>
-            <li key="hasExpiry">
-                Has expiry:&nbsp;<input
-                    name="invite-has-expiry"
-                    type="checkbox"
-                    defaultChecked={hasExpiry}
-                    disabled={!canManipulate}
-                    onChange={this.updateHasExpiry}
-                />
-            </li>
             <li key="expiry">
-                Expiry:&nbsp;<input
-                    defaultValue={claimParams.expiry?.toISOString()}
-                    placeholder="2020-12-31"
-                    disabled={!canManipulate}
-                />
-                <input
-                    type="text"
-                    className={isExpiryValid ? "" : isWrongStyle}
-                    placeholder={new Date().toISOString()}
-                    defaultValue={expiry}
-                    disabled={!canManipulate || !hasExpiry}
-                    onChange={this.updateExpiry}
+                Expiry:&nbsp;
+                <DateTimeEntryView
+                    dateTime={expiry}
+                    isOptional={true}
+                    isWrongStyle={isWrongStyle}
+                    canManipulate={canManipulate}
+                    validDateChanged={this.onValidDateChanged}
                 />
             </li>
-        </ul>
+        </ul >
     }
 }

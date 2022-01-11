@@ -170,6 +170,7 @@ export default function Home() {
   }
 
   async function loadAuthorisations(): Promise<void> {
+    return // TODO do not skip
     const api: Polymesh = await getPolyWalletApi();
     setMyInfo(returnUpdatedCreator(["myAddress"], api.getAccount()))
     setMyInfo(returnUpdatedCreator(["myDid"], (await api.getCurrentIdentity()).did))
@@ -260,49 +261,6 @@ export default function Home() {
     await (await request.remove()).run()
     setStatus(`Request ${request.authId} rejected`)
     await loadAuthorisations()
-  }
-
-  async function fetchMyCddId(location: MyInfoPath): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    return fetchCddId(location, await api.getCurrentIdentity())
-  }
-
-  async function fetchCddId(location: MyInfoPath, target: string | Identity): Promise<void> {
-    const api: Polymesh = await getPolyWalletApi()
-    const targetDid: string = typeof target === "string" ? target : target.did
-    if (typeof targetDid === "undefined" || targetDid === null || targetDid === "") throw new Error(`You need to put a valid target first, not ${targetDid}`)
-    setStatus(`Fetching Cdd attestation received by ${targetDid}`)
-    const claims: ClaimData<Claim>[] = (await api.claims.getCddClaims({
-      target: target,
-      includeExpired: false,
-    }))
-    if (claims.length === 0) throw new Error(`No CDD claims attached to ${targetDid}`)
-    setMyInfo(returnUpdatedCreator(location, (claims[0].claim as CddClaim).id))
-  }
-
-  async function addUniquenessAttestation(location: MyInfoPath): Promise<void> {
-    const toAdd: AddInvestorUniquenessClaimParams = Object.assign({}, findValue(myInfo, location))
-    const api: Polymesh = await getPolyWalletApi()
-    const currentIdentity: Identity = await api.getCurrentIdentity()
-    const polyWallet = (window || {})["polyWallet"]
-    const network = await polyWallet.network.get()
-    const crypto = await import('@polymathnetwork/confidential-identity')
-    const data = await polyWallet.uid.requestProof({ ticker: toAdd.scope.value })
-      .catch((e) => {
-        if (e.message !== "Uid not found") throw e
-        const mockedUid: string = crypto.create_mocked_investor_uid(currentIdentity.did)
-        return polyWallet.uid.provide({
-          uid: mockedUid,
-          did: currentIdentity.did,
-          network: network.name,
-        })
-      })
-      .then(() => polyWallet.uid.requestProof({ ticker: toAdd.scope.value }))
-    toAdd.proof = data.proof
-    toAdd.scopeId = data.scope_id
-    setMyInfo(returnUpdatedCreator([...location, "proof"], data.proof))
-    setMyInfo(returnUpdatedCreator([...location, "scopeId"], data.scope_id))
-    await (await api.claims.addInvestorUniquenessClaim(toAdd)).run()
   }
 
   function setMyPortfolios(myDetails: PortfolioInfoJson[]) {
@@ -574,13 +532,8 @@ export default function Home() {
           requirements={myInfo.requirements}
           cardStyle={styles.card}
           myDid={myInfo.myDid}
-          myInfo={myInfo}
           apiPromise={apiPromise}
-          identityGetter={getIdentity}
           onTokenInfoChanged={setTokenInfo}
-          fetchCddId={fetchCddId}
-          getMyDid={getMyDid}
-          location={["requirements"]}
           canManipulate={myInfo.requirements.canManipulate}
         />
 
@@ -598,14 +551,10 @@ export default function Home() {
         <ClaimsManagerView
           cardStyle={styles.card}
           isWrongStyle={styles.isWrong}
-          myInfo={myInfo}
-          location={["attestations"]}
+          myDid={myInfo.myDid}
           canManipulate={true}
           apiPromise={apiPromise}
-          onClaimDataChanged={() => { }}
-          fetchCddId={fetchCddId}
-          fetchMyCddId={fetchMyCddId}
-          addUniquenessAttestation={addUniquenessAttestation}
+          onAddInvestorUniquenessClaimParamsChanged={() => { }}
         />
 
         <PortfolioManagerView

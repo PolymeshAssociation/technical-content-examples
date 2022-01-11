@@ -10,14 +10,7 @@ import {
     RequirementFlat,
 } from "../../handlers/compliance/RequirementHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
-import {
-    FetchAndAddToPath,
-    Getter,
-    MyInfoJson,
-    RequirementsInfoJson,
-    TokenInfoJson,
-} from "../../types";
-import { BasicProps } from "../BasicProps";
+import { RequirementsInfoJson, TokenInfoJson } from "../../types";
 import { RequirementsView } from "./RequirementView";
 
 export interface ComplianceCheckParams {
@@ -33,17 +26,14 @@ interface ComplianceManagerViewState {
     compliance: Compliance | null
 }
 
-export interface ComplianceManagerViewProps extends BasicProps {
+export interface ComplianceManagerViewProps {
     token: TokenInfoJson
     requirements: RequirementsInfoJson
     myDid: string
-    myInfo: MyInfoJson
+    canManipulate: boolean
     apiPromise: Promise<Polymesh>
     cardStyle: any
-    identityGetter: IdentityGetter
     onTokenInfoChanged: OnTokenInfoChanged
-    fetchCddId: FetchAndAddToPath<string | Identity>
-    getMyDid: Getter<string>
 }
 
 export class ComplianceManagerView extends Component<ComplianceManagerViewProps, ComplianceManagerViewState> {
@@ -73,21 +63,25 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         modified: true,
     })
     onFromChanged = (e) => this.setState({ simulationFrom: e.target.value })
-    onFromPicked = async () => this.setState({ simulationFrom: await this.props.getMyDid() })
+    onFromPicked = async () => this.setState({ simulationFrom: await this.props.myDid })
     onToChanged = (e) => this.setState({ simulationTo: e.target.value })
-    onToPicked = async () => this.setState({ simulationTo: await this.props.getMyDid() })
+    onToPicked = async () => this.setState({ simulationTo: await this.props.myDid })
 
     onSaveRequirements = async (): Promise<void> => {
         const updatedToken: SecurityToken = await (await this.props.requirements.original.set(await this.getParams())).run()
         const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
         this.props.onTokenInfoChanged(updatedInfo)
     }
-    getParams = async (): Promise<SetAssetRequirementsParams> => ({
-        requirements: (await Promise
-            .all(this.state.requirements
-                .map(convertRequirementFlatToRequirement(this.props.identityGetter))))
-            .map((requirement: Requirement) => requirement.conditions)
-    })
+    getParams = async (): Promise<SetAssetRequirementsParams> => {
+        const api: Polymesh = await this.props.apiPromise
+        const identityGetter: IdentityGetter = async (did: string) => api.getIdentity({ did: did })
+        return {
+            requirements: (await Promise
+                .all(this.state.requirements
+                    .map(convertRequirementFlatToRequirement(identityGetter))))
+                .map((requirement: Requirement) => requirement.conditions)
+        }
+    }
 
     onSimulateCompliance = async () => this.setState({
         compliance: await this.props.requirements.original.checkSettle(this.getSimulateParams())
@@ -114,11 +108,8 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             token,
             requirements: reqs,
             myDid,
-            myInfo,
             apiPromise,
             cardStyle,
-            fetchCddId,
-            location,
             canManipulate,
         } = this.props
         const canSaveAll: boolean = token.current !== null
@@ -131,11 +122,8 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             <div>
                 <RequirementsView
                     requirements={requirements}
-                    myInfo={myInfo}
                     apiPromise={apiPromise}
                     onRequirementsChanged={this.onRequirementsChanged}
-                    fetchCddId={fetchCddId}
-                    location={[...location, "current"]}
                     canManipulate={canManipulate}
                 />
             </div>
