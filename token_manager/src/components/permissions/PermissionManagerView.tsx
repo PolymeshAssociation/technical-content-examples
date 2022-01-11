@@ -3,7 +3,7 @@ import { KnownPermissionGroup } from "@polymathnetwork/polymesh-sdk/api/entities
 import { Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { OnAgentChanged } from "../../handlers/permissions/AgentHandlers";
-import { fetchPermissions, OnPermissionsChanged } from "../../handlers/permissions/PermissionsHandlers";
+import { fetchPermissions, OnPermissionsInfoJsonChanged } from "../../handlers/permissions/PermissionsHandlers";
 import {
     getEmptyPermissionsInfoJson,
     PermissionGroupInfoJson,
@@ -25,7 +25,7 @@ export interface PermissionManagerViewProps {
     hasTitleStyle: any
     isWrongStyle: any
     onAgentChanged: OnAgentChanged
-    onPermissionsChanged: OnPermissionsChanged
+    onPermissionsInfoJsonChanged: OnPermissionsInfoJsonChanged
 }
 
 export class PermissionManagerView extends Component<PermissionManagerViewProps, PermissionManagerViewState> {
@@ -54,7 +54,7 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
         this.setState({
             permissions: permissionsInfo,
         })
-        this.props.onPermissionsChanged(permissionsInfo)
+        this.props.onPermissionsInfoJsonChanged(permissionsInfo)
         return permissionsInfo
     }
     onGroupPicked = (group: PermissionGroupInfoJson<KnownPermissionGroup | CustomPermissionGroup>): void => this.setState({

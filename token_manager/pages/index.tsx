@@ -524,7 +524,7 @@ export default function Home() {
           hasTitleStyle={styles.hasTitle}
           isWrongStyle={styles.isWrong}
           onAgentChanged={() => { }}
-          onPermissionsChanged={setPermissionsInfo}
+          onPermissionsInfoJsonChanged={setPermissionsInfo}
         />
 
         <ComplianceManagerView

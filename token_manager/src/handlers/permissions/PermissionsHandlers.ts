@@ -4,7 +4,7 @@ import { fetchPermissionAgents } from "./AgentHandlers";
 import { fetchPermissionGroups } from "./GroupHandlers";
 
 export type OnGroupPermissionsChanged = (permissions: GroupPermissions) => void
-export type OnPermissionsChanged = (permissionsInfo: PermissionsInfoJson) => void
+export type OnPermissionsInfoJsonChanged = (permissionsInfo: PermissionsInfoJson) => void
 
 export const fetchPermissions = async (token: SecurityToken): Promise<PermissionsInfoJson> => token === null
     ? getEmptyPermissionsInfoJson()
