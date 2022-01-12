@@ -33,6 +33,7 @@ import {
 } from "../../types";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { TxGroupsView, TransactionPermissionsView } from "./TransactionPermissionView";
 
 export interface GroupPermissionsViewProps {
@@ -435,8 +436,10 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
         const { txGroups, transactions, modified } = this.state
         const { cardStyle, canManipulate } = this.props
         const canCreate: boolean = canManipulate && modified
-        return <fieldset className={cardStyle}>
-            <legend>Custom group to create</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Custom group to create"
+            collapsed={false}>
 
             <ul>
                 <li key="groups">
@@ -465,6 +468,6 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
                 Create custom group
             </button>
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

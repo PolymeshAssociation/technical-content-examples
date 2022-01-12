@@ -10,6 +10,7 @@ import {
     PermissionsInfoJson,
     TokenInfoJson,
 } from "../../types";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { NewPermissionAgentView, PermissionAgentsView } from "./PermissionAgentView";
 import { NewCustomPermissionGroupView, PermissionGroupsInfoView } from "./PermissionGroupView";
 
@@ -71,11 +72,15 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
         const { myDid, token, cardStyle, hasTitleStyle, isWrongStyle } = this.props
         const canManipulate: boolean = token.details?.owner?.did === myDid
         const canInvite: boolean = canManipulate && permissions.original !== null
-        return <fieldset className={cardStyle}>
-            <legend>Permissions For: {token.current?.ticker}</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend={`Permissions For: ${token.current?.ticker}`}
+            collapsed={true}>
 
-            <fieldset className={cardStyle}>
-                <legend>Agent Groups</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Agent Groups"
+                collapsed={false}>
 
                 <PermissionGroupsInfoView
                     permissions={permissions.original}
@@ -92,10 +97,12 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                     canManipulate={canManipulate}
                 />
 
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-            <fieldset className={cardStyle}>
-                <legend>External Agents</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="External Agents"
+                collapsed={false}>
 
                 <PermissionAgentsView
                     permissions={permissions.original}
@@ -115,8 +122,8 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                     canManipulate={canInvite}
                 />
 
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

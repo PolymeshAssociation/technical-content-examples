@@ -5,6 +5,7 @@ import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/Tok
 import { TokenInfoJson } from "../../types";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView, IdentityView } from "../identity/IdentityView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface SecurityTokenFieldsViewProps {
@@ -16,8 +17,11 @@ export interface SecurityTokenFieldsViewProps {
 export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewProps> {
     render() {
         const { token, cardStyle, hasTitleStyle } = this.props
-        return <fieldset className={cardStyle}>
-            <legend>Fields</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Fields"
+            collapsed={false}>
+
             <ul>
                 <li key="did">Did:&nbsp;
                     <IdentityView
@@ -40,7 +44,7 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
                     />
                 </li>
             </ul>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
 
@@ -59,8 +63,11 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
         } = this.props
         const owner: Identity = details?.owner
         const identityLut = { [myDid]: "me" }
-        return <fieldset className={cardStyle}>
-            <legend>Details</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Details"
+            collapsed={false}>
+
             <ul>
                 <li key="name">With the name: {details?.name}</li>
                 <li key="divisible">
@@ -92,7 +99,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                         lut={identityLut} />
                 </li>
             </ul>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
 
@@ -152,8 +159,11 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         } = this.props
         const canTransfer: boolean = token.current !== null
             && token.details?.owner?.did === myDid
-        return <fieldset className={cardStyle}>
-            <legend>Ownership transfer</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Ownership transfer"
+            collapsed={true}>
+
             <div className="submit">
                 <label htmlFor="token-ownership-target">
                     <span className={hasTitleStyle} title="Who is the new owner">Target</span>
@@ -204,7 +214,7 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
                     Transfer ownership
                 </button>
             </div>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
 
@@ -227,8 +237,10 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
             isWrongStyle,
             onTokenInfoChanged: onSecurityTokenChanged,
         } = this.props
-        return <fieldset className={cardStyle}>
-            <legend>Security Token: {token.current?.ticker}</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend={`Security Token: ${token.current?.ticker}`}
+            collapsed={false}>
 
             <SecurityTokenFieldsView
                 token={token}
@@ -251,6 +263,6 @@ export class SecurityTokenManagerView extends Component<SecurityTokenManagerView
                 onSecurityTokenChanged={onSecurityTokenChanged}
             />
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

@@ -14,6 +14,7 @@ import { ReservationInfoJson, TokenInfoJson } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { IdentityView } from "../identity/IdentityView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
@@ -82,8 +83,10 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         const canCreate: boolean = reservation.current !== null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
-        return <fieldset className={cardStyle}>
-            <legend>Ownership transfer</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            collapsed={true}
+            legend="Ownership transfer">
             <div>
                 <label htmlFor="transfer-target">
                     <span className={hasTitleStyle} title="Target identity of the ownership transfer">Target</span>
@@ -122,7 +125,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                     Transfer ownership
                 </button>
             </div>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
 
@@ -191,8 +194,10 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
             && token.current === null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
-        return <fieldset className={cardStyle}>
-            <legend>Token creation</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Token creation"
+            collapsed={false}>
             <div>
                 <label htmlFor="token-name">
                     <span className={hasTitleStyle} title="Long name of your security token">Name</span>
@@ -282,7 +287,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                     Create token
                 </button>
             </div>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
 
@@ -309,8 +314,10 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
             onReservationInfoChanged,
             onTokenInfoChanged: onSecurityTokenChanged
         } = this.props
-        return <fieldset className={cardStyle}>
-            <legend>Ticker Reservation: {reservation.current?.ticker}</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend={`Ticker Reservation: ${reservation.current?.ticker}`}
+            collapsed={false}>
 
             <TickerReservationView
                 reservation={reservation}
@@ -335,6 +342,6 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
                 onSecurityTokenChanged={onSecurityTokenChanged}
             />
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

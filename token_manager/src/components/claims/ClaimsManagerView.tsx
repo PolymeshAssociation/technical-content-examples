@@ -14,6 +14,7 @@ import {
     getDummyAddInvestorUniquenessClaimParams,
     OnAddInvestorUniquenessClaimParamsChanged,
 } from "../../handlers/claims/ClaimHandlers";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { ClaimDatasView, ClaimTargetView } from "./ClaimDataView";
 import { AddInvestorUniquenessClaimView } from "./ClaimView";
 
@@ -106,8 +107,10 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
             addInvestorUniquenessClaimParams,
         } = this.state
 
-        return <fieldset className={cardStyle}>
-            <legend>Attestations</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Attestations"
+            collapsed={true}>
 
             <div className="submit">
                 <button
@@ -140,8 +143,10 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                 />
             </div>
 
-            <fieldset className={cardStyle}>
-                <legend>Attestation to add:</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Attestation to add"
+                collapsed={false}>
 
                 <div>
                     <ClaimTargetView
@@ -164,10 +169,12 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                     to show in the list above because the<br />
                     middleware first needs to be updated
                 </div>
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-            <fieldset className={cardStyle}>
-                <legend>Investor uniqueness to add to yourself:</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Investor uniqueness to add to yourself"
+                collapsed={false}>
 
                 <div>
                     <AddInvestorUniquenessClaimView
@@ -191,8 +198,8 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                     to show in the list above because the<br />
                     middleware needs to be updated
                 </div>
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

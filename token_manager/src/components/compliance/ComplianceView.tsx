@@ -12,6 +12,7 @@ import {
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { RequirementsInfoJson, TokenInfoJson } from "../../types";
 import { RequirementsView } from "./RequirementView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 
 export interface ComplianceCheckParams {
     from?: string | Identity
@@ -116,8 +117,10 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             && token.details?.owner?.did === myDid
             && modified
         const canSimulate: boolean = token.current !== null
-        return <fieldset className={cardStyle}>
-            < legend > Compliance Requirements For: {token.current?.ticker}</legend >
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend={`Compliance Requirements For: ${token.current?.ticker}`}
+            collapsed={true}>
 
             <div>
                 <RequirementsView
@@ -193,7 +196,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                 </div>
             </div>
 
-        </fieldset >
+        </CollapsibleFieldsetView >
 
     }
 }

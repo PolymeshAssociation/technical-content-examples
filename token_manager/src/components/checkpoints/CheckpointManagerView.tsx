@@ -17,6 +17,7 @@ import {
 } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { CheckpointScheduleDetailsView } from "./CheckpointScheduleView";
 import { CheckpointsView } from "./CheckpointView";
 
@@ -81,8 +82,10 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
         const { start } = this.state
         const { myInfo, cardStyle, isWrongStyle } = this.props
         const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
-        return <fieldset className={cardStyle}>
-            <legend>Checkpoints for: {myInfo.token.current?.ticker}</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend={`Checkpoints for: ${myInfo.token.current?.ticker}`}
+            collapsed={true}>
 
             <div className="submit">
                 <button
@@ -93,17 +96,21 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                 </button>
             </div>
 
-            <fieldset className={cardStyle}>
-                <legend>Loaded checkpoints</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Loaded checkpoints"
+                collapsed={false}>
 
                 <CheckpointsView
                     checkpoints={myInfo.checkpoints?.details}
                     canManipulate={true}
                 />
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-            <fieldset className={cardStyle}>
-                <legend>New schedule</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="New schedule"
+                collapsed={false}>
 
                 <ul>
                     <li key="start">
@@ -154,18 +161,20 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                     </div>
                 </div>
 
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-            <fieldset className={cardStyle}>
-                <legend>Loaded checkpoint schedules</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Loaded checkpoint schedules"
+                collapsed={false}>
 
                 <CheckpointScheduleDetailsView
                     schedules={myInfo.checkpoints.scheduleDetails}
                     canManipulate={canManipulate}
                 />
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-        </fieldset>
+        </CollapsibleFieldsetView>
 
     }
 }

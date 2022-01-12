@@ -3,6 +3,7 @@ import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
 import { fetchPortfolioInfoJsons, OnPortfolioInfosChanged } from "../../handlers/portfolios/PortfolioHandlers"
 import { assertUnreachable, PortfolioInfoJson } from "../../types"
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView"
 import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
 import { NewPortfolioView } from "./PortfolioView"
 
@@ -121,8 +122,10 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
         const { myDid, apiPromise, cardStyle, isWrongStyle, canManipulate } = this.props
         const portfoliosToShow: PortfolioInfoJson[] = this.getPortfoliosToShow()
         const canLoadOther: boolean = listType !== PortfolioListType.Other || otherOwner !== loadedOtherOwner
-        return <fieldset className={cardStyle}>
-            <legend>Portfolios</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Portfolios"
+            collapsed={true}>
 
             <div className="submit">
                 <button
@@ -153,8 +156,11 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
                 />
             </div>
 
-            <fieldset className={cardStyle}>
-                <legend>Loaded portfolios</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Loaded portfolios"
+                collapsed={false}>
+
                 <PortfolioJsonInfosView
                     portfolios={portfoliosToShow}
                     onPortfolioInfosChanged={this.onPortfolioInfosChanged(listType)}
@@ -162,7 +168,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
                 />
-            </fieldset>
+            </CollapsibleFieldsetView>
 
             <div>See in the authorisations box above<br />for the pending custody authorisation</div>
 
@@ -173,6 +179,6 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
                 onPortfolioInfoCreated={this.onPortfolioInfoCreated}
             />
 
-        </fieldset >
+        </CollapsibleFieldsetView >
     }
 }

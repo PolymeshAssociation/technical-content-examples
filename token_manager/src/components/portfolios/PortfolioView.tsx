@@ -8,6 +8,7 @@ import {
     fetchPortfolioInfoJson,
 } from "../../handlers/portfolios/PortfolioHandlers";
 import { IdentityView } from "../identity/IdentityView";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 
 export interface PortfolioViewProps {
     portfolio: DefaultPortfolio | NumberedPortfolio
@@ -83,8 +84,11 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
 
     render() {
         const { cardStyle, canManipulate } = this.props
-        return <fieldset className={cardStyle}>
-            <legend>New portfolio</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="New portfolio"
+            collapsed={false}>
+
             <div>Numbered portfolio to create:</div>
             <div className="submit">
                 Name:&nbsp;
@@ -102,6 +106,6 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
                     Create
                 </button>
             </div>
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }

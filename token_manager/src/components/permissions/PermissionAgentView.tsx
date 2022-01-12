@@ -12,6 +12,7 @@ import { IdentityView } from "../identity/IdentityView";
 import { PermissionGroupView } from "./PermissionGroupView";
 import { isOwner, OnAgentChanged } from "../../handlers/permissions/AgentHandlers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 
 export interface PermissionAgentViewProps {
     myDid: string
@@ -121,8 +122,10 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
         const { expiry, modified } = this.state
         const { cardStyle, hasTitleStyle, isWrongStyle, defaultGroup, canManipulate } = this.props
         const canInvite: boolean = canManipulate && modified && defaultGroup !== null && typeof defaultGroup !== "undefined"
-        return <fieldset className={cardStyle} >
-            <legend>Agent to invite</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="Agent to invite"
+            collapsed={false}>
 
             <div>
                 <label htmlFor="invite-target">
@@ -174,6 +177,6 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
                 Invite agent
             </button>
 
-        </fieldset >
+        </CollapsibleFieldsetView >
     }
 }

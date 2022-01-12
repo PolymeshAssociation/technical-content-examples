@@ -1,6 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AuthorizationRequest, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { AuthorisationRequestsView } from "./AuthorisationView";
 
 interface AuthorisationManagerViewState {
@@ -49,8 +50,10 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
     render() {
         const { whose, receivedRequests, sentRequests } = this.state
         const { myDid, myAddress, cardStyle, isWrongStyle, canManipulate } = this.props
-        return <fieldset className={cardStyle}>
-            <legend>My authorisation requests</legend>
+        return <CollapsibleFieldsetView
+            className={cardStyle}
+            legend="My authorisation requests"
+            collapsed={true}>
 
             <div className="submit">
                 <button
@@ -72,8 +75,11 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
                 </button>
             </div>
 
-            <fieldset className={cardStyle}>
-                <legend>Received</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Received"
+                collapsed={false}>
+
                 <AuthorisationRequestsView
                     requests={receivedRequests}
                     myDid={myDid}
@@ -82,10 +88,13 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
                     canManipulate={canManipulate}
                     onAuthorisationRequestChanged={() => { }}
                 />
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-            <fieldset className={cardStyle}>
-                <legend>Sent</legend>
+            <CollapsibleFieldsetView
+                className={cardStyle}
+                legend="Sent"
+                collapsed={false}>
+
                 <AuthorisationRequestsView
                     requests={sentRequests}
                     myDid={myDid}
@@ -94,8 +103,8 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
                     canManipulate={canManipulate}
                     onAuthorisationRequestChanged={() => { }}
                 />
-            </fieldset>
+            </CollapsibleFieldsetView>
 
-        </fieldset>
+        </CollapsibleFieldsetView>
     }
 }
