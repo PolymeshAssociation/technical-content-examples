@@ -1,8 +1,9 @@
-import { GroupPermissions, SecurityToken } from "@polymathnetwork/polymesh-sdk/types";
+import { GroupPermissions, Permissions, SecurityToken } from "@polymathnetwork/polymesh-sdk/types";
 import { getEmptyPermissionsInfoJson, PermissionsInfoJson } from "../../types";
 import { fetchPermissionAgents } from "./AgentHandlers";
 import { fetchPermissionGroups } from "./GroupHandlers";
 
+export type OnPermissionsChanged = (permissions: Permissions) => void
 export type OnGroupPermissionsChanged = (permissions: GroupPermissions) => void
 export type OnPermissionsInfoJsonChanged = (permissionsInfo: PermissionsInfoJson) => void
 

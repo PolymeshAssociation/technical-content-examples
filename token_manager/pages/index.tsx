@@ -4,12 +4,6 @@ import styles from "../styles/Home.module.css"
 import {
   Requirement,
   SecurityToken,
-  Claim,
-  ClaimData,
-  CddClaim,
-  Authorization,
-  AuthorizationType,
-  Permissions,
   DividendDistributionDetails,
   DistributionParticipant,
   DistributionWithDetails,
@@ -34,8 +28,6 @@ import {
   TokenInfoJson,
 } from "../src/types"
 import {
-  AddInvestorUniquenessClaimParams,
-  AuthorizationRequest,
   Checkpoint,
   CheckpointSchedule,
   CorporateAction,
@@ -48,7 +40,6 @@ import { CheckpointScheduleView } from "../src/components/checkpoints/Checkpoint
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
-import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
@@ -61,6 +52,7 @@ import {
   fetchCheckpointsInfo,
 } from "../src/handlers/checkpoints/CheckpointHandlers"
 import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
+import { AuthorisationManagerView } from "../src/components/authorisations/AuthorisationManagerView"
 import { IdentityView } from "../src/components/identity/IdentityView"
 
 export default function Home() {
@@ -76,18 +68,6 @@ export default function Home() {
     const myIdentity: Identity = await api.getCurrentIdentity()
     setMyInfo(returnUpdatedCreator(["myDid"], myIdentity.did))
     return api
-  }
-
-  async function getMyIdentity(): Promise<Identity> {
-    return (await getPolyWalletApi()).getCurrentIdentity()
-  }
-
-  async function getIdentity(did: string): Promise<Identity> {
-    return await (await getPolyWalletApi()).getIdentity({ did: did })
-  }
-
-  async function getMyDid(): Promise<string> {
-    return (await getMyIdentity()).did
   }
 
   function onValueChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
@@ -167,100 +147,6 @@ export default function Home() {
       await onValueChangedCreator(path, deep, valueProcessor)(e)
       setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
     }
-  }
-
-  async function loadAuthorisations(): Promise<void> {
-    return // TODO do not skip
-    const api: Polymesh = await getPolyWalletApi();
-    setMyInfo(returnUpdatedCreator(["myAddress"], api.getAccount()))
-    setMyInfo(returnUpdatedCreator(["myDid"], (await api.getCurrentIdentity()).did))
-    const authorisations: AuthorizationRequest[] = [
-      ...(await (await api.getCurrentIdentity()).authorizations.getSent()).data,
-      ...await (await api.getCurrentIdentity()).authorizations.getReceived(),
-    ]
-    await setAuthorisations(authorisations)
-  }
-
-  async function setAuthorisations(authorisations: AuthorizationRequest[]): Promise<void> {
-    setMyInfo(returnUpdatedCreator(["authorisations", "current"], authorisations))
-  }
-
-  function presentPermissions(permissions: Permissions, location: MyInfoPath): JSX.Element {
-    return <ul>
-      <li key="portfolios">
-        Portfolios:&nbsp;<PortfoliosView portfolios={permissions.portfolios.values} myDid={myInfo.myDid} />
-      </li>
-      <li key="tokens">Tokens:&nbsp;{
-        permissions.tokens === null ? "null" : permissions.tokens
-          .map((token: SecurityToken) => token.ticker)
-          .join(", ")
-      }</li>
-      <li key="transactionGroups">Transaction groups:&nbsp;{permissions.transactionGroups === null ? "null" : permissions.transactionGroups.join(", ")}</li>
-      <li key="transactions">Transactions:&nbsp;{permissions.transactions === null ? "null" : permissions.transactions.join(", ")}</li>
-    </ul>
-  }
-
-  function presentAuthorisation(authorisation: Authorization, location: MyInfoPath): JSX.Element {
-    const elements: JSX.Element[] = [<li key="type">Type:&nbsp; {authorisation.type}</li>]
-    if (authorisation.type === AuthorizationType.NoData) { // Add nothing
-    } else if (authorisation.type === AuthorizationType.PortfolioCustody) {
-      elements.push(<li key="value">Value:&nbsp;<PortfolioView portfolio={authorisation.value} myDid={myInfo.myDid} /></li>)
-    } else if (authorisation.type === AuthorizationType.JoinIdentity) {
-      elements.push(<li key="value">Value:{presentPermissions(authorisation.value, [...location, "value"])}</li>)
-    } else {
-      elements.push(<li key="value">Value:&nbsp;{authorisation.value}</li>)
-    }
-    return <ul>{elements}</ul>
-  }
-
-  function presentAuthorisationRequest(authorisationRequest: AuthorizationRequest, location: MyInfoPath): JSX.Element {
-    const amIssuer: boolean = authorisationRequest.issuer.did === myInfo.myDid
-    const target: string = authorisationRequest.target instanceof Identity ? authorisationRequest.target.did : authorisationRequest.target.address
-    const amTarget: boolean = target === myInfo.myDid || target === myInfo.myAddress
-    return <ul>
-      <li key="id">
-        AuthId: {authorisationRequest.authId.toString(10)}
-        &nbsp;
-        <button className="submit accept-auth-request" onClick={() => acceptRequest(location)} disabled={!amTarget}>Accept</button>
-        &nbsp;
-        <button className="submit reject-auth-request" onClick={() => rejectRequest(location)} disabled={!amIssuer && !amTarget}>Reject</button>
-      </li>
-      <li key="issuer">
-        Issuer:&nbsp;<LongHexView value={authorisationRequest.issuer.did} lut={{ [myInfo.myDid]: "me" }} />
-      </li>
-      <li key="target">
-        Target:&nbsp;<LongHexView value={target} lut={{ [myInfo.myDid]: "me", [myInfo.myAddress]: "me" }} />
-      </li>
-      <li key="expiry">Expiry:&nbsp;{authorisationRequest.expiry?.toISOString()}</li>
-      <li key="data">Data:&nbsp;{presentAuthorisation(authorisationRequest.data, [...location, "data"])}</li>
-    </ul>
-  }
-
-  function presentAuthorisationRequests(authorisationRequests: AuthorizationRequest[], location: MyInfoPath): JSX.Element {
-    if (typeof authorisationRequests === "undefined" || authorisationRequests === null || authorisationRequests.length === 0) return <div>No authorisations</div>
-    return <ul>{
-      authorisationRequests
-        .map((request: AuthorizationRequest, requestIndex: number) => presentAuthorisationRequest(request, [...location, requestIndex]))
-        .map((presented, requestIndex: number) => <li key={requestIndex}>
-          Authorisation {requestIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
-  async function acceptRequest(location: MyInfoPath): Promise<void> {
-    const request: AuthorizationRequest = findValue(myInfo, location)
-    setStatus(`Accepting request ${request.authId}`)
-    await (await request.accept()).run()
-    setStatus(`Request ${request.authId} accepted`)
-    await loadAuthorisations()
-  }
-
-  async function rejectRequest(location: MyInfoPath): Promise<void> {
-    const request: AuthorizationRequest = findValue(myInfo, location)
-    setStatus(`Rejecting request ${request.authId}`)
-    await (await request.remove()).run()
-    setStatus(`Request ${request.authId} rejected`)
-    await loadAuthorisations()
   }
 
   function setMyPortfolios(myDetails: PortfolioInfoJson[]) {
@@ -537,16 +423,14 @@ export default function Home() {
           canManipulate={myInfo.requirements.canManipulate}
         />
 
-        <fieldset className={styles.card}>
-          <legend>My authorisation requests</legend>
-
-          <div className="submit">
-            <button className="submit load-authorisations" onClick={loadAuthorisations}>Load authorisations</button>
-          </div>
-
-          <div>{presentAuthorisationRequests(myInfo.authorisations.current, ["authorisations", "current"])}</div>
-
-        </fieldset>
+        <AuthorisationManagerView
+          myDid={myInfo.myDid}
+          myAddress={myInfo.myAddress}
+          canManipulate={true}
+          cardStyle={styles.card}
+          isWrongStyle={styles.isWrong}
+          apiPromise={apiPromise}
+        />
 
         <ClaimsManagerView
           cardStyle={styles.card}
