@@ -32,7 +32,7 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
             <li key="owner">
                 Owned by:&nbsp;
                 <IdentityView
-                    value={reservation.details?.owner?.did}
+                    value={reservation.details?.owner ?? ""}
                     lut={{ [myDid]: "me" }} />
             </li>
             <li key="status">With status: {reservation.details?.status}</li>

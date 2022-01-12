@@ -466,7 +466,7 @@ export default function Home() {
           <div>{
             (() => {
               const owner: string = myInfo.token.details?.owner?.did
-              const caa: string = myInfo.corporateActions.agent?.did
+              const caa: string = myInfo.corporateActions.agent?.did ?? ""
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li key="caa">

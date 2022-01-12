@@ -1,5 +1,5 @@
 import { TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
-import { SecurityToken, SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
+import { Identity, SecurityToken, SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
@@ -21,7 +21,7 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
             <ul>
                 <li key="did">Did:&nbsp;
                     <IdentityView
-                        value={token?.current?.did}
+                        value={token?.current?.did ?? ""}
                         lut={null} />
                 </li>
                 <li key="createdAt">
@@ -57,7 +57,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
             myDid,
             cardStyle,
         } = this.props
-        const owner: string = details?.owner?.did
+        const owner: Identity = details?.owner
         const identityLut = { [myDid]: "me" }
         return <fieldset className={cardStyle}>
             <legend>Details</legend>
@@ -82,7 +82,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                 </li>
                 <li key="owner">Owned by:&nbsp;
                     <IdentityView
-                        value={owner}
+                        value={owner ?? ""}
                         lut={identityLut} />
                 </li>
                 <li key="totalSupply">With total supply of:&nbsp;{details?.totalSupply?.toString(10)}</li>
