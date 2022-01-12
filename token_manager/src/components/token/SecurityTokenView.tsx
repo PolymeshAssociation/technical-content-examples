@@ -19,12 +19,15 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
         return <fieldset className={cardStyle}>
             <legend>Fields</legend>
             <ul>
-                <li key="did">Did: <IdentityView value={token?.current?.did} lut={null} /></li>
+                <li key="did">Did:&nbsp;
+                    <IdentityView
+                        value={token?.current?.did}
+                        lut={null} />
+                </li>
                 <li key="createdAt">
                     Created at:&nbsp;
                     <EventIdentifierView
-                        eventId={token?.createdAt}
-                    />
+                        eventId={token?.createdAt} />
                 </li>
                 <li key="currentFundingRound">Current funding round: {token.currentFundingRound}</li>
                 <li key="tokenIdentifiers">
@@ -77,9 +80,17 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                         disabled={true}
                     />
                 </li>
-                <li key="owner">Owned by: <IdentityView value={owner} lut={identityLut} /></li>
-                <li key="totalSupply">With total supply of: {details?.totalSupply?.toString(10)}</li>
-                <li key="fullAgents">Whose full agents are: <IdentitiesView values={details?.fullAgents} lut={identityLut} /></li>
+                <li key="owner">Owned by:&nbsp;
+                    <IdentityView
+                        value={owner}
+                        lut={identityLut} />
+                </li>
+                <li key="totalSupply">With total supply of:&nbsp;{details?.totalSupply?.toString(10)}</li>
+                <li key="fullAgents">Whose full agents are:&nbsp;
+                    <IdentitiesView
+                        values={details?.fullAgents}
+                        lut={identityLut} />
+                </li>
             </ul>
         </fieldset>
     }

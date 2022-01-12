@@ -30,7 +30,10 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
         if (reservation.current === null) return "There is no reservation"
         else return <ul>
             <li key="owner">
-                Owned by: <IdentityView value={reservation.details?.owner?.did} lut={{ [myDid]: "me" }} />
+                Owned by:&nbsp;
+                <IdentityView
+                    value={reservation.details?.owner?.did}
+                    lut={{ [myDid]: "me" }} />
             </li>
             <li key="status">With status: {reservation.details?.status}</li>
             <li key="expiry">Valid until: {reservation.details?.expiryDate?.toISOString()}</li>

@@ -19,7 +19,10 @@ export class PortfolioView extends Component<PortfolioViewProps> {
         const { portfolio, myDid } = this.props
         return <ul>
             <li key="owner">
-                Owner:&nbsp;<IdentityView value={portfolio.owner.did} lut={{ [myDid]: "me" }} />
+                Owner:&nbsp;
+                <IdentityView
+                    value={portfolio.owner.did}
+                    lut={{ [myDid]: "me" }} />
             </li>
             <li key="id">Id:&nbsp;{isNumberedPortfolio(portfolio) ? portfolio.id.toString(10) : "null"}</li>
         </ul>
@@ -38,7 +41,10 @@ export class PortfoliosView extends Component<PortfoliosViewProps> {
         return <ul>{
             portfolios.map((portfolio: DefaultPortfolio | NumberedPortfolio, index: number) =>
                 <li key={index}>
-                    Portfolio {index}:&nbsp;<PortfolioView portfolio={portfolio} myDid={myDid} />
+                    Portfolio {index}:&nbsp;
+                    <PortfolioView
+                        portfolio={portfolio}
+                        myDid={myDid} />
                 </li>)
         }</ul>
     }
