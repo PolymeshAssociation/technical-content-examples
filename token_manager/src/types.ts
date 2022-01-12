@@ -1,5 +1,6 @@
 import countries from "i18n-iso-countries"
 import {
+    Account,
     AgentWithGroup,
     CddClaim,
     CheckpointWithData,
@@ -342,6 +343,7 @@ export interface HasFetchTimer {
 }
 
 export const isIdentity = (identity: string | Identity): identity is Identity => typeof (identity as Identity).did !== "undefined"
+export const isAccount = (account: string | Account): account is Account => typeof (account as Account).address !== "undefined"
 export const isKnownPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is KnownPermissionGroup => typeof (group as KnownPermissionGroup).type !== "undefined"
 export const isCustomPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is CustomPermissionGroup => typeof (group as CustomPermissionGroup).id !== "undefined"
 export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfolio): portfolio is NumberedPortfolio => typeof (portfolio as NumberedPortfolio).id !== "undefined"

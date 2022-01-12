@@ -13,7 +13,7 @@ import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/Tok
 import { ReservationInfoJson, TokenInfoJson } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
-import { LongHexView } from "../LongHexView";
+import { IdentityView } from "../identity/IdentityView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface TickerReservationViewProps {
@@ -30,7 +30,7 @@ export class TickerReservationView extends Component<TickerReservationViewProps>
         if (reservation.current === null) return "There is no reservation"
         else return <ul>
             <li key="owner">
-                Owned by: <LongHexView value={reservation.details?.owner?.did} lut={{ [myDid]: "me" }} />
+                Owned by: <IdentityView value={reservation.details?.owner?.did} lut={{ [myDid]: "me" }} />
             </li>
             <li key="status">With status: {reservation.details?.status}</li>
             <li key="expiry">Valid until: {reservation.details?.expiryDate?.toISOString()}</li>

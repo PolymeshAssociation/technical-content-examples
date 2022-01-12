@@ -4,8 +4,7 @@ import { Component } from "react";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
-import { IdentitiesView } from "../identity/IdentityView";
-import { LongHexView } from "../LongHexView";
+import { IdentitiesView, IdentityView } from "../identity/IdentityView";
 import { TokenIdentifiersView } from "./TokenIdentifierView";
 
 export interface SecurityTokenFieldsViewProps {
@@ -20,7 +19,7 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
         return <fieldset className={cardStyle}>
             <legend>Fields</legend>
             <ul>
-                <li key="did">Did: <LongHexView value={token?.current?.did} lut={null} /></li>
+                <li key="did">Did: <IdentityView value={token?.current?.did} lut={null} /></li>
                 <li key="createdAt">
                     Created at:&nbsp;
                     <EventIdentifierView
@@ -78,7 +77,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                         disabled={true}
                     />
                 </li>
-                <li key="owner">Owned by: <LongHexView value={owner} lut={identityLut} /></li>
+                <li key="owner">Owned by: <IdentityView value={owner} lut={identityLut} /></li>
                 <li key="totalSupply">With total supply of: {details?.totalSupply?.toString(10)}</li>
                 <li key="fullAgents">Whose full agents are: <IdentitiesView values={details?.fullAgents} lut={identityLut} /></li>
             </ul>

@@ -35,7 +35,6 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
         claim: newClaim,
     })
 
-
     render() {
         const { claimTarget, canManipulate, isWrongStyle, apiPromise } = this.props
         const { target, expiry } = claimTarget

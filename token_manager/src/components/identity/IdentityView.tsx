@@ -1,6 +1,6 @@
-import { Identity } from "@polymathnetwork/polymesh-sdk/types";
+import { Account, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { isIdentity } from "../../types";
+import { isAccount, isIdentity } from "../../types";
 import { LongView } from "../LongHexView";
 
 export interface IdentityViewProps {
@@ -49,5 +49,31 @@ export class IdentitiesView extends Component<IdentitiesViewProps> {
                 />
             </li>)
         }</ol>
+    }
+}
+
+export interface AccountViewProps {
+    value: string | Account
+    /**
+     * Look-up table to replace well-known values.
+     */
+    lut: { [key: string]: string } | undefined | null
+}
+
+const defaultAccountCutoffs = {
+    left: 8,
+    right: 6,
+}
+
+export class AccountView extends Component<AccountViewProps> {
+    render() {
+        const { value, lut } = this.props
+        const { left, right } = defaultAccountCutoffs
+        return <LongView
+            value={isAccount(value) ? value.address : value}
+            left={left}
+            right={right}
+            lut={lut}
+        />
     }
 }

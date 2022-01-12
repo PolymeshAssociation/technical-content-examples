@@ -2,12 +2,12 @@ import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
-import { LongHexView } from "../LongHexView";
 import {
     NewPortfolioParams,
     OnPortfolioInfoChanged,
     fetchPortfolioInfoJson,
 } from "../../handlers/portfolios/PortfolioHandlers";
+import { IdentityView } from "../identity/IdentityView";
 
 export interface PortfolioViewProps {
     portfolio: DefaultPortfolio | NumberedPortfolio
@@ -19,7 +19,7 @@ export class PortfolioView extends Component<PortfolioViewProps> {
         const { portfolio, myDid } = this.props
         return <ul>
             <li key="owner">
-                Owner:&nbsp;<LongHexView value={portfolio.owner.did} lut={{ [myDid]: "me" }} />
+                Owner:&nbsp;<IdentityView value={portfolio.owner.did} lut={{ [myDid]: "me" }} />
             </li>
             <li key="id">Id:&nbsp;{isNumberedPortfolio(portfolio) ? portfolio.id.toString(10) : "null"}</li>
         </ul>

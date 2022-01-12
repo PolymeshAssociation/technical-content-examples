@@ -48,7 +48,6 @@ import { CheckpointScheduleView } from "../src/components/checkpoints/Checkpoint
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
-import { LongHexView } from "../src/components/LongHexView"
 import { PortfoliosView, PortfolioView } from "../src/components/portfolios/PortfolioView"
 import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
@@ -62,6 +61,7 @@ import {
   fetchCheckpointsInfo,
 } from "../src/handlers/checkpoints/CheckpointHandlers"
 import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
+import { IdentityView } from "../src/components/identity/IdentityView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -586,7 +586,7 @@ export default function Home() {
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li key="caa">
-                  With agent: <LongHexView value={caa} lut={{ [myInfo.myDid]: caa }} />
+                  With agent: <IdentityView value={caa} lut={{ [myInfo.myDid]: caa }} />
                   &nbsp;
                   <button className="submit remove-token-caa" onClick={removeCorporateActionsAgent} disabled={owner !== myInfo.myDid || owner === caa}>Remove</button>
                 </li>
