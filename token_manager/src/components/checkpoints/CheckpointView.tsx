@@ -1,6 +1,6 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
 import { Component } from "react";
-import { CheckpointLoadBalanceParams } from "../../handlers/checkpoints/CheckpointHandlers";
+import { CheckpointLoadBalanceParams, OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers";
 import { CheckpointInfoJson } from "../../types";
 
 interface CheckpointViewState {
@@ -64,26 +64,43 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
 
 export interface CheckpointsViewProps {
     checkpoints: CheckpointInfoJson[]
+    pickedCheckpoint: CheckpointInfoJson | null
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export class CheckpointsView extends Component<CheckpointsViewProps> {
+
+    onCheckpointPickedAt = (index: number) => () => this.props.onCheckpointPicked(this.props.checkpoints[index])
+
     render() {
         const {
             checkpoints,
+            pickedCheckpoint,
             canManipulate,
         } = this.props
         if (typeof checkpoints === "undefined" || checkpoints === null || checkpoints.length === 0)
             return <div>There are no checkpoints</div>
         return <ul>{
             checkpoints
-                .map((checkpoint: CheckpointInfoJson, index: number) => <li key={index}>
-                    Checkpoint {index}:&nbsp;
-                    <CheckpointView
-                        checkpointInfo={checkpoint}
-                        canManipulate={canManipulate}
-                    />
-                </li>)
+                .map((checkpoint: CheckpointInfoJson, index: number) => {
+                    const canPick: boolean = typeof pickedCheckpoint === "undefined"
+                        || pickedCheckpoint === null
+                        || !checkpoint.checkpoint.isEqual(pickedCheckpoint?.checkpoint)
+                    return <li key={index}>
+                        Checkpoint {index}:&nbsp;
+                        <button
+                            className="submit"
+                            onClick={this.onCheckpointPickedAt(index)}
+                            disabled={!canPick}>
+                            Pick
+                        </button>
+                        <CheckpointView
+                            checkpointInfo={checkpoint}
+                            canManipulate={canManipulate}
+                        />
+                    </li>
+                })
         }</ul>
     }
 }

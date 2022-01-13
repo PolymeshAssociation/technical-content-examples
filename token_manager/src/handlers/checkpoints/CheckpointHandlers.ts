@@ -17,6 +17,7 @@ import {
     TokenInfoJson,
 } from "../../types";
 
+export type OnCheckpointPicked = (checkpoint: CheckpointInfoJson) => void
 export type OnCheckpointsChanged = (checkpoints: CheckpointInfoJson[]) => void
 export type OnCheckpointSchedulesChanged = (checkpointSchedules: CheckpointScheduleDetailsInfoJson[]) => void
 

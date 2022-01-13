@@ -178,6 +178,16 @@ export default function Home() {
     return checkpoints
   }
 
+  function setCheckpointPicked(picked: CheckpointInfoJson | null) {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      checkpoints: {
+        ...prev.checkpoints,
+        picked: picked,
+      }
+    }))
+  }
+
   function setCheckpointsInfo(infos: CheckpointInfoJson[]) {
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
@@ -464,11 +474,12 @@ export default function Home() {
         />
 
         <CheckpointManagerView
-          myInfo={myInfo}
+          myDid={myInfo.myDid}
           token={myInfo.token}
           checkpoints={myInfo.checkpoints}
           cardStyle={styles.card}
           isWrongStyle={styles.isWrong}
+          onCheckpointPicked={setCheckpointPicked}
           onCheckpointsChanged={setCheckpointsInfo}
           onCheckpointSchedulesChanged={setCheckpointSchedulesInfo}
         />

@@ -4,6 +4,7 @@ import { Component } from "react";
 import {
     fetchCheckpointInfoJson,
     fetchCheckpointScheduleInfoJson,
+    OnCheckpointPicked,
     OnCheckpointsChanged,
     OnCheckpointSchedulesChanged,
 } from "../../handlers/checkpoints/CheckpointHandlers";
@@ -29,11 +30,12 @@ interface CheckpointManagerViewState {
 }
 
 export interface CheckpointManagerViewProps {
-    myInfo: MyInfoJson
-    token: TokenInfoJson
+    myDid: string
+    token: TokenInfoJson | null
     checkpoints: CheckpointsInfoJson
     cardStyle: any
     isWrongStyle: any
+    onCheckpointPicked: OnCheckpointPicked
     onCheckpointsChanged: OnCheckpointsChanged
     onCheckpointSchedulesChanged: OnCheckpointSchedulesChanged
 }
@@ -72,19 +74,19 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
 
     onCreateCheckpoint = async () => this.onCreateCheckpoint()
     createCheckpoint = async (): Promise<CheckpointInfoJson> => {
-        const created: Checkpoint = await (await this.props.myInfo.token.current.checkpoints.create()).run()
+        const created: Checkpoint = await (await this.props.token.current.checkpoints.create()).run()
         const info: CheckpointInfoJson = await fetchCheckpointInfoJson(created)
         this.props.onCheckpointsChanged([...this.props.checkpoints.details, info])
         return info
     }
 
     render() {
-        const { start } = this.state
-        const { myInfo, cardStyle, isWrongStyle } = this.props
-        const canManipulate: boolean = myInfo.token?.current !== null && myInfo.token?.details?.owner?.did === myInfo.myDid
+        const { start, periodValue, periodUnit, repetitions } = this.state
+        const { myDid, token, checkpoints, cardStyle, isWrongStyle } = this.props
+        const canManipulate: boolean = token?.current !== null && token?.details?.owner?.did === myDid
         return <CollapsibleFieldsetView
             className={cardStyle}
-            legend={`Checkpoints for: ${myInfo.token.current?.ticker}`}
+            legend={`Checkpoints for: ${token?.current?.ticker}`}
             collapsed={true}>
 
             <div className="submit">
@@ -102,8 +104,10 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                 collapsed={false}>
 
                 <CheckpointsView
-                    checkpoints={myInfo.checkpoints?.details}
+                    checkpoints={checkpoints.details}
+                    pickedCheckpoint={checkpoints.picked}
                     canManipulate={true}
+                    onCheckpointPicked={this.props.onCheckpointPicked}
                 />
             </CollapsibleFieldsetView>
 
@@ -126,7 +130,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                     <li key="periodValue">
                         Period value:&nbsp;
                         <input
-                            defaultValue={this.state.periodValue} placeholder="5"
+                            defaultValue={periodValue} placeholder="5"
                             disabled={!canManipulate}
                             onChange={this.updatePeriodValue}
                         />
@@ -135,7 +139,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                         Period unit:&nbsp;
                         <EnumSelectView<CalendarUnit>
                             theEnum={CalendarUnit}
-                            defaultValue={this.state.periodUnit}
+                            defaultValue={periodUnit}
                             onChange={this.updatePeriodUnit}
                             canManipulate={true}
                         />
@@ -143,7 +147,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                     <li key="repetitions">
                         Repetitions:&nbsp;
                         <input
-                            defaultValue={this.state.repetitions}
+                            defaultValue={repetitions}
                             placeholder="0" disabled={!canManipulate}
                             onChange={this.updateRepetitions}
                         />
@@ -169,7 +173,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                 collapsed={false}>
 
                 <CheckpointScheduleDetailsView
-                    schedules={myInfo.checkpoints.scheduleDetails}
+                    schedules={checkpoints.scheduleDetails}
                     canManipulate={canManipulate}
                 />
             </CollapsibleFieldsetView>

@@ -220,6 +220,7 @@ export type AttestationsInfoJson = {
 export type CheckpointsInfoJson = {
     current: Checkpoint[],
     details: CheckpointInfoJson[],
+    picked: CheckpointInfoJson | null,
     currentSchedules: CheckpointSchedule[],
     scheduleDetails: CheckpointScheduleDetailsInfoJson[],
 }
@@ -228,6 +229,7 @@ export function getEmptyCheckpointsInfoJson(): CheckpointsInfoJson {
     return {
         current: [] as Checkpoint[],
         details: [] as CheckpointInfoJson[],
+        picked: null,
         currentSchedules: [] as CheckpointSchedule[],
         scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
     }
