@@ -195,6 +195,7 @@ export type AuthorisationInfoJson = {
 
 export type PortfoliosInfoJson = {
     myDetails: PortfolioInfoJson[],
+    picked: PortfolioInfoJson | null,
 }
 
 export type PortfolioInfoJson = {
@@ -311,6 +312,7 @@ export function getEmptyMyInfo(): MyInfoJson {
         } as AttestationsInfoJson,
         portfolios: {
             myDetails: [] as PortfolioInfoJson[],
+            picked: null,
         },
         checkpoints: getEmptyCheckpointsInfoJson(),
         corporateActions: {

@@ -153,7 +153,18 @@ export default function Home() {
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       portfolios: {
+        ...prev.portfolios,
         myDetails: myDetails,
+      }
+    }))
+  }
+
+  function onPortfolioPicked(picked: PortfolioInfoJson | null) {
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      portfolios: {
+        ...prev.portfolios,
+        picked: picked,
       }
     }))
   }
@@ -444,8 +455,10 @@ export default function Home() {
         <PortfolioManagerView
           apiPromise={apiPromise}
           myDid={myInfo.myDid}
+          pickedPortfolio={myInfo.portfolios.picked}
           cardStyle={styles.card}
           isWrongStyle={styles.isWrong}
+          onPortfolioPicked={onPortfolioPicked}
           onMyPortfolioInfosChanged={setMyPortfolios}
           canManipulate={true}
         />

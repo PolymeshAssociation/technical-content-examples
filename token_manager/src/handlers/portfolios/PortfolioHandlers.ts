@@ -1,6 +1,12 @@
 import { Identity } from "@polymathnetwork/polymesh-sdk/internal";
-import { DefaultPortfolio, EventIdentifier, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
+import {
+    DefaultPortfolio,
+    EventIdentifier,
+    NumberedPortfolio,
+} from "@polymathnetwork/polymesh-sdk/types";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
+
+export type OnPortfolioPicked = (picked: PortfolioInfoJson) => void
 
 export async function fetchPortfolioInfoJson(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
     const [createdAt, exists, custodian, name]: [EventIdentifier, boolean, Identity, string] = await Promise.all([

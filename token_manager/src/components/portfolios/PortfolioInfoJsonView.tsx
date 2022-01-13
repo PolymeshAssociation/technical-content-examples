@@ -12,6 +12,7 @@ import {
     OnPortfolioInfoChanged,
     OnPortfolioInfosChanged,
     fetchPortfolioInfoJson,
+    OnPortfolioPicked,
 } from "../../handlers/portfolios/PortfolioHandlers";
 import { PortfolioView } from "./PortfolioView";
 
@@ -155,7 +156,9 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
 export interface PortfolioJsonInfosViewProps {
     portfolios: PortfolioInfoJson[]
     myDid: string
+    pickedPortfolio: PortfolioInfoJson | null
     onPortfolioInfosChanged: OnPortfolioInfosChanged
+    onPortfolioPicked: OnPortfolioPicked
     isWrongStyle: any
     canManipulate: boolean
 }
@@ -173,6 +176,7 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
         list.splice(index, 1)
         onPortfolioInfosChanged(list)
     }
+    onPortfolioPicked = (portfolio: PortfolioInfoJson) => () => this.props.onPortfolioPicked(portfolio)
 
     onPortfolioInfoChanged = (index: number) => {
         const list: PortfolioInfoJson[] = this.props.portfolios
@@ -187,6 +191,7 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
         const {
             portfolios,
             myDid,
+            pickedPortfolio,
             isWrongStyle,
             canManipulate,
         } = this.props
@@ -198,6 +203,9 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
                     const original: DefaultPortfolio | NumberedPortfolio = portfolio.original
                     const isNumbered: boolean = isNumberedPortfolio(original)
                     const canDelete: boolean = canManipulate && isNumbered && portfolio.original.owner.did === myDid
+                    const canPick: boolean = typeof pickedPortfolio === "undefined"
+                        || pickedPortfolio === null
+                        || !portfolio.original.isEqual(pickedPortfolio?.original)
                     return <li key={index}>
                         {isNumbered ? "Numbered" : "Default"}&nbsp;Portfolio:&nbsp;
                         <button
@@ -205,6 +213,13 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
                             onClick={this.onDeletePortfolio(index)}
                             disabled={!canDelete}>
                             Delete
+                        </button>
+                        &nbsp;
+                        <button
+                            className="submit pick-portfolio"
+                            onClick={this.onPortfolioPicked(portfolio)}
+                            disabled={!canPick}>
+                            Pick
                         </button>
                         <PortfolioInfoJsonView
                             portfolio={portfolio}

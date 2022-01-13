@@ -1,7 +1,11 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
-import { fetchPortfolioInfoJsons, OnPortfolioInfosChanged } from "../../handlers/portfolios/PortfolioHandlers"
+import {
+    fetchPortfolioInfoJsons,
+    OnPortfolioInfosChanged,
+    OnPortfolioPicked,
+} from "../../handlers/portfolios/PortfolioHandlers"
 import { assertUnreachable, PortfolioInfoJson } from "../../types"
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView"
 import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
@@ -26,9 +30,11 @@ interface PortfolioManagerViewState {
 export interface PortfolioManagerViewProps {
     apiPromise: Promise<Polymesh>
     myDid: string
+    pickedPortfolio: PortfolioInfoJson
     cardStyle: any
     isWrongStyle: any
     onMyPortfolioInfosChanged: OnPortfolioInfosChanged
+    onPortfolioPicked: OnPortfolioPicked
     canManipulate: boolean
 }
 
@@ -119,7 +125,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
 
     render() {
         const { listType, otherOwner, loadedOtherOwner } = this.state
-        const { myDid, apiPromise, cardStyle, isWrongStyle, canManipulate } = this.props
+        const { myDid, pickedPortfolio, apiPromise, cardStyle, isWrongStyle, canManipulate } = this.props
         const portfoliosToShow: PortfolioInfoJson[] = this.getPortfoliosToShow()
         const canLoadOther: boolean = listType !== PortfolioListType.Other || otherOwner !== loadedOtherOwner
         return <CollapsibleFieldsetView
@@ -163,8 +169,10 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
 
                 <PortfolioJsonInfosView
                     portfolios={portfoliosToShow}
-                    onPortfolioInfosChanged={this.onPortfolioInfosChanged(listType)}
                     myDid={myDid}
+                    pickedPortfolio={pickedPortfolio}
+                    onPortfolioInfosChanged={this.onPortfolioInfosChanged(listType)}
+                    onPortfolioPicked={this.props.onPortfolioPicked}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
                 />
