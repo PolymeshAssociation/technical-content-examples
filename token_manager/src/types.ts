@@ -255,7 +255,7 @@ export type CheckpointScheduleDetailsInfoJson = CheckpointScheduleInfoJson & {
 
 export type CorporateActionsInfoJson = {
     distributions: DistributionsInfoJson,
-    agent: Identity,
+    agents: Identity[],
     newAgent: ModifyCorporateActionsAgentParams,
 }
 
@@ -274,6 +274,7 @@ export type CorporateActionInfoJson = {
 export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "current"> & {
     current: DividendDistribution,
     origin: PortfolioInfoJson,
+    exists: boolean,
     details: DividendDistributionDetails,
     participants: DistributionParticipant[],
 }
@@ -333,7 +334,7 @@ export function getEmptyMyInfo(): MyInfoJson {
                     expiryDate: null,
                 },
             },
-            agent: null as Identity,
+            agents: [],
             newAgent: {
                 target: "" as string | Identity,
                 requestExpiry: null as Date | null,

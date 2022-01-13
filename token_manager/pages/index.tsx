@@ -4,11 +4,9 @@ import styles from "../styles/Home.module.css"
 import {
   Requirement,
   SecurityToken,
-  DividendDistributionDetails,
-  DistributionParticipant,
   DistributionWithDetails,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { Polymesh, BigNumber } from '@polymathnetwork/polymesh-sdk'
+import { Polymesh } from '@polymathnetwork/polymesh-sdk'
 import {
   AgentsInfoJson,
   CheckpointInfoJson,
@@ -19,7 +17,6 @@ import {
   getEmptyMyInfo,
   getEmptyRequirements,
   isCheckpointSchedule,
-  isNumberedPortfolio,
   MyInfoJson,
   MyInfoPath,
   PermissionsInfoJson,
@@ -35,12 +32,9 @@ import {
   Identity,
 } from "@polymathnetwork/polymesh-sdk/internal"
 import { findValue, getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
-import { CheckpointView } from "../src/components/checkpoints/CheckpointView"
-import { CheckpointScheduleView } from "../src/components/checkpoints/CheckpointScheduleView"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
-import { PortfolioInfoJsonView } from "../src/components/portfolios/PortfolioInfoJsonView"
 import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
@@ -54,6 +48,7 @@ import {
 import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
 import { AuthorisationManagerView } from "../src/components/authorisations/AuthorisationManagerView"
 import { IdentityView } from "../src/components/identity/IdentityView"
+import { DividendDistributionManagerView } from "../src/components/distribution/DividendDistributionView"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -237,9 +232,13 @@ export default function Home() {
 
   async function loadCorporateActions(token: SecurityToken): Promise<void> {
     setStatus("Loading corporate actions")
-    const agent: Identity = await token.corporateActions.getAgent()
-    setMyInfo(returnUpdatedCreator(["corporateActions", "agent"], agent))
+    const agents: Identity[] = await token.corporateActions.getAgents()
+    setMyInfo(returnUpdatedCreator(["corporateActions", "agents"], agents))
     await loadDividendDistributions(token)
+  }
+
+  function onDividendDistributionCreated(action: DividendDistribution) {
+    setTimeout(async () => loadDividendDistributions(myInfo.token.current), 1)
   }
 
   async function loadDividendDistributions(token: SecurityToken): Promise<DistributionWithDetails[]> {
@@ -264,6 +263,7 @@ export default function Home() {
       ...(await getCorporateActionInfo(action)),
       current: action,
       origin: await fetchPortfolioInfoJson(action.origin),
+      exists: await action.exists(),
       details: await action.details(),
       participants: await action.getParticipants(),
     }
@@ -278,102 +278,6 @@ export default function Home() {
       checkpoint: checkpoint === null ? null : isSchedule ? null : await fetchCheckpointInfoJson(checkpoint as Checkpoint),
       checkpointSchedule: checkpoint === null ? null : isSchedule ? await fetchCheckpointScheduleInfoJson(checkpoint as CheckpointSchedule) : null,
     }
-  }
-
-  function presentCorporateAction(action: CorporateActionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{presentCorporateActionInner(action, location, canManipulate)}</ul>
-  }
-
-  function presentCorporateActionInner(action: CorporateActionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
-    return [
-      <li key="id">Id:&nbsp;{action.current.id.toString(10)}</li>,
-      <li key="ticker">Ticker:&nbsp;{action.current.ticker}</li>,
-      <li key="declarationDate">Declaration date:&nbsp;{action.current.declarationDate.toISOString()}</li>,
-      <li key="description">Description:&nbsp;{action.current.description}</li>,
-      (function () {
-        if (action.checkpoint !== null) return <li key="checkpoint">
-          Checkpoint:&nbsp;
-          <CheckpointView
-            checkpointInfo={action.checkpoint}
-            canManipulate={canManipulate}
-          />
-        </li>
-        if (action.checkpointSchedule !== null) return <li key="checkpointSchedule">Checkpoint schedule:&nbsp;<CheckpointScheduleView
-          scheduleInfo={action.checkpointSchedule}
-          canManipulate={canManipulate}
-        />
-        </li>
-        return <li key="checkpoint">No checkpoint or checkpoint schedule</li>
-      })(),
-    ]
-  }
-
-  function presentDividendDistributions(actions: DividendDistributionInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{
-      actions
-        .map((action: DividendDistributionInfoJson, actionIndex: number) => presentDividendDistribution(action, [...location, actionIndex], canManipulate))
-        .map((presented: JSX.Element, actionIndex: number) => <li key={actionIndex}>
-          Dividend distribution {actionIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
-  function presentDividendDistribution(action: DividendDistributionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{presentDividendDistributionInner(action, location, canManipulate)}</ul>
-  }
-
-  function presentDividendDistributionInner(action: DividendDistributionInfoJson, location: MyInfoPath, canManipulate: boolean): JSX.Element[] {
-    return [
-      ...presentCorporateActionInner(action, location, canManipulate),
-      <li key="origin">
-        Origin:&nbsp;
-        <PortfolioInfoJsonView
-          portfolio={action.origin}
-          myDid={myInfo.myDid}
-          isWrongStyle={styles.isWrong}
-          onPortfolioInfoChanged={() => { }}
-          canManipulate={canManipulate}
-        />
-      </li>,
-      <li key="details">Details:&nbsp;{presentDividendDistributionDetails(action.details, [...location, "details"], canManipulate)}</li>,
-      <li key="participants">Participants:&nbsp;{presentParticipants(action.participants, [...location, "participants"], canManipulate)}</li>,
-    ]
-  }
-
-  function presentDividendDistributionDetails(details: DividendDistributionDetails, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>
-      <li key="remainingFunds">Remaining funds:&nbsp;{details.remainingFunds.toString(10)}</li>
-      <li key="fundsReclaimed">Funds reclaimed:&nbsp;{details.fundsReclaimed ? "true" : "false"}</li>
-    </ul>
-  }
-
-  function presentCorporateActions(actions: CorporateActionInfoJson[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    if (typeof actions === "undefined" || actions === null || actions.length === 0) return <div>There are no corporate actions</div>
-    return <ul>{
-      actions
-        .map((action: CorporateActionInfoJson, actionIndex: number) => presentCorporateAction(action, [...location, actionIndex], canManipulate))
-        .map((presented: JSX.Element, actionIndex: number) => <li key={actionIndex}>
-          Corporate action {actionIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
-  function presentParticipants(participants: DistributionParticipant[], location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>{
-      participants
-        .map((participant: DistributionParticipant, participantIndex: number) => presentParticipant(participant, [...location, participantIndex], canManipulate))
-        .map((presented: JSX.Element, participantIndex: number) => <li key={participantIndex}>
-          Participant {participantIndex}:&nbsp;{presented}
-        </li>)
-    }</ul>
-  }
-
-  function presentParticipant(participant: DistributionParticipant, location: MyInfoPath, canManipulate: boolean): JSX.Element {
-    return <ul>
-      <li key="identity">Identity:&nbsp;{participant.identity.did}</li>
-      <li key="amount">Identity:&nbsp;{participant.amount.toString(10)}</li>
-      <li key="paid">Identity:&nbsp;{participant.paid ? "true" : "false"}</li>
-    </ul>
   }
 
   const apiPromise: Promise<Polymesh> = getPolyWalletApi()
@@ -490,7 +394,7 @@ export default function Home() {
           <div>{
             (() => {
               const owner: string = myInfo.token.details?.owner?.did
-              const caa: string = myInfo.corporateActions.agent?.did ?? ""
+              const caa: string = myInfo.corporateActions.agents?.did ?? ""
               if (myInfo.token.current === null) return "There is no token"
               else return <ul>
                 <li key="caa">
@@ -526,102 +430,16 @@ export default function Home() {
 
         </fieldset>
 
-        <fieldset className={styles.card}>
-          <legend>Dividend distributions for: {myInfo.token.current?.ticker}</legend>
-
-          <div className="submit">{
-            (() => {
-              const canManipulate: boolean = myInfo.token?.current !== null && (myInfo.token?.details?.owner?.did === myInfo.myDid || myInfo.corporateActions?.agent?.did === myInfo.myDid)
-              return <div className="submit">
-                <button className="submit create-dividend-distribution" onClick={createDividendDistribution} disabled={!canManipulate}>Create 1 now</button>
-              </div>
-            })()
-          }</div>
-
-          <div className={styles.card}>{
-            (() => {
-              const canManipulate: boolean = myInfo.token?.current !== null && (myInfo.token?.details?.owner?.did === myInfo.myDid || myInfo.corporateActions?.agent?.did === myInfo.myDid)
-              const currentCheckpointIndex = myInfo.checkpoints.current
-                .findIndex((checkpoint: Checkpoint) => checkpoint.id.toString(10) === (myInfo.corporateActions.distributions.newDividend.checkpoint as Checkpoint)?.id?.toString(10))
-              return <div>
-                Create new (no tax handling):
-                <ul>
-                  <li key="declarationDate">
-                    Declaration date:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.declarationDate?.toISOString()} placeholder="2021-12-31T06:00:00Z" disabled={!canManipulate}
-                      onChange={onRequirementChangedDateCreator(["corporateActions", "distributions", "newDividend", "declarationDate"])} />
-                  </li>
-                  <li key="checkpoint" title="a choice was made to only use checkpoint">
-                    Checkpoint:&nbsp;
-                    <select defaultValue={currentCheckpointIndex} disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "checkpoint"], false, (e) => {
-                        console.log(e);
-                        return Promise.resolve(myInfo.checkpoints.current[parseInt(e.target.value)])
-                      })}>{
-                        [
-                          <option key="menu" disabled={true}>Pick a checkpoint</option>,
-                          ...myInfo.checkpoints.details
-                            .map((checkpoint: CheckpointInfoJson, index: number) => <option key={index} value={index}>
-                              {checkpoint.checkpoint.id.toString(10)}&nbsp;-&nbsp;{checkpoint.createdAt.toISOString()}
-                            </option>)
-                        ]
-                      }</select>
-                  </li>
-                  <li key="description">
-                    Description:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.description} placeholder="Quarterly dividend" disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "description"])} />
-                  </li>
-                  <li key="originPortfolio">
-                    Origin portfolio:&nbsp;
-                    <select defaultValue={myInfo.corporateActions.distributions.newDividend.originPortfolio?.id?.toString(10)} disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "originPortfolio"], false, (e) => Promise.resolve(myInfo.portfolios.myDetails[e.target.value].original))}>{
-                        myInfo.portfolios.myDetails
-                          .map((portfolio: PortfolioInfoJson, index: number) => <option key={index} value={index}>
-                            {isNumberedPortfolio(portfolio.original) ? portfolio.original.id.toString(10) : "Default"}
-                          </option>)
-                      }</select>
-                  </li>
-                  <li key="currency">
-                    Currency:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.currency} placeholder="USD" disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "currency"])} />
-                  </li>
-                  <li key="perShare">
-                    Per share:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.perShare.toString(10)} placeholder="1" disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "perShare"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
-                  </li>
-                  <li key="maxAmount">
-                    Max amount:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.maxAmount.toString(10)} placeholder="1" disabled={!canManipulate}
-                      onChange={onValueChangedCreator(["corporateActions", "distributions", "newDividend", "maxAmount"], false, (e) => Promise.resolve(new BigNumber(e.target.value)))} />
-                  </li>
-                  <li key="paymentDate">
-                    Payment date:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.paymentDate?.toISOString()} placeholder="2021-12-31T06:00:00Z" disabled={!canManipulate}
-                      onChange={onRequirementChangedDateCreator(["corporateActions", "distributions", "newDividend", "paymentDate"])} />
-                  </li>
-                  <li key="expiryDate">
-                    Expiry date:&nbsp;
-                    <input defaultValue={myInfo.corporateActions.distributions.newDividend.expiryDate?.toISOString()} placeholder="2021-12-31T06:00:00Z" disabled={!canManipulate}
-                      onChange={onRequirementChangedDateCreator(["corporateActions", "distributions", "newDividend", "expiryDate"])} />
-                  </li>
-                </ul>
-
-                <div className="submit">
-                  <div className="submit">
-                    <button className="submit create-dividend-distribution" onClick={createDividendDistribution} disabled={!canManipulate}>Create 1 now</button>
-                  </div>
-                </div>
-
-              </div>
-            })()
-          }</div>
-
-          <div>{presentDividendDistributions(myInfo.corporateActions.distributions.dividends, ["corporateActions", "distributions", "dividends"], true)}</div>
-
-        </fieldset>
+        <DividendDistributionManagerView
+          distributions={myInfo.corporateActions.distributions.dividends}
+          token={myInfo.token}
+          myDid={myInfo.myDid}
+          cardStyle={styles.card}
+          isWrongStyle={styles.isWrong}
+          pickedCheckpoint={myInfo.checkpoints.picked}
+          pickedPortfolio={myInfo.portfolios.picked}
+          onDividendDistributionCreated={onDividendDistributionCreated}
+        />
 
       </main>
 
