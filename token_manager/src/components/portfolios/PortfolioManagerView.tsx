@@ -1,11 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
-import {
-    fetchPortfolioInfoJsons,
-    OnPortfolioInfosChanged,
-    OnPortfolioPicked,
-} from "../../handlers/portfolios/PortfolioHandlers"
+import { fetchPortfolioInfoJsons, OnPortfolioPicked } from "../../handlers/portfolios/PortfolioHandlers"
 import { assertUnreachable, PortfolioInfoJson } from "../../types"
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView"
 import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
@@ -33,7 +29,6 @@ export interface PortfolioManagerViewProps {
     pickedPortfolio: PortfolioInfoJson
     cardStyle: any
     isWrongStyle: any
-    onMyPortfolioInfosChanged: OnPortfolioInfosChanged
     onPortfolioPicked: OnPortfolioPicked
     canManipulate: boolean
 }
@@ -68,9 +63,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     }
     fetchMyPortfolios = async (): Promise<PortfolioInfoJson[]> => {
         const api: Polymesh = await this.props.apiPromise
-        const myPortfolios: PortfolioInfoJson[] = await this.fetchPortfolios(await api.getCurrentIdentity())
-        this.props.onMyPortfolioInfosChanged(myPortfolios)
-        return myPortfolios
+        return await this.fetchPortfolios(await api.getCurrentIdentity())
     }
     onLoadOtherPortfolios = async () => {
         const loadedOtherOwner: string = this.state.otherOwner
@@ -102,17 +95,16 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
 
     onPortfolioInfosChanged = (listType: PortfolioListType) => (changed: PortfolioInfoJson[]) => {
         switch (listType) {
-            case PortfolioListType.None: return
+            case PortfolioListType.None: break
             case PortfolioListType.Mine:
                 this.setState({ myPortfolios: changed })
-                this.props.onMyPortfolioInfosChanged(changed)
-                return
+                break
             case PortfolioListType.Other:
                 this.setState({ otherPortfolios: changed })
-                return
+                break
             case PortfolioListType.MyCustodied:
                 this.setState({ myCustodieds: changed })
-                return
+                break
             default: assertUnreachable(listType)
         }
     }

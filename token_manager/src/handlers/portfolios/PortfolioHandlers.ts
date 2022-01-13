@@ -7,6 +7,8 @@ import {
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 
 export type OnPortfolioPicked = (picked: PortfolioInfoJson) => void
+export type OnPortfolioInfoChanged = (changed: PortfolioInfoJson) => void
+export type OnPortfolioInfosChanged = (portfolio: PortfolioInfoJson[]) => void
 
 export async function fetchPortfolioInfoJson(portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> {
     const [createdAt, exists, custodian, name]: [EventIdentifier, boolean, Identity, string] = await Promise.all([
@@ -31,6 +33,3 @@ export async function fetchPortfolioInfoJsons(portfolios: (DefaultPortfolio | Nu
 export interface NewPortfolioParams {
     name: string
 }
-
-export type OnPortfolioInfoChanged = (changed: PortfolioInfoJson) => void
-export type OnPortfolioInfosChanged = (portfolio: PortfolioInfoJson[]) => void

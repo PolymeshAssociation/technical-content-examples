@@ -74,6 +74,7 @@ export async function fetchCheckpointsInfo(token: TokenInfoJson): Promise<Checkp
     return {
         current: checkpoints.map((withData: CheckpointWithData) => withData.checkpoint),
         details: infos,
+        picked: null,
         currentSchedules: schedules.map((withDetails: ScheduleWithDetails) => withDetails.schedule),
         scheduleDetails: scheduleInfos,
     }

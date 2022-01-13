@@ -141,7 +141,6 @@ interface TokenCreatorViewState {
 
 export interface TokenCreatorViewProps {
     reservation: ReservationInfoJson
-    token: TokenInfoJson
     myDid: string
     cardStyle: any
     hasTitleStyle: any
@@ -189,9 +188,8 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
 
     render() {
         const { longName, isDivisible, assetType, fundingRound, requiresUniqueness, tokenIdentifiers } = this.state
-        const { reservation, token, myDid, cardStyle, hasTitleStyle } = this.props
+        const { reservation, myDid, cardStyle, hasTitleStyle } = this.props
         const canCreate: boolean = reservation.current !== null
-            && token.current === null
             && reservation.details?.status === TickerReservationStatus.Reserved
             && reservation.details?.owner?.did === myDid
         return <CollapsibleFieldsetView
@@ -293,7 +291,6 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
 
 export interface TickerReservationManagerProps {
     reservation: ReservationInfoJson
-    token: TokenInfoJson
     myDid: string
     cardStyle: any
     hasTitleStyle: any
@@ -306,7 +303,6 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
     render() {
         const {
             reservation,
-            token,
             myDid,
             cardStyle,
             hasTitleStyle,
@@ -335,7 +331,6 @@ export class TickerReservationManagerView extends Component<TickerReservationMan
 
             <TokenCreatorView
                 reservation={reservation}
-                token={token}
                 myDid={myDid}
                 cardStyle={cardStyle}
                 hasTitleStyle={hasTitleStyle}

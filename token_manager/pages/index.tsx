@@ -1,37 +1,23 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { useState } from "react"
 import styles from "../styles/Home.module.css"
-import {
-  Requirement,
-  SecurityToken,
-  DistributionWithDetails,
-} from "@polymathnetwork/polymesh-sdk/types"
+import { Requirement, SecurityToken, DistributionWithDetails } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh } from '@polymathnetwork/polymesh-sdk'
 import {
-  AgentsInfoJson,
   CheckpointInfoJson,
   CheckpointScheduleDetailsInfoJson,
   CheckpointsInfoJson,
-  CorporateActionInfoJson,
   DividendDistributionInfoJson,
   getEmptyMyInfo,
   getEmptyRequirements,
-  isCheckpointSchedule,
   MyInfoJson,
-  MyInfoPath,
   PermissionsInfoJson,
   PortfolioInfoJson,
   ReservationInfoJson,
   TokenInfoJson,
 } from "../src/types"
-import {
-  Checkpoint,
-  CheckpointSchedule,
-  CorporateAction,
-  DividendDistribution,
-  Identity,
-} from "@polymathnetwork/polymesh-sdk/internal"
-import { findValue, getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
+import { DividendDistribution, Identity } from "@polymathnetwork/polymesh-sdk/internal"
+import { getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
@@ -39,16 +25,11 @@ import { TickerManagerView } from "../src/components/token/TickerView"
 import { TickerReservationManagerView } from "../src/components/token/ReservationView"
 import { SecurityTokenManagerView } from "../src/components/token/SecurityTokenView"
 import { PortfolioManagerView } from "../src/components/portfolios/PortfolioManagerView"
-import { fetchPortfolioInfoJson } from "../src/handlers/portfolios/PortfolioHandlers"
-import {
-  fetchCheckpointInfoJson,
-  fetchCheckpointScheduleInfoJson,
-  fetchCheckpointsInfo,
-} from "../src/handlers/checkpoints/CheckpointHandlers"
+import { fetchCheckpointsInfo } from "../src/handlers/checkpoints/CheckpointHandlers"
 import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
 import { AuthorisationManagerView } from "../src/components/authorisations/AuthorisationManagerView"
-import { IdentityView } from "../src/components/identity/IdentityView"
 import { DividendDistributionManagerView } from "../src/components/distribution/DividendDistributionView"
+import { fetchDividendDistributionInfos } from "../src/handlers/distribution/DividendDistributionHandlers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -63,13 +44,6 @@ export default function Home() {
     const myIdentity: Identity = await api.getCurrentIdentity()
     setMyInfo(returnUpdatedCreator(["myDid"], myIdentity.did))
     return api
-  }
-
-  function onValueChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>) {
-    return async function (e): Promise<void> {
-      const value = valueProcessor ? await valueProcessor(e) : e.target.value
-      setMyInfo(returnUpdatedCreator(path, value, deep))
-    }
   }
 
   function setTicker(newTicker: string): void {
@@ -95,6 +69,7 @@ export default function Home() {
       async () => Promise.all([
         loadComplianceRequirements(token.current),
         loadCheckpointsInfo(token),
+        loadDividendDistributions(token.current),
       ]),
       500)
   }
@@ -137,30 +112,13 @@ export default function Home() {
     }
   }
 
-  function onRequirementChangedCreator(path: MyInfoPath, deep: boolean = false, valueProcessor?: (e) => Promise<any>): (e) => Promise<void> {
-    return async function (e): Promise<void> {
-      await onValueChangedCreator(path, deep, valueProcessor)(e)
-      setMyInfo(returnUpdatedCreator(["requirements"], { modified: true }, true))
-    }
-  }
-
-  function setMyPortfolios(myDetails: PortfolioInfoJson[]) {
-    setMyInfo((prev: MyInfoJson) => ({
-      ...prev,
-      portfolios: {
-        ...prev.portfolios,
-        myDetails: myDetails,
-      }
-    }))
-  }
-
   function onPortfolioPicked(picked: PortfolioInfoJson | null) {
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       portfolios: {
         ...prev.portfolios,
         picked: picked,
-      }
+      },
     }))
   }
 
@@ -179,7 +137,7 @@ export default function Home() {
       checkpoints: {
         ...prev.checkpoints,
         picked: picked,
-      }
+      },
     }))
   }
 
@@ -190,7 +148,7 @@ export default function Home() {
         ...prev.checkpoints,
         current: infos.map((info: CheckpointInfoJson) => info.checkpoint),
         details: infos,
-      }
+      },
     }))
   }
 
@@ -201,43 +159,11 @@ export default function Home() {
         ...prev.checkpoints,
         currentSchedules: infos.map((info: CheckpointScheduleDetailsInfoJson) => info.schedule),
         scheduleDetails: infos,
-      }
+      },
     }))
   }
 
-  function onRequirementChangedDateCreator(path: MyInfoPath): (e) => Promise<void> {
-    return onRequirementChangedCreator(path, false, (e) => {
-      const newDate: Date = new Date(e.target.value)
-      if (newDate.toDateString() === "Invalid Date") return Promise.resolve(findValue(myInfo, path))
-      return Promise.resolve(newDate)
-    })
-  }
-
-  async function setCorporateActionsAgent(): Promise<void> {
-    setStatus("Setting corporate actions agent")
-    await (await myInfo.token.current.corporateActions.setAgent(myInfo.corporateActions.newAgent)).run()
-  }
-
-  async function removeCorporateActionsAgent(): Promise<void> {
-    setStatus("Removing corporate actions agent")
-    await (await myInfo.token.current.corporateActions.removeAgent()).run()
-  }
-
-  async function createDividendDistribution(): Promise<DividendDistribution> {
-    setStatus("Creating dividend distribution")
-    const distribution: DividendDistribution = await (await myInfo.token.current.corporateActions.distributions.configureDividendDistribution(myInfo.corporateActions.distributions.newDividend)).run()
-    await loadDividendDistributions(myInfo.token.current)
-    return distribution
-  }
-
-  async function loadCorporateActions(token: SecurityToken): Promise<void> {
-    setStatus("Loading corporate actions")
-    const agents: Identity[] = await token.corporateActions.getAgents()
-    setMyInfo(returnUpdatedCreator(["corporateActions", "agents"], agents))
-    await loadDividendDistributions(token)
-  }
-
-  function onDividendDistributionCreated(action: DividendDistribution) {
+  function onDividendDistributionCreated(_: DividendDistribution) {
     setTimeout(async () => loadDividendDistributions(myInfo.token.current), 1)
   }
 
@@ -249,35 +175,9 @@ export default function Home() {
   }
 
   async function setDividendDistributions(actions: DistributionWithDetails[]): Promise<DividendDistributionInfoJson[]> {
-    const actionInfos: DividendDistributionInfoJson[] = await getDividendDistributionInfos(actions.map(action => action.distribution))
+    const actionInfos: DividendDistributionInfoJson[] = await fetchDividendDistributionInfos(actions.map(action => action.distribution))
     setMyInfo(returnUpdatedCreator(["corporateActions", "distributions", "dividends"], actionInfos))
     return actionInfos
-  }
-
-  async function getDividendDistributionInfos(actions: DividendDistribution[]): Promise<DividendDistributionInfoJson[]> {
-    return Promise.all(actions.map(getDividendDistributionInfo))
-  }
-
-  async function getDividendDistributionInfo(action: DividendDistribution): Promise<DividendDistributionInfoJson> {
-    return {
-      ...(await getCorporateActionInfo(action)),
-      current: action,
-      origin: await fetchPortfolioInfoJson(action.origin),
-      exists: await action.exists(),
-      details: await action.details(),
-      participants: await action.getParticipants(),
-    }
-  }
-
-  async function getCorporateActionInfo(action: CorporateAction): Promise<CorporateActionInfoJson> {
-    const checkpoint: Checkpoint | CheckpointSchedule = await action.checkpoint()
-    const isSchedule: boolean = isCheckpointSchedule(checkpoint)
-    return {
-      current: action,
-      exists: await action.exists(),
-      checkpoint: checkpoint === null ? null : isSchedule ? null : await fetchCheckpointInfoJson(checkpoint as Checkpoint),
-      checkpointSchedule: checkpoint === null ? null : isSchedule ? await fetchCheckpointScheduleInfoJson(checkpoint as CheckpointSchedule) : null,
-    }
   }
 
   const apiPromise: Promise<Polymesh> = getPolyWalletApi()
@@ -310,7 +210,6 @@ export default function Home() {
 
         <TickerReservationManagerView
           reservation={myInfo.reservation}
-          token={myInfo.token}
           myDid={myInfo.myDid}
           cardStyle={styles.card}
           hasTitleStyle={styles.hasTitle}
@@ -373,7 +272,6 @@ export default function Home() {
           cardStyle={styles.card}
           isWrongStyle={styles.isWrong}
           onPortfolioPicked={onPortfolioPicked}
-          onMyPortfolioInfosChanged={setMyPortfolios}
           canManipulate={true}
         />
 
@@ -387,48 +285,6 @@ export default function Home() {
           onCheckpointsChanged={setCheckpointsInfo}
           onCheckpointSchedulesChanged={setCheckpointSchedulesInfo}
         />
-
-        <fieldset className={styles.card}>
-          <legend>Corporate actions for: {myInfo.token.current?.ticker}</legend>
-
-          <div>{
-            (() => {
-              const owner: string = myInfo.token.details?.owner?.did
-              const caa: string = myInfo.corporateActions.agents?.did ?? ""
-              if (myInfo.token.current === null) return "There is no token"
-              else return <ul>
-                <li key="caa">
-                  With agent: <IdentityView value={caa} lut={{ [myInfo.myDid]: caa }} />
-                  &nbsp;
-                  <button className="submit remove-token-caa" onClick={removeCorporateActionsAgent} disabled={owner !== myInfo.myDid || owner === caa}>Remove</button>
-                </li>
-              </ul>
-            })()
-          }</div>
-
-          <fieldset className={styles.card}>
-            <legend>New corporate actions agent</legend>
-            {
-              (() => {
-                const canManipulate: boolean = myInfo.token.current !== null && myInfo.token.details?.owner?.did === myInfo.myDid
-                const target: string = typeof myInfo.corporateActions.newAgent.target === "string" ? myInfo.corporateActions.newAgent.target : myInfo.corporateActions.newAgent.target.did
-                return <div className="submit">
-                  Target:&nbsp;
-                  <input name="token-caa-target" type="text" placeholder="0x1234" defaultValue={target} disabled={!canManipulate} onChange={onValueChangedCreator(["corporateActions", "newAgent", "target"])} />
-                  <br />
-                  Request expiry:&nbsp;
-                  <input name="token-caa-expiry" type="text" placeholder="2020-12-31" defaultValue={myInfo.corporateActions.newAgent.requestExpiry?.toISOString()} disabled={!canManipulate}
-                    onChange={onValueChangedCreator(["corporateActions", "newAgent", "target"], false, (e) => Promise.resolve(new Date(e.target.value)))} />
-                  &nbsp;
-                  <button className="submit change-token-caa" onClick={setCorporateActionsAgent} disabled={!canManipulate}>Set Agent</button>
-                  <br />
-                  See above for the pending authorisation
-                </div>
-              })()
-            }
-          </fieldset>
-
-        </fieldset>
 
         <DividendDistributionManagerView
           distributions={myInfo.corporateActions.distributions.dividends}

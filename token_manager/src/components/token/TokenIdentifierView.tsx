@@ -134,7 +134,6 @@ export class TokenIdentifiersView extends Component<TokenIdentifiersViewProps, T
                         canManipulate={canManipulate}
                         onChange={this.onTokenIdentifierChanged(index)}
                     />
-
                 </li>)
             }</ol>
         </div>
