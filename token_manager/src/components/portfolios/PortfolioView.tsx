@@ -1,7 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
-import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
+import { ApiGetter, isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 import {
     NewPortfolioParams,
     OnPortfolioInfoChanged,
@@ -57,7 +57,7 @@ interface NewPortfolioViewState {
 
 export interface NewPortfolioViewProps {
     cardStyle: any
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onPortfolioInfoCreated: OnPortfolioInfoChanged
     canManipulate: boolean
 }
@@ -73,7 +73,7 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
     updateName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ name: e.target.value })
     onCreatePortfolio = async () => this.createPortfolio(this.getCreateParams())
     createPortfolio = async (newName: NewPortfolioParams): Promise<PortfolioInfoJson> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const me: Identity = await api.getCurrentIdentity()
         const created: NumberedPortfolio = await (await me.portfolios.create(newName)).run()
         const createdInfo: PortfolioInfoJson = await fetchPortfolioInfoJson(created)

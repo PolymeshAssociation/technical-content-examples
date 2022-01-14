@@ -8,7 +8,7 @@ import {
     OnClaimDatasChanged,
     OnClaimTargetChanged,
 } from "../../handlers/claims/ClaimDataHandlers";
-import { isIdentity } from "../../types";
+import { ApiGetter, isIdentity } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { ClaimView } from "./ClaimView";
 
@@ -16,7 +16,7 @@ export interface ClaimTargetViewProps {
     claimTarget: ClaimTarget
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onClaimTargetChanged: OnClaimTargetChanged
 }
 
@@ -36,7 +36,7 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
     })
 
     render() {
-        const { claimTarget, canManipulate, isWrongStyle, apiPromise } = this.props
+        const { claimTarget, canManipulate, isWrongStyle, apiGetter } = this.props
         const { target, expiry } = claimTarget
         return <ul>
             <li key="target">Target:&nbsp;
@@ -58,7 +58,7 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
             </li>
             <li key="claim">Claim:&nbsp;
                 <ClaimView
-                    apiPromise={apiPromise}
+                    apiGetter={apiGetter}
                     claim={claimTarget.claim}
                     onClaimChanged={this.onClaimChanged}
                     canManipulate={canManipulate}
@@ -72,7 +72,7 @@ export interface ClaimDataViewProps {
     claimData: ClaimData<Claim>
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onClaimDataChanged: OnClaimDataChanged
 }
 
@@ -95,7 +95,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
         const {
             claimData,
             canManipulate,
-            apiPromise,
+            apiGetter,
             isWrongStyle,
         } = this.props
         const { target, issuer, expiry, issuedAt, claim } = convertClaimDataToFlat(claimData)
@@ -129,7 +129,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
             </li>
             <li key="claim">Claim:&nbsp;
                 <ClaimView
-                    apiPromise={apiPromise}
+                    apiGetter={apiGetter}
                     claim={claim}
                     onClaimChanged={this.onClaimChanged}
                     canManipulate={canManipulate}
@@ -144,7 +144,7 @@ export interface ClaimDatasViewProps {
     claimDatas: ClaimData<Claim>[]
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onClaimDatasChanged: OnClaimDatasChanged
 }
 
@@ -156,7 +156,7 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
         this.props.onClaimDatasChanged(claimDatas)
     }
     onRevokeAttestation = (claimData: ClaimData) => async () => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         await (await api.claims.revokeClaims({
             claims: [{
                 target: claimData.target,
@@ -166,7 +166,7 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
     }
 
     render() {
-        const { myDid, claimDatas, apiPromise, isWrongStyle, canManipulate } = this.props
+        const { myDid, claimDatas, apiGetter, isWrongStyle, canManipulate } = this.props
         if (claimDatas.length === 0) return <div>No attestations</div>
         return <ul>{
             claimDatas
@@ -184,7 +184,7 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
                             claimData={claimData}
                             canManipulate={false}
                             isWrongStyle={isWrongStyle}
-                            apiPromise={apiPromise}
+                            apiGetter={apiGetter}
                             onClaimDataChanged={this.onClaimDataChangedAt(index)}
                         />
                     </li>

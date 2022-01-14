@@ -1,6 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AuthorizationRequest, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
+import { ApiGetter } from "../../types";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { AuthorisationRequestsView } from "./AuthorisationView";
 
@@ -16,7 +17,7 @@ export interface AuthorisationManagerViewProps {
     cardStyle: any
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
 }
 
 export class AuthorisationManagerView extends Component<AuthorisationManagerViewProps, AuthorisationManagerViewState> {
@@ -37,7 +38,7 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
         whose: this.props.myDid,
     })
     onLoadAuthorisationRequests = async () => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const whose: Identity = await api.getIdentity({ did: this.state.whose })
         this.setState({
             receivedRequests: await whose.authorizations.getReceived(),

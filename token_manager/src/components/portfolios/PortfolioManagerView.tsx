@@ -2,7 +2,7 @@ import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
 import { fetchPortfolioInfoJsons, OnPortfolioPicked } from "../../handlers/portfolios/PortfolioHandlers"
-import { assertUnreachable, PortfolioInfoJson } from "../../types"
+import { ApiGetter, assertUnreachable, PortfolioInfoJson } from "../../types"
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView"
 import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
 import { NewPortfolioView } from "./PortfolioView"
@@ -24,7 +24,7 @@ interface PortfolioManagerViewState {
 }
 
 export interface PortfolioManagerViewProps {
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     myDid: string
     pickedPortfolio: PortfolioInfoJson
     cardStyle: any
@@ -62,7 +62,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
         this.setState({ myPortfolios: await this.fetchMyPortfolios() })
     }
     fetchMyPortfolios = async (): Promise<PortfolioInfoJson[]> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         return await this.fetchPortfolios(await api.getCurrentIdentity())
     }
     onLoadOtherPortfolios = async () => {
@@ -74,7 +74,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
         })
     }
     fetchOtherPortfolios = async (): Promise<PortfolioInfoJson[]> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const otherOwner: Identity = await api.getIdentity({ did: this.state.otherOwner })
         return this.fetchPortfolios(otherOwner)
     }
@@ -86,7 +86,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
         this.setState({ myCustodieds: await this.fetchMyCustodiedPortfolios() })
     }
     fetchMyCustodiedPortfolios = async (): Promise<PortfolioInfoJson[]> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const me: Identity = await api.getCurrentIdentity()
         return this.fetchCustodiedPortfolios(me)
     }
@@ -117,7 +117,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
 
     render() {
         const { listType, otherOwner, loadedOtherOwner } = this.state
-        const { myDid, pickedPortfolio, apiPromise, cardStyle, isWrongStyle, canManipulate } = this.props
+        const { myDid, pickedPortfolio, apiGetter, cardStyle, isWrongStyle, canManipulate } = this.props
         const portfoliosToShow: PortfolioInfoJson[] = this.getPortfoliosToShow()
         const canLoadOther: boolean = listType !== PortfolioListType.Other || otherOwner !== loadedOtherOwner
         return <CollapsibleFieldsetView
@@ -173,7 +173,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             <div>See in the authorisations box above<br />for the pending custody authorisation</div>
 
             <NewPortfolioView
-                apiPromise={apiPromise}
+                apiGetter={apiGetter}
                 cardStyle={cardStyle}
                 canManipulate={canManipulate}
                 onPortfolioInfoCreated={this.onPortfolioInfoCreated}

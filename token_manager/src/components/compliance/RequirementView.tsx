@@ -1,4 +1,3 @@
-import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import React, { Component } from "react";
 import { ConditionFlat } from "../../handlers/compliance/ConditionHandlers";
 import {
@@ -7,12 +6,13 @@ import {
     OnRequirementsChanged,
     RequirementFlat,
 } from "../../handlers/compliance/RequirementHandlers";
+import { ApiGetter } from "../../types";
 import { ConditionsView } from "./ConditionView";
 
 export interface RequirementViewProps {
     requirement: RequirementFlat
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onRequirementChanged: OnRequirementChanged
 }
 
@@ -29,7 +29,7 @@ export class RequirementView extends Component<RequirementViewProps> {
                 id,
                 conditions,
             },
-            apiPromise,
+            apiGetter,
             canManipulate,
         } = this.props
         return <ul>
@@ -38,7 +38,7 @@ export class RequirementView extends Component<RequirementViewProps> {
                 Conditions:&nbsp;
                 <ConditionsView
                     conditions={conditions}
-                    apiPromise={apiPromise}
+                    apiGetter={apiGetter}
                     onConditionsChanged={this.onConditionsChange}
                     canManipulate={canManipulate}
                 />
@@ -50,7 +50,7 @@ export class RequirementView extends Component<RequirementViewProps> {
 export interface RequirementsViewProps {
     requirements: RequirementFlat[]
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onRequirementsChanged: OnRequirementsChanged
 }
 
@@ -72,7 +72,7 @@ export class RequirementsView extends Component<RequirementsViewProps> {
     }
 
     render() {
-        const { requirements, apiPromise, canManipulate } = this.props
+        const { requirements, apiGetter, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-requirement"
             onClick={this.addRequirement}
@@ -96,7 +96,7 @@ export class RequirementsView extends Component<RequirementsViewProps> {
                     </button>
                     <RequirementView
                         requirement={requirement}
-                        apiPromise={apiPromise}
+                        apiGetter={apiGetter}
                         onRequirementChanged={this.onRequirementChangedAt(index)}
                         canManipulate={canManipulate}
                     />

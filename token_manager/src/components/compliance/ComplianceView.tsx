@@ -10,7 +10,7 @@ import {
     RequirementFlat,
 } from "../../handlers/compliance/RequirementHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
-import { RequirementsInfoJson, TokenInfoJson } from "../../types";
+import { ApiGetter, RequirementsInfoJson, TokenInfoJson } from "../../types";
 import { RequirementsView } from "./RequirementView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 
@@ -32,7 +32,7 @@ export interface ComplianceManagerViewProps {
     requirements: RequirementsInfoJson
     myDid: string
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     cardStyle: any
     onTokenInfoChanged: OnTokenInfoChanged
 }
@@ -74,7 +74,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         this.props.onTokenInfoChanged(updatedInfo)
     }
     getParams = async (): Promise<SetAssetRequirementsParams> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const identityGetter: IdentityGetter = async (did: string) => api.getIdentity({ did: did })
         return {
             requirements: (await Promise
@@ -109,7 +109,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             token,
             requirements: reqs,
             myDid,
-            apiPromise,
+            apiGetter,
             cardStyle,
             canManipulate,
         } = this.props
@@ -125,7 +125,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
             <div>
                 <RequirementsView
                     requirements={requirements}
-                    apiPromise={apiPromise}
+                    apiGetter={apiGetter}
                     onRequirementsChanged={this.onRequirementsChanged}
                     canManipulate={canManipulate}
                 />

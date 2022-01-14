@@ -39,7 +39,7 @@ import {
     DividendDistribution,
     KnownPermissionGroup,
 } from "@polymathnetwork/polymesh-sdk/internal"
-import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
 import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
 import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
@@ -62,6 +62,7 @@ export function getCountryList(): CountryInfo[] {
 export type MyInfoPath = (string | number)[]
 
 export type MyInfoJson = {
+    api: Polymesh | null,
     polyWallet: PolyWallet | null
     ticker: string
     myDid: string
@@ -238,6 +239,7 @@ export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "curren
 
 export function getEmptyMyInfo(): MyInfoJson {
     return {
+        api: null,
         polyWallet: null,
         ticker: "",
         myDid: "",
@@ -296,6 +298,8 @@ export type PolyWallet = InjectedExtension & {
         provide: (any) => any
     }
 }
+
+export type ApiGetter = () => Promise<Polymesh>
 
 /**
  * For type safety. See https://schneidenbach.gitbooks.io/typescript-cookbook/content/nameof-operator.html

@@ -1,4 +1,3 @@
-import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { Claim, ConditionTarget, ConditionType } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
 import { TrustedClaimIssuerFlat } from "../../handlers/claims/TrustedClaimIssuerHandlers";
@@ -8,7 +7,7 @@ import {
     OnConditionChanged,
     OnConditionsChanged,
 } from "../../handlers/compliance/ConditionHandlers";
-import { assertUnreachable } from "../../types";
+import { ApiGetter, assertUnreachable } from "../../types";
 import { ClaimsView, ClaimView } from "../claims/ClaimView";
 import { TrustedClaimIssuersView } from "../claims/TrustedClaimIssuerView";
 import { EnumSelectView } from "../EnumView";
@@ -16,7 +15,7 @@ import { EnumSelectView } from "../EnumView";
 export interface ConditionViewProps {
     condition: ConditionFlat
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onConditionChanged: OnConditionChanged
 }
 
@@ -49,7 +48,7 @@ export class ConditionView extends Component<ConditionViewProps> {
                 claims,
                 identity,
             },
-            apiPromise,
+            apiGetter,
             canManipulate,
         } = this.props
         const elements: JSX.Element[] = [
@@ -84,7 +83,7 @@ export class ConditionView extends Component<ConditionViewProps> {
                     Claim:
                     <ClaimView
                         claim={claim}
-                        apiPromise={apiPromise}
+                        apiGetter={apiGetter}
                         onClaimChanged={this.onClaimChanged}
                         canManipulate={canManipulate}
                     />
@@ -95,7 +94,7 @@ export class ConditionView extends Component<ConditionViewProps> {
                 elements.push(<li key="claims">Claims:
                     <ClaimsView
                         claims={claims}
-                        apiPromise={apiPromise}
+                        apiGetter={apiGetter}
                         onClaimsChanged={this.onClaimsChanged}
                         canManipulate={canManipulate}
                     />
@@ -124,7 +123,7 @@ export class ConditionView extends Component<ConditionViewProps> {
 export interface ConditionsViewProps {
     conditions: ConditionFlat[]
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onConditionsChanged: OnConditionsChanged
 }
 
@@ -146,7 +145,7 @@ export class ConditionsView extends Component<ConditionsViewProps> {
     }
 
     render() {
-        const { conditions, apiPromise, canManipulate } = this.props
+        const { conditions, apiGetter, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-condition"
             onClick={this.addCondition}
@@ -170,7 +169,7 @@ export class ConditionsView extends Component<ConditionsViewProps> {
                         </button>
                         <ConditionView
                             condition={condition}
-                            apiPromise={apiPromise}
+                            apiGetter={apiGetter}
                             onConditionChanged={this.onConditionChangedAt(index)}
                             canManipulate={canManipulate}
                         />

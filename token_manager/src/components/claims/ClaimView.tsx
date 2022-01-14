@@ -24,6 +24,7 @@ import {
     OnScopeChanged,
 } from "../../handlers/claims/ClaimHandlers";
 import {
+    ApiGetter,
     isCddClaim,
     isJurisdictionClaim,
     isScopeClaimProof,
@@ -80,7 +81,7 @@ export class ScopeView extends Component<ScopeViewProps> {
 export interface ClaimViewProps {
     claim: Claim
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onClaimChanged: OnClaimChanged
 }
 
@@ -172,7 +173,7 @@ export class ClaimView extends Component<ClaimViewProps> {
 export interface ClaimsViewProps {
     claims: Claim[]
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onClaimsChanged: OnClaimsChanged
 }
 
@@ -189,7 +190,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
     }
 
     render() {
-        const { claims, apiPromise, canManipulate } = this.props
+        const { claims, apiGetter, canManipulate } = this.props
         const addButton: JSX.Element = <button
             className="submit add-claim"
             onClick={this.addClaim}
@@ -208,7 +209,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
                             Claim {index}:
                             <ClaimView
                                 claim={convertClaimToFlat(claim)}
-                                apiPromise={apiPromise}
+                                apiGetter={apiGetter}
                                 onClaimChanged={this.onClaimChangedAt(index)}
                                 canManipulate={canManipulate}
                             />
@@ -223,7 +224,7 @@ export interface AddInvestorUniquenessClaimViewProps {
     claimParams: AddInvestorUniquenessClaimParams
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     onAddInvestorUniquenessClaimParamsChanged: OnAddInvestorUniquenessClaimParamsChanged
 }
 
@@ -238,7 +239,7 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
     onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e: React.ChangeEvent<HTMLInputElement>) =>
         this.setClaimParamValue<string>(key, e.target.value)
     onFetchMyCddId = async (): Promise<void> => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const me: Identity = await api.getCurrentIdentity()
         const claims: ClaimData<CddClaim>[] = (await api.claims.getCddClaims({
             target: me,

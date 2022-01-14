@@ -45,6 +45,7 @@ export default function Home() {
     const myIdentity: Identity = await api.getCurrentIdentity()
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
+      api: api,
       polyWallet: polyWallet,
       myDid: myIdentity.did,
     }))
@@ -194,7 +195,7 @@ export default function Home() {
     return actionInfos
   }
 
-  const apiPromise: Promise<Polymesh> = getPolyWalletApi()
+  const apiGetter = async () => myInfo.api ?? await getPolyWalletApi()
 
   return (
     <div className={styles.container}>
@@ -212,7 +213,7 @@ export default function Home() {
           reservation={myInfo.reservation}
           token={myInfo.token}
           cardStyle={styles.card}
-          apiPromise={apiPromise}
+          apiGetter={apiGetter}
           onTickerChanged={setTicker}
           onReservationInfoChanged={setReservationInfo}
           onTokenInfoChanged={setTokenInfo}
@@ -256,7 +257,7 @@ export default function Home() {
           requirements={myInfo.requirements}
           cardStyle={styles.card}
           myDid={myInfo.myDid}
-          apiPromise={apiPromise}
+          apiGetter={apiGetter}
           onTokenInfoChanged={setTokenInfo}
           canManipulate={myInfo.requirements.canManipulate}
         />
@@ -267,7 +268,7 @@ export default function Home() {
           canManipulate={true}
           cardStyle={styles.card}
           isWrongStyle={styles.isWrong}
-          apiPromise={apiPromise}
+          apiGetter={apiGetter}
         />
 
         <ClaimsManagerView
@@ -275,13 +276,13 @@ export default function Home() {
           isWrongStyle={styles.isWrong}
           myDid={myInfo.myDid}
           canManipulate={true}
-          apiPromise={apiPromise}
+          apiGetter={apiGetter}
           polyWallet={myInfo.polyWallet}
           onAddInvestorUniquenessClaimParamsChanged={() => { }}
         />
 
         <PortfolioManagerView
-          apiPromise={apiPromise}
+          apiGetter={apiGetter}
           myDid={myInfo.myDid}
           pickedPortfolio={myInfo.portfolios.picked}
           cardStyle={styles.card}

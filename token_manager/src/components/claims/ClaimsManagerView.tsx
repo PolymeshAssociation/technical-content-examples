@@ -14,7 +14,7 @@ import {
     getDummyAddInvestorUniquenessClaimParams,
     OnAddInvestorUniquenessClaimParamsChanged,
 } from "../../handlers/claims/ClaimHandlers";
-import { PolyWallet } from '../../types';
+import { ApiGetter, PolyWallet } from '../../types';
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { ClaimDatasView, ClaimTargetView } from "./ClaimDataView";
 import { AddInvestorUniquenessClaimView } from "./ClaimView";
@@ -31,7 +31,7 @@ export interface ClaimsManagerViewProps {
     cardStyle: any
     isWrongStyle: any
     canManipulate: boolean
-    apiPromise: Promise<Polymesh>
+    apiGetter: ApiGetter
     polyWallet: PolyWallet
     onAddInvestorUniquenessClaimParamsChanged: OnAddInvestorUniquenessClaimParamsChanged
 }
@@ -51,7 +51,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
     onTargetToLoadChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ targetToLoad: e.target.value })
     onPickMyDid = async () => this.setState({ targetToLoad: this.props.myDid })
     onLoadAttestationsReceived = async () => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const claimResult: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({
             targets: [this.state.targetToLoad],
         })
@@ -61,14 +61,14 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
     }
     onAttestationToAddChanged = (newClaimTarget: ClaimTarget) => this.setState({ claimTargetToAdd: newClaimTarget })
     onAddAttestation = async () => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         await (await api.claims.addClaims({ claims: [this.state.claimTargetToAdd] })).run()
     }
     onAddInvestorUniquenessClaimParamsChanged = (params: AddInvestorUniquenessClaimParams) => this.setState({
         addInvestorUniquenessClaimParams: params,
     })
     onAddInvestorUniquenessClaim = async () => {
-        const api: Polymesh = await this.props.apiPromise
+        const api: Polymesh = await this.props.apiGetter()
         const me: Identity = await api.getCurrentIdentity()
         const { polyWallet } = this.props
         const network = await polyWallet.network.get()
@@ -91,7 +91,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
     }
 
     render() {
-        const { myDid, canManipulate, apiPromise, cardStyle, isWrongStyle } = this.props
+        const { myDid, canManipulate, apiGetter, cardStyle, isWrongStyle } = this.props
         const {
             targetToLoad,
             claimDatas,
@@ -130,7 +130,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                     claimDatas={claimDatas}
                     canManipulate={canManipulate}
                     isWrongStyle={isWrongStyle}
-                    apiPromise={apiPromise}
+                    apiGetter={apiGetter}
                     onClaimDatasChanged={() => { }}
                 />
             </div>
@@ -145,7 +145,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                         claimTarget={claimTargetToAdd}
                         canManipulate={true}
                         isWrongStyle={isWrongStyle}
-                        apiPromise={apiPromise}
+                        apiGetter={apiGetter}
                         onClaimTargetChanged={this.onAttestationToAddChanged}
                     />
                 </div>
@@ -171,7 +171,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                 <div>
                     <AddInvestorUniquenessClaimView
                         claimParams={addInvestorUniquenessClaimParams}
-                        apiPromise={apiPromise}
+                        apiGetter={apiGetter}
                         isWrongStyle={isWrongStyle}
                         canManipulate={true}
                         onAddInvestorUniquenessClaimParamsChanged={this.onAddInvestorUniquenessClaimParamsChanged}
