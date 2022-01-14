@@ -13,7 +13,6 @@ import {
     CheckpointScheduleDetailsInfoJson,
     CheckpointScheduleInfoJson,
     CheckpointsInfoJson,
-    MyInfoJson,
     TokenInfoJson,
 } from "../../types";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
@@ -52,9 +51,9 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
     }
 
     onValidDateChanged = (newStartDate: Date) => this.setState({ start: newStartDate })
-    updatePeriodValue = (e) => this.setState({ periodValue: parseInt(e.target.value) })
-    updatePeriodUnit = async (e) => this.setState({ periodUnit: e.target.value })
-    updateRepetitions = (e) => this.setState({ repetitions: parseInt(e.target.value) })
+    updatePeriodValue = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ periodValue: parseInt(e.target.value) })
+    updatePeriodUnit = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState({ periodUnit: CalendarUnit[e.target.value] })
+    updateRepetitions = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ repetitions: parseInt(e.target.value) })
 
     onCreateCheckpointSchedule = async () => this.createCheckpointSchedule()
     createCheckpointSchedule = async (): Promise<CheckpointScheduleInfoJson> => {
@@ -123,7 +122,7 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
                             dateTime={start}
                             isOptional={false}
                             isWrongStyle={isWrongStyle}
-                            validDateChanged={this.onValidDateChanged}
+                            onValidDateChanged={this.onValidDateChanged}
                             canManipulate={canManipulate}
                         />
                     </li>
@@ -174,7 +173,9 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
 
                 <CheckpointScheduleDetailsView
                     schedules={checkpoints.scheduleDetails}
+                    pickedCheckpoint={checkpoints.picked}
                     canManipulate={canManipulate}
+                    onCheckpointPicked={this.props.onCheckpointPicked}
                 />
             </CollapsibleFieldsetView>
 

@@ -11,7 +11,7 @@ export type OnRequirementsChanged = (requirements: RequirementFlat[]) => void
 
 export interface RequirementFlat {
     id: number
-    conditions: ConditionFlat[],
+    conditions: ConditionFlat[]
 }
 
 export const getDummyRequirementFlat = (): RequirementFlat => ({

@@ -24,8 +24,14 @@ export class RequirementView extends Component<RequirementViewProps> {
     })
 
     render() {
-        const { requirement, apiPromise, canManipulate } = this.props
-        const { id, conditions } = requirement
+        const {
+            requirement: {
+                id,
+                conditions,
+            },
+            apiPromise,
+            canManipulate,
+        } = this.props
         return <ul>
             <li key="id">Id: {id}</li>
             <li key="conditions">

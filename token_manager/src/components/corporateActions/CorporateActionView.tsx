@@ -1,6 +1,7 @@
 import { CorporateAction } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
-import { CorporateActionInfoJson } from "../../types"
+import { OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers"
+import { CheckpointInfoJson, CorporateActionInfoJson } from "../../types"
 import { CheckpointScheduleView } from "../checkpoints/CheckpointScheduleView"
 import { CheckpointView } from "../checkpoints/CheckpointView"
 
@@ -35,7 +36,9 @@ export class CorporateActionView extends Component<CorporateActionViewProps> {
 
 export interface CorporateActionInfoJsonViewProps {
     action: CorporateActionInfoJson
+    pickedCheckpoint: CheckpointInfoJson | null
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export const getCorporateActionInfoJsonViewInner = (props: CorporateActionInfoJsonViewProps): JSX.Element[] => {
@@ -45,7 +48,9 @@ export const getCorporateActionInfoJsonViewInner = (props: CorporateActionInfoJs
             checkpoint,
             checkpointSchedule,
         },
+        pickedCheckpoint,
         canManipulate,
+        onCheckpointPicked,
     } = props
     const elements: JSX.Element[] = getCorporateActionViewInner({ action: current })
     if (checkpoint === null) elements.push(<li key="checkpoint">No checkpoints</li>)
@@ -61,7 +66,9 @@ export const getCorporateActionInfoJsonViewInner = (props: CorporateActionInfoJs
         Checkpoint schedule:&nbsp;
         <CheckpointScheduleView
             scheduleInfo={checkpointSchedule}
+            pickedCheckpoint={pickedCheckpoint}
             canManipulate={canManipulate}
+            onCheckpointPicked={onCheckpointPicked}
         />
     </li>)
     return elements
@@ -77,19 +84,28 @@ export class CorporateActionInfoJsonView extends Component<CorporateActionInfoJs
 
 export interface CorporateActionInfoJsonsViewProps {
     actions: CorporateActionInfoJson[]
+    pickedCheckpoint: CheckpointInfoJson | null
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export class CorporateActionInfoJsonsView extends Component<CorporateActionInfoJsonsViewProps> {
     render() {
-        const { actions, canManipulate } = this.props
+        const {
+            actions,
+            pickedCheckpoint,
+            canManipulate,
+            onCheckpointPicked,
+        } = this.props
         if (typeof actions === "undefined" || actions === null || actions.length === 0) return <div>There are no corporate actions</div>
         return <ul>{
             actions.map((action: CorporateActionInfoJson, index: number) => <li key={index}>
                 Corporate action {index}:&nbsp;
                 <CorporateActionInfoJsonView
                     action={action}
+                    pickedCheckpoint={pickedCheckpoint}
                     canManipulate={canManipulate}
+                    onCheckpointPicked={onCheckpointPicked}
                 />
             </li>)
         }</ul>

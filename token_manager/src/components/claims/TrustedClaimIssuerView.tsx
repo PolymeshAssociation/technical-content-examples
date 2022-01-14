@@ -1,6 +1,7 @@
 import { ClaimType } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import {
+    getDummyTrustedClaimIssuerFlat,
     OnTrustedIssuerChanged,
     OnTrustedIssuersChanged,
     TrustedClaimIssuerFlat,
@@ -15,26 +16,26 @@ export interface TrustedClaimIssuerViewProps {
 
 export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProps> {
 
-    onChangeIdentity = (e) => this.props.onTrustedIssuerChanged({
+    onChangeIdentity = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onTrustedIssuerChanged({
         ...this.props.trustedIssuer,
         identity: e.target.value,
     })
-    onAddTrusted = () => this.props.onTrustedIssuerChanged({
+    onAddTrustedFor = () => this.props.onTrustedIssuerChanged({
         ...this.props.trustedIssuer,
         trustedFor: [
             ClaimType.Accredited,
             ...this.props.trustedIssuer.trustedFor,
         ]
     })
-    onChangeTrustedAt = (index: number) => async (e) => {
+    onChangeTrustedForAt = (index: number) => async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const trustedFor: ClaimType[] = this.props.trustedIssuer.trustedFor
-        trustedFor[index] = e.target.value
+        trustedFor[index] = ClaimType[e.target.value]
         this.props.onTrustedIssuerChanged({
             ...this.props.trustedIssuer,
             trustedFor: trustedFor,
         })
     }
-    onRemoveTrustedForAt = (index: number) => (e) => {
+    onRemoveTrustedForAt = (index: number) => () => {
         const trustedFor: ClaimType[] = this.props.trustedIssuer.trustedFor
         trustedFor.splice(index, 1)
         this.props.onTrustedIssuerChanged({
@@ -44,15 +45,20 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
     }
 
     render() {
-        const { canManipulate, trustedIssuer } = this.props
-        const { identity, trustedFor } = trustedIssuer
+        const {
+            trustedIssuer: {
+                identity,
+                trustedFor,
+            },
+            canManipulate,
+        } = this.props
         const trustedForElem: JSX.Element = trustedFor && trustedFor.length > 0
             ? <ol>{
                 trustedFor.map((claimType: ClaimType, index: number) => <li key={index}>
                     <EnumSelectView<ClaimType>
                         theEnum={ClaimType}
                         defaultValue={claimType}
-                        onChange={this.onChangeTrustedAt(index)}
+                        onChange={this.onChangeTrustedForAt(index)}
                         canManipulate={canManipulate}
                     />
                     &nbsp;
@@ -78,7 +84,7 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
             <li key="trustedFor">Trusted for:&nbsp;
                 <button
                     className="submit add-trusted-for"
-                    onClick={this.onAddTrusted}
+                    onClick={this.onAddTrustedFor}
                     disabled={!canManipulate}>
                     Add trusted for
                 </button>
@@ -97,10 +103,7 @@ export interface TrustedClaimIssuersViewProps {
 export class TrustedClaimIssuersView extends Component<TrustedClaimIssuersViewProps> {
 
     onAddTrustedIssuer = () => this.props.onTrustedIssuersChanged([
-        {
-            identity: "",
-            trustedFor: [],
-        },
+        getDummyTrustedClaimIssuerFlat(),
         ...this.props.trustedIssuers,
     ])
     onTrustedIssuerChanged = (index: number) => (trustedClaimIssuer: TrustedClaimIssuerFlat) => {

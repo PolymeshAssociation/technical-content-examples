@@ -2,14 +2,18 @@ import { Component } from "react"
 
 export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
     const selects: JSX.Element[] = []
-    for (const element in theEnum) selects.push(<option value={element} key={element}>{theEnum[element]}</option>)
+    for (const element in theEnum) selects.push(<option
+        value={element}
+        key={element}>
+        {theEnum[element]}
+    </option>)
     return selects
 }
 
 export interface EnumSelectViewProps<EnumType> {
     theEnum: any
     defaultValue: EnumType
-    onChange: ((e) => Promise<void>) | undefined
+    onChange: ((e: React.ChangeEvent<HTMLSelectElement>) => Promise<void>) | undefined
     canManipulate: boolean
 }
 

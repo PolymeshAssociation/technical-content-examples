@@ -30,7 +30,7 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
         }
     }
 
-    onWhoseChanged = (e) => this.setState({
+    onWhoseChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         whose: e.target.value,
     })
     onPickMyDid = () => this.setState({
@@ -86,7 +86,7 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
                     myAddress={myAddress}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
-                    onAuthorisationRequestChanged={() => { }}
+                    onAuthorisationRequestChanged={this.onLoadAuthorisationRequests}
                 />
             </CollapsibleFieldsetView>
 
@@ -101,7 +101,7 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
                     myAddress={myAddress}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
-                    onAuthorisationRequestChanged={() => { }}
+                    onAuthorisationRequestChanged={this.onLoadAuthorisationRequests}
                 />
             </CollapsibleFieldsetView>
 

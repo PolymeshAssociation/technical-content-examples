@@ -27,7 +27,7 @@ export class CollapsibleFieldsetView extends Component<CollapsibleFieldsetViewPr
         const { legend, className } = this.props
         const children = this.props.children
         return <fieldset className={className}>
-            <legend onClick={this.toggleContent}>{legend}&nbsp;{collapsed ? "➕" : "➖"}</legend>
+            <legend onClick={this.toggleContent}>{collapsed ? "➕" : "➖"}&nbsp;{legend}</legend>
             {collapsed ? <span>Click legend to expand</span> : children
             }
         </fieldset>

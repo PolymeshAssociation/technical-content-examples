@@ -1,6 +1,5 @@
 import { Component } from "react"
-
-export type ValidDateChanged = (newDate: Date | null) => void
+import { OnValidDateChanged } from "../../handlers/elements/DateTimeEntryHandlers"
 
 export interface DateTimeEntryViewState {
     dateTime: string
@@ -11,7 +10,7 @@ export interface DateTimeEntryViewState {
 export interface DateTimeEntryViewProps {
     dateTime: Date | null
     isOptional: boolean
-    validDateChanged: ValidDateChanged
+    onValidDateChanged: OnValidDateChanged
     isWrongStyle: any
     canManipulate: boolean
 }
@@ -26,27 +25,27 @@ export class DateTimeEntryView extends Component<DateTimeEntryViewProps, DateTim
         }
     }
 
-    onDateTimeChanged = (e) => {
+    onDateTimeChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newDate: string = e.target.value
         const isDateTimeValid: boolean = new Date(newDate).toString() !== "Invalid Date"
-        if (isDateTimeValid) this.props.validDateChanged(new Date(newDate))
         this.setState({
             dateTime: e.target.value,
             isDateTimeValid: isDateTimeValid,
         })
+        if (isDateTimeValid) this.props.onValidDateChanged(new Date(newDate))
     }
-    onHasDateTimeChanged = (e) => this.setState((prev: DateTimeEntryViewState) => {
+    onHasDateTimeChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState((prev: DateTimeEntryViewState) => {
         const isDateTimeValid: boolean = new Date(prev.dateTime).toString() !== "Invalid Date"
-        if (!e.target.checked) this.props.validDateChanged(null)
-        else if (isDateTimeValid) this.props.validDateChanged(new Date(prev.dateTime))
+        if (!e.target.checked) this.props.onValidDateChanged(null)
+        else if (isDateTimeValid) this.props.onValidDateChanged(new Date(prev.dateTime))
         return { hasDateTime: e.target.checked }
     })
     onNowPicked = () => {
-        this.props.validDateChanged(new Date())
         this.setState({
             dateTime: new Date().toISOString(),
             isDateTimeValid: true,
         })
+        this.props.onValidDateChanged(new Date())
     }
 
     render() {

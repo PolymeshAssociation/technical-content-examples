@@ -22,8 +22,8 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
         }
     }
 
-    updateNewWhoseBalance = (e) => this.setState({ whoseBalance: e.target.value })
-    onGetBalanceOf = async (e) => this.setState({ balance: await this.loadBalance() })
+    updateNewWhoseBalance = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ whoseBalance: e.target.value })
+    onGetBalanceOf = async () => this.setState({ balance: await this.loadBalance() })
     loadBalance = async (): Promise<BigNumber> => this.props.checkpointInfo.checkpoint.balance(this.getLoadBalanceParams())
     getLoadBalanceParams = (): CheckpointLoadBalanceParams => ({ identity: this.state.whoseBalance })
 
@@ -71,8 +71,6 @@ export interface CheckpointsViewProps {
 
 export class CheckpointsView extends Component<CheckpointsViewProps> {
 
-    onCheckpointPickedAt = (index: number) => () => this.props.onCheckpointPicked(this.props.checkpoints[index])
-
     render() {
         const {
             checkpoints,
@@ -91,7 +89,7 @@ export class CheckpointsView extends Component<CheckpointsViewProps> {
                         Checkpoint {index}:&nbsp;
                         <button
                             className="submit"
-                            onClick={this.onCheckpointPickedAt(index)}
+                            onClick={() => this.props.onCheckpointPicked(checkpoint)}
                             disabled={!canPick}>
                             Pick
                         </button>

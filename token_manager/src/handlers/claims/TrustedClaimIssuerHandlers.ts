@@ -9,6 +9,11 @@ export interface TrustedClaimIssuerFlat {
     trustedFor: ClaimType[]
 }
 
+export const getDummyTrustedClaimIssuerFlat = (): TrustedClaimIssuerFlat => ({
+    identity: "",
+    trustedFor: [],
+})
+
 export const convertTrustedClaimIssuerToFlat = (trustedClaimIssuer: TrustedClaimIssuer): TrustedClaimIssuerFlat => ({
     identity: trustedClaimIssuer.identity.did,
     trustedFor: trustedClaimIssuer.trustedFor ?? [],

@@ -1,5 +1,11 @@
 import { DefaultPortfolio, SecurityToken } from "@polymathnetwork/polymesh-sdk/internal"
-import { NumberedPortfolio, Permissions, SectionPermissions, TransactionPermissions, TxGroup, } from "@polymathnetwork/polymesh-sdk/types"
+import {
+    NumberedPortfolio,
+    Permissions,
+    SectionPermissions,
+    TransactionPermissions,
+    TxGroup,
+} from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
 import { OnPermissionsChanged } from "../../handlers/permissions/PermissionsHandlers"
 import { SectionPermissionsPortfolioView, SectionPermissionsSecurityTokenView } from "./SectionPermissionView"

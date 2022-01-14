@@ -3,6 +3,7 @@ import { Distributions } from "@polymathnetwork/polymesh-sdk/api/entities/Securi
 import { ConfigureDividendDistributionParams } from "@polymathnetwork/polymesh-sdk/api/procedures/configureDividendDistribution"
 import { DividendDistribution, DividendDistributionDetails } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
+import { OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers"
 import { OnDividendDistributionCreated } from "../../handlers/distribution/DividendDistributionHandlers"
 import {
     CheckpointInfoJson,
@@ -99,26 +100,28 @@ export class DividendDistributionDetailsView extends Component<DividendDistribut
 export interface DividendDistributionInfoJsonViewProps {
     action: DividendDistributionInfoJson
     myDid: string
+    pickedCheckpoint: CheckpointInfoJson
     isWrongStyle: any
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export const getDividendDistributionInfoJsonViewInner = (props: DividendDistributionInfoJsonViewProps): JSX.Element[] => {
     const {
-        action,
+        action: {
+            current,
+            origin,
+            exists,
+            details,
+            participants,
+        },
         myDid,
         isWrongStyle,
         canManipulate,
     } = props
-    const {
-        origin,
-        exists,
-        details,
-        participants,
-    } = action
     return [
         ...getCorporateActionInfoJsonViewInner(props),
-        ...getDividendDistributionViewInner({ distribution: action.current, myDid: myDid }),
+        ...getDividendDistributionViewInner({ distribution: current, myDid: myDid }),
         < li key="origin" >
             Origin:&nbsp;
             <PortfolioInfoJsonView
@@ -162,13 +165,22 @@ export class DividendDistributionInfoJsonView extends Component<DividendDistribu
 export interface DividendDistributionInfoJsonsViewProps {
     actions: DividendDistributionInfoJson[]
     myDid: string
+    pickedCheckpoint: CheckpointInfoJson
     isWrongStyle: any
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export class DividendDistributionInfoJsonsView extends Component<DividendDistributionInfoJsonsViewProps> {
     render() {
-        const { actions, myDid, isWrongStyle, canManipulate } = this.props
+        const {
+            actions,
+            myDid,
+            pickedCheckpoint,
+            isWrongStyle,
+            canManipulate,
+            onCheckpointPicked,
+        } = this.props
         if (actions.length === 0) return <div>There are no dividend distributions</div>
         return <ul>{
             actions.map((action: DividendDistributionInfoJson, index: number) => <li key={index}>
@@ -176,8 +188,10 @@ export class DividendDistributionInfoJsonsView extends Component<DividendDistrib
                 <DividendDistributionInfoJsonView
                     action={action}
                     myDid={myDid}
+                    pickedCheckpoint={pickedCheckpoint}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
+                    onCheckpointPicked={onCheckpointPicked}
                 />
             </li>)
         }</ul>
@@ -222,16 +236,16 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
     onDeclarationDateChanged = (newDeclarationDate: Date | null) => this.setState({
         declarationDate: newDeclarationDate,
     })
-    onDescriptionChanged = (e) => this.setState({
+    onDescriptionChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         description: e.target.value,
     })
-    onCurrencyChanged = (e) => this.setState({
+    onCurrencyChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         currency: e.target.value,
     })
-    onPerShareChanged = (e) => this.setState({
+    onPerShareChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         perShare: new BigNumber(e.target.value),
     })
-    onMaxAmountChanged = (e) => this.setState({
+    onMaxAmountChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         maxAmount: new BigNumber(e.target.value),
     })
     onPaymentDateChanged = (newPaymentDate: Date) => this.setState({
@@ -242,8 +256,14 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
     })
     getCreationParams = (): ConfigureDividendDistributionParams => ({
         ...this.state,
-        originPortfolio: isNumberedPortfolio(this.props.pickedPortfolio.original) ? this.props.pickedPortfolio.original : null,
-        checkpoint: this.props.pickedCheckpoint?.checkpoint,
+        declarationDate: this.state.declarationDate ?? undefined,
+        originPortfolio: typeof this.props.pickedPortfolio === "undefined" || this.props.pickedPortfolio === null
+            ? undefined
+            : isNumberedPortfolio(this.props.pickedPortfolio.original)
+                ? this.props.pickedPortfolio.original
+                : undefined,
+        checkpoint: this.props.pickedCheckpoint?.checkpoint ?? undefined,
+        expiryDate: this.state.expiryDate ?? undefined,
     })
     onCreateDividendDistribution = async () => {
         const distribution: DividendDistribution = await (await this.props.distributions.configureDividendDistribution(this.getCreationParams())).run()
@@ -268,6 +288,7 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
             isWrongStyle,
             canManipulate,
         } = this.props
+        const canCreate: boolean = canManipulate && pickedCheckpoint != null
         return <CollapsibleFieldsetView
             className={cardStyle}
             collapsed={false}
@@ -281,7 +302,7 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
                         isOptional={true}
                         isWrongStyle={isWrongStyle}
                         canManipulate={canManipulate}
-                        validDateChanged={this.onDeclarationDateChanged}
+                        onValidDateChanged={this.onDeclarationDateChanged}
                     />
                 </li>
                 <li key="checkpoint">
@@ -307,9 +328,9 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
                 <li key="originPortfolio">
                     Origin portfolio:&nbsp;Pick from the list of portfolios&nbsp;
                     {(function () {
-                        if (typeof pickedPortfolio === "undefined" || pickedPortfolio === null)
-                            return <div>No picked portfolio</div>
-                        if (!isNumberedPortfolio(pickedPortfolio.original))
+                        if (typeof pickedPortfolio === "undefined"
+                            || pickedPortfolio === null
+                            || !isNumberedPortfolio(pickedPortfolio.original))
                             return <div>Your default portfolio</div>
                         return <PortfolioInfoJsonView
                             portfolio={pickedPortfolio}
@@ -350,7 +371,7 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
                         isOptional={false}
                         isWrongStyle={isWrongStyle}
                         canManipulate={canManipulate}
-                        validDateChanged={this.onPaymentDateChanged}
+                        onValidDateChanged={this.onPaymentDateChanged}
                     />
                 </li>
                 <li key="expiryDate">
@@ -360,7 +381,7 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
                         isOptional={true}
                         isWrongStyle={isWrongStyle}
                         canManipulate={canManipulate}
-                        validDateChanged={this.onExpiryDateChanged}
+                        onValidDateChanged={this.onExpiryDateChanged}
                     />
                 </li>
             </ul>
@@ -369,7 +390,7 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
                 <button
                     className="submit create-dividend-distribution"
                     onClick={this.onCreateDividendDistribution}
-                    disabled={!canManipulate}>
+                    disabled={!canCreate}>
                     Create 1 now
                 </button>
             </div>
@@ -386,6 +407,7 @@ export interface DividendDistributionManagerViewProps {
     pickedPortfolio: PortfolioInfoJson
     cardStyle: any
     isWrongStyle: any
+    onCheckpointPicked: OnCheckpointPicked
     onDividendDistributionCreated: OnDividendDistributionCreated
 }
 
@@ -399,6 +421,7 @@ export class DividendDistributionManagerView extends Component<DividendDistribut
             pickedPortfolio,
             cardStyle,
             isWrongStyle,
+            onCheckpointPicked,
             onDividendDistributionCreated,
         } = this.props
         return <CollapsibleFieldsetView
@@ -423,9 +446,11 @@ export class DividendDistributionManagerView extends Component<DividendDistribut
 
                 <DividendDistributionInfoJsonsView
                     actions={distributions}
+                    pickedCheckpoint={pickedCheckpoint}
                     isWrongStyle={isWrongStyle}
                     myDid={myDid}
                     canManipulate={true}
+                    onCheckpointPicked={onCheckpointPicked}
                 />
 
             </CollapsibleFieldsetView>

@@ -10,7 +10,17 @@ export type OnCustomGroupsUpdated = (groups: CustomPermissionGroup[]) => void
 export type OnGroupsInfoUpdated = (groupInfo: PermissionGroupsInfo) => void
 
 export const fetchPermissionGroup = async <GroupType extends KnownPermissionGroup | CustomPermissionGroup>(group: GroupType): Promise<PermissionGroupInfoJson<GroupType>> => {
-    const [permissions, exists]: [GroupPermissions, boolean] = await Promise.all([group.getPermissions(), /*group.exists()*/true]) // TODO put back
+    const
+        [
+            permissions,
+            exists,
+        ]: [
+                GroupPermissions,
+                boolean,
+            ] = await Promise.all([
+                group.getPermissions(),
+                group.exists(),
+            ])
     return {
         current: group,
         permissions: permissions,
@@ -19,10 +29,17 @@ export const fetchPermissionGroup = async <GroupType extends KnownPermissionGrou
 }
 
 export const fetchPermissionGroups = async (groups: PermissionGroupsInfo): Promise<PermissionGroupsInfoJson> => {
-    const [known, custom]: [PermissionGroupInfoJson<KnownPermissionGroup>[], PermissionGroupInfoJson<CustomPermissionGroup>[]] = await Promise.all([
-        Promise.all(groups.known.map(fetchPermissionGroup)),
-        Promise.all(groups.custom.map(fetchPermissionGroup)),
-    ])
+    const
+        [
+            known,
+            custom,
+        ]: [
+                PermissionGroupInfoJson<KnownPermissionGroup>[],
+                PermissionGroupInfoJson<CustomPermissionGroup>[]
+            ] = await Promise.all([
+                Promise.all(groups.known.map(fetchPermissionGroup)),
+                Promise.all(groups.custom.map(fetchPermissionGroup)),
+            ])
     return {
         known: known,
         custom: custom,

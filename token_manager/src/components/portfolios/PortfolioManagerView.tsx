@@ -55,7 +55,7 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             default: assertUnreachable(this.state.listType)
         }
     }
-    updateOtherOwner = (e) => this.setState({ otherOwner: e.target.value })
+    updateOtherOwner = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ otherOwner: e.target.value })
 
     onLoadMyPortfolios = async () => {
         this.setState({ listType: PortfolioListType.Mine })

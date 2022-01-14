@@ -3,6 +3,7 @@ import { Identity, SecurityToken, SecurityTokenDetails } from "@polymathnetwork/
 import { Component } from "react";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
+import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView, IdentityView } from "../identity/IdentityView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
@@ -33,7 +34,9 @@ export class SecurityTokenFieldsView extends Component<SecurityTokenFieldsViewPr
                     <EventIdentifierView
                         eventId={token?.createdAt} />
                 </li>
-                <li key="currentFundingRound">Current funding round: {token.currentFundingRound}</li>
+                <li key="currentFundingRound">
+                    Current funding round: {token.currentFundingRound}
+                </li>
                 <li key="tokenIdentifiers">
                     Token identifiers:&nbsp;
                     <TokenIdentifiersView
@@ -69,7 +72,9 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
             collapsed={false}>
 
             <ul>
-                <li key="name">With the name: {details?.name}</li>
+                <li key="name">
+                    With the name: {details?.name}
+                </li>
                 <li key="divisible">
                     Divisible:&nbsp;
                     <input
@@ -78,7 +83,9 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                         disabled={true}
                     />
                 </li>
-                <li key="assetType">As asset type: {details?.assetType}</li>
+                <li key="assetType">
+                    As asset type: {details?.assetType}
+                </li>
                 <li key="requiresInvestorUniqueness">
                     Requires investor uniqueness:&nbsp;
                     <input
@@ -92,8 +99,11 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
                         value={owner ?? ""}
                         lut={identityLut} />
                 </li>
-                <li key="totalSupply">With total supply of:&nbsp;{details?.totalSupply?.toString(10)}</li>
-                <li key="fullAgents">Whose full agents are:&nbsp;
+                <li key="totalSupply">
+                    With total supply of:&nbsp;{details?.totalSupply?.toString(10)}
+                </li>
+                <li key="fullAgents">
+                    Whose full agents are:&nbsp;
                     <IdentitiesView
                         values={details?.fullAgents}
                         lut={identityLut} />
@@ -105,9 +115,7 @@ export class SecurityTokenDetailsView extends Component<SecurityTokenDetailsView
 
 interface SecurityTokenOwnerTransferViewState {
     ownershipTarget: string
-    hasOwnershipExpiry: boolean
-    ownershipExpiry: string
-    isOwnershipExpiryValid: boolean
+    ownershipExpiry: Date | null
 }
 
 export interface SecurityTokenOwnerTransferViewProps {
@@ -124,32 +132,24 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         super(props)
         this.state = {
             ownershipTarget: "",
-            hasOwnershipExpiry: true,
-            ownershipExpiry: new Date().toISOString(),
-            isOwnershipExpiryValid: true,
+            ownershipExpiry: null,
         }
     }
 
-    updateOwnershipTarget = (e) => this.setState({ ownershipTarget: e.target.value })
-    updateExpiry = (e) => {
-        const newExpiry = e.target.value
-        this.setState({
-            ownershipExpiry: newExpiry,
-            isOwnershipExpiryValid: new Date(newExpiry).toString() !== "Invalid Date"
-        })
-    }
-    updateHasExpiry = (e) => this.setState({ hasOwnershipExpiry: e.target.checked })
-    onTransferReservationOwnership = async (e) => {
+    updateOwnershipTarget = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ ownershipTarget: e.target.value })
+    onOwnershipExpiryChanged = (expiry: Date) => this.setState({ ownershipExpiry: expiry })
+    onTransferReservationOwnership = async () => {
         const securityToken: SecurityToken = await (await this.props.token.current.transferOwnership(this.getTransferParams())).run()
         const tokenInfo: TokenInfoJson = await fetchTokenInfoJson(securityToken)
         this.props.onSecurityTokenChanged(tokenInfo)
     }
     getTransferParams = () => ({
         target: this.state.ownershipTarget,
-        expiry: this.state.hasOwnershipExpiry ? new Date(this.state.ownershipExpiry) : undefined
+        expiry: this.state.ownershipExpiry ?? undefined
     }) as TransferTokenOwnershipParams
 
     render() {
+        const { ownershipTarget, ownershipExpiry } = this.state
         const {
             token,
             myDid,
@@ -166,45 +166,34 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
 
             <div className="submit">
                 <label htmlFor="token-ownership-target">
-                    <span className={hasTitleStyle} title="Who is the new owner">Target</span>
+                    <span
+                        className={hasTitleStyle}
+                        title="Who is the new owner">
+                        Target
+                    </span>
                 </label>
-                Target:&nbsp;
+                :&nbsp;
                 <input
-                    name="token-ownership-target"
+                    id="token-ownership-target"
                     type="text"
                     placeholder="0x1234"
-                    defaultValue={this.state.ownershipTarget}
+                    defaultValue={ownershipTarget}
                     disabled={!canTransfer}
                     onChange={this.updateOwnershipTarget} />
             </div>
             <div>
-                <label htmlFor="transfer-has-expiry">
-                    <span className={hasTitleStyle} title="Whether the ownership transfer has an expiry">Has Expiry</span>
-                </label>
-                <input
-                    name="transfer-has-expiry"
-                    type="checkbox"
-                    defaultChecked={this.state.hasOwnershipExpiry}
-                    disabled={!canTransfer}
-                    onChange={this.updateHasExpiry}
-                />
-            </div>
-            <div>
-                <label htmlFor="transfer-expiry">
-                    <span
-                        className={hasTitleStyle}
-                        title="Expiry of the ownership transfer">
-                        Expiry
-                    </span>
-                </label>
-                <input
-                    name="transfer-expiry"
-                    type="text"
-                    className={this.state.isOwnershipExpiryValid ? "" : isWrongStyle}
-                    placeholder={new Date().toISOString()}
-                    defaultValue={this.state.ownershipExpiry}
-                    disabled={!canTransfer || !this.state.hasOwnershipExpiry}
-                    onChange={this.updateExpiry}
+                <span
+                    className={hasTitleStyle}
+                    title="Expiry of the ownership transfer">
+                    Expiry
+                </span>
+                :&nbsp;
+                <DateTimeEntryView
+                    dateTime={ownershipExpiry}
+                    isOptional={true}
+                    isWrongStyle={isWrongStyle}
+                    canManipulate={canTransfer}
+                    onValidDateChanged={this.onOwnershipExpiryChanged}
                 />
             </div>
             <div className="submit">

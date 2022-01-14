@@ -12,12 +12,13 @@ import {
   getEmptyRequirements,
   MyInfoJson,
   PermissionsInfoJson,
+  PolyWallet,
   PortfolioInfoJson,
   ReservationInfoJson,
   TokenInfoJson,
 } from "../src/types"
 import { DividendDistribution, Identity } from "@polymathnetwork/polymesh-sdk/internal"
-import { getBasicPolyWalletApi, returnUpdatedCreator } from "../src/ui-helpers"
+import { getBasicPolyWalletApi } from "../src/ui-helpers"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
@@ -29,7 +30,7 @@ import { fetchCheckpointsInfo } from "../src/handlers/checkpoints/CheckpointHand
 import { ClaimsManagerView } from "../src/components/claims/ClaimsManagerView"
 import { AuthorisationManagerView } from "../src/components/authorisations/AuthorisationManagerView"
 import { DividendDistributionManagerView } from "../src/components/distribution/DividendDistributionView"
-import { fetchDividendDistributionInfos } from "../src/handlers/distribution/DividendDistributionHandlers"
+import { fetchDividendDistributionInfosWithDetails } from "../src/handlers/distribution/DividendDistributionHandlers"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
@@ -40,9 +41,13 @@ export default function Home() {
   }
 
   async function getPolyWalletApi(): Promise<Polymesh> {
-    const api: Polymesh = await getBasicPolyWalletApi(setStatus)
+    const [api, polyWallet]: [Polymesh, PolyWallet] = await getBasicPolyWalletApi(setStatus)
     const myIdentity: Identity = await api.getCurrentIdentity()
-    setMyInfo(returnUpdatedCreator(["myDid"], myIdentity.did))
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      polyWallet: polyWallet,
+      myDid: myIdentity.did,
+    }))
     return api
   }
 
@@ -174,9 +179,18 @@ export default function Home() {
     return actions
   }
 
-  async function setDividendDistributions(actions: DistributionWithDetails[]): Promise<DividendDistributionInfoJson[]> {
-    const actionInfos: DividendDistributionInfoJson[] = await fetchDividendDistributionInfos(actions.map(action => action.distribution))
-    setMyInfo(returnUpdatedCreator(["corporateActions", "distributions", "dividends"], actionInfos))
+  async function setDividendDistributions(actionsWithDetails: DistributionWithDetails[]): Promise<DividendDistributionInfoJson[]> {
+    const actionInfos: DividendDistributionInfoJson[] = await fetchDividendDistributionInfosWithDetails(actionsWithDetails)
+    setMyInfo((prev: MyInfoJson) => ({
+      ...prev,
+      corporateActions: {
+        ...prev.corporateActions,
+        distributions: {
+          ...prev.corporateActions.distributions,
+          dividends: actionInfos,
+        },
+      },
+    }))
     return actionInfos
   }
 
@@ -262,6 +276,7 @@ export default function Home() {
           myDid={myInfo.myDid}
           canManipulate={true}
           apiPromise={apiPromise}
+          polyWallet={myInfo.polyWallet}
           onAddInvestorUniquenessClaimParamsChanged={() => { }}
         />
 
@@ -294,6 +309,7 @@ export default function Home() {
           isWrongStyle={styles.isWrong}
           pickedCheckpoint={myInfo.checkpoints.picked}
           pickedPortfolio={myInfo.portfolios.picked}
+          onCheckpointPicked={setCheckpointPicked}
           onDividendDistributionCreated={onDividendDistributionCreated}
         />
 

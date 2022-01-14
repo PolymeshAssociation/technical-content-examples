@@ -65,7 +65,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         }
     }
 
-    onTargetChanged = (e) => this.setState({ transferTarget: e.target.value })
+    onTargetChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ transferTarget: e.target.value })
     onTransferExpiryChanged = (expiry: Date) => this.setState({ transferExpiry: expiry })
     getTransferParams = () => ({
         target: this.state.transferTarget,
@@ -111,7 +111,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
                 <DateTimeEntryView
                     dateTime={transferExpiry}
                     isOptional={true}
-                    validDateChanged={this.onTransferExpiryChanged}
+                    onValidDateChanged={this.onTransferExpiryChanged}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canCreate}
                 />
@@ -133,7 +133,7 @@ interface TokenCreatorViewState {
     canCreate: boolean
     longName: string
     isDivisible: boolean
-    assetType: KnownTokenType
+    assetType: KnownTokenType | string
     fundingRound: string
     requiresUniqueness: boolean
     tokenIdentifiers: TokenIdentifier[]
@@ -164,12 +164,12 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
         }
     }
 
-    onLongNameChanged = (e) => this.setState({ longName: e.target.value })
-    onIsDivisibleChanged = (e) => this.setState({ isDivisible: e.target.checked })
-    onAssetTypeFromInputChanged = (e) => this.setState({ assetType: e.target.value })
-    onAssetTypeFromDropDownChanged = async (e) => this.setState({ assetType: e.target.value })
-    onFundingRoundChanged = (e) => this.setState({ fundingRound: e.target.value })
-    onUniquenessChanged = (e) => this.setState({ requiresUniqueness: e.target.checked })
+    onLongNameChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ longName: e.target.value })
+    onIsDivisibleChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ isDivisible: e.target.checked })
+    onAssetTypeFromInputChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ assetType: e.target.value })
+    onAssetTypeFromDropDownChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState({ assetType: e.target.value })
+    onFundingRoundChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ fundingRound: e.target.value })
+    onUniquenessChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ requiresUniqueness: e.target.checked })
     onTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
     onCreateToken = async () => {
         const securityToken: SecurityToken = await (await this.props.reservation.current.createToken(this.getTokenParams())).run()
@@ -236,7 +236,7 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
                 &nbsp;
                 <EnumSelectView<KnownTokenType>
                     theEnum={KnownTokenType}
-                    defaultValue={assetType}
+                    defaultValue={KnownTokenType[assetType]}
                     onChange={this.onAssetTypeFromDropDownChanged}
                     canManipulate={canCreate}
                 />

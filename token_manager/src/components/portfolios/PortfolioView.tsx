@@ -70,7 +70,7 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
         }
     }
 
-    updateName = (e) => this.setState({ name: e.target.value })
+    updateName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ name: e.target.value })
     onCreatePortfolio = async () => this.createPortfolio(this.getCreateParams())
     createPortfolio = async (newName: NewPortfolioParams): Promise<PortfolioInfoJson> => {
         const api: Polymesh = await this.props.apiPromise

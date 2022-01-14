@@ -274,7 +274,7 @@ export interface CustomPermissionGroupInfosViewProps {
 
 export class CustomPermissionGroupInfosView extends Component<CustomPermissionGroupInfosViewProps> {
 
-    onGroupPicked = (group: PermissionGroupInfoJson<CustomPermissionGroup>) => (e) => this.props.onGroupPicked(group)
+    onGroupPicked = (group: PermissionGroupInfoJson<CustomPermissionGroup>) => () => this.props.onGroupPicked(group)
 
     onGroupUpdated = (index: number) => (group: CustomPermissionGroup) => {
         const list = this.props.groups.map((groupInfo: PermissionGroupInfoJson<CustomPermissionGroup>) => groupInfo.current)

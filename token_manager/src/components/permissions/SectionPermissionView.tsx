@@ -33,8 +33,8 @@ export interface SectionPermissionsSecurityTokenViewProps {
 
 export class SectionPermissionsSecurityTokenView extends Component<SectionPermissionsSecurityTokenViewProps> {
 
-    onPermissionTypeChanged = async (e) => {
-        const type: PermissionType = e.target.value
+    onPermissionTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const type: PermissionType = PermissionType[e.target.value]
         this.props.onSectionPermissionsChanged({
             ...this.props.permissions,
             type: type,
@@ -74,8 +74,8 @@ export interface SectionPermissionsPortfolioViewProps {
 
 export class SectionPermissionsPortfolioView extends Component<SectionPermissionsPortfolioViewProps> {
 
-    onPermissionTypeChanged = async (e) => {
-        const type: PermissionType = e.target.value
+    onPermissionTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const type: PermissionType = PermissionType[e.target.value]
         this.props.onSectionPermissionsChanged({
             ...this.props.permissions,
             type: type,

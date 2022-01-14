@@ -26,12 +26,22 @@ export interface CheckpointLoadBalanceParams {
 }
 
 export async function fetchCheckpointInfoJson(checkpointWith: CheckpointWithData | Checkpoint): Promise<CheckpointInfoJson> {
-    const [checkpoint, exists, totalSupply, createdAt]: [Checkpoint, boolean, BigNumber, Date] = await Promise.all([
-        isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith,
-        isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint.exists() : checkpointWith.exists(),
-        isCheckpointWithData(checkpointWith) ? checkpointWith.totalSupply : checkpointWith.totalSupply(),
-        isCheckpointWithData(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt(),
-    ])
+    const
+        [checkpoint,
+            exists,
+            totalSupply,
+            createdAt,
+        ]: [
+                Checkpoint,
+                boolean,
+                BigNumber,
+                Date,
+            ] = await Promise.all([
+                isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith,
+                (isCheckpointWithData(checkpointWith) ? checkpointWith.checkpoint : checkpointWith).exists(),
+                isCheckpointWithData(checkpointWith) ? checkpointWith.totalSupply : checkpointWith.totalSupply(),
+                isCheckpointWithData(checkpointWith) ? checkpointWith.createdAt : checkpointWith.createdAt(),
+            ])
     return {
         checkpoint: checkpoint,
         exists: exists,
@@ -45,11 +55,20 @@ export async function fetchCheckpointInfoJsons(checkpointWiths: (CheckpointWithD
 }
 
 export async function fetchCheckpointScheduleInfoJson(schedule: CheckpointSchedule | ScheduleWithDetails): Promise<CheckpointScheduleDetailsInfoJson> {
-    const [createdCheckpointInfos, exists, details]: [CheckpointInfoJson[], boolean, ScheduleDetails] = await Promise.all([
-        Promise.all((await (isScheduleWithDetails(schedule) ? schedule.schedule : schedule).getCheckpoints()).map(fetchCheckpointInfoJson)),
-        (isScheduleWithDetails(schedule) ? schedule.schedule : schedule).exists(),
-        isScheduleWithDetails(schedule) ? schedule.details : schedule.details(),
-    ])
+    const
+        [
+            createdCheckpointInfos,
+            exists,
+            details,
+        ]: [
+                CheckpointInfoJson[],
+                boolean,
+                ScheduleDetails,
+            ] = await Promise.all([
+                Promise.all((await (isScheduleWithDetails(schedule) ? schedule.schedule : schedule).getCheckpoints()).map(fetchCheckpointInfoJson)),
+                (isScheduleWithDetails(schedule) ? schedule.schedule : schedule).exists(),
+                isScheduleWithDetails(schedule) ? schedule.details : schedule.details(),
+            ])
     return {
         schedule: isScheduleWithDetails(schedule) ? schedule.schedule : schedule,
         createdCheckpoints: createdCheckpointInfos,

@@ -24,11 +24,14 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
         }
     }
 
-    onStateChanged = () => this.props.onChange({ type: this.state.type, value: this.state.value })
-    onTypeChanged = async (e) => this.setState(
-        { type: e.target.value },
+    onStateChanged = () => this.props.onChange({
+        type: this.state.type,
+        value: this.state.value,
+    })
+    onTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState(
+        { type: TokenIdentifierType[e.target.value] },
         this.onStateChanged)
-    onValueChanged = (e) => this.setState(
+    onValueChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState(
         { value: e.target.value },
         this.onStateChanged)
 

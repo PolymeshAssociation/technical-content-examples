@@ -24,7 +24,7 @@ export class LongHexView extends Component<LongHexViewProps> {
 }
 
 interface LongViewState {
-    shrink: boolean
+    shrunk: boolean
 }
 
 export interface LongViewProps extends BasicLongViewProps {
@@ -36,18 +36,18 @@ export class LongView extends Component<LongViewProps, LongViewState> {
     constructor(props: LongViewProps) {
         super(props)
         this.state = {
-            shrink: true
+            shrunk: true
         }
     }
 
-    onClick = (e) => this.setState({ shrink: !this.state.shrink })
+    onClick = () => this.setState({ shrunk: !this.state.shrunk })
 
     render() {
         const { value, left, right, lut } = this.props
         if (typeof value === "undefined") return <span>undefined</span>
         if (value === null) return <span>null</span>
 
-        if (!this.state.shrink) return <span onClick={this.onClick}>{value}</span>
+        if (!this.state.shrunk) return <span onClick={this.onClick}>{value}</span>
 
         const lookedUp = (lut ?? {})[value]
         if (typeof lookedUp === "string") return <span onClick={this.onClick}>{lookedUp}</span>

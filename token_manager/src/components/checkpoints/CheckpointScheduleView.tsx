@@ -1,15 +1,30 @@
 import { Component } from "react";
-import { CheckpointScheduleDetailsInfoJson, CheckpointScheduleInfoJson } from "../../types";
+import { OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers";
+import {
+    CheckpointInfoJson,
+    CheckpointScheduleDetailsInfoJson,
+    CheckpointScheduleInfoJson,
+} from "../../types";
 import { CheckpointsView } from "./CheckpointView";
 
 export interface CheckpointScheduleViewProps {
     scheduleInfo: CheckpointScheduleInfoJson
+    pickedCheckpoint: CheckpointInfoJson | null
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
-function presentCheckpointScheduleInner(
-    scheduleInfo: CheckpointScheduleInfoJson,
-    canManipulate: boolean): JSX.Element[] {
+export interface CheckpointScheduleDetailViewProps extends Omit<CheckpointScheduleViewProps, "scheduleInfo"> {
+    scheduleDetailInfo: CheckpointScheduleDetailsInfoJson
+}
+
+function presentCheckpointScheduleInner(props: CheckpointScheduleViewProps): JSX.Element[] {
+    const {
+        scheduleInfo,
+        pickedCheckpoint,
+        canManipulate,
+        onCheckpointPicked,
+    } = props
     return [
         <li key="exists">
             Exists:&nbsp;
@@ -24,68 +39,59 @@ function presentCheckpointScheduleInner(
             <CheckpointsView
                 checkpoints={scheduleInfo.createdCheckpoints}
                 canManipulate={canManipulate}
+                pickedCheckpoint={pickedCheckpoint}
+                onCheckpointPicked={onCheckpointPicked}
             />
         </li>,
     ]
 }
 
-function presentCheckpointScheduleDetailInner(
-    scheduleInfo: CheckpointScheduleDetailsInfoJson,
-    canManipulate: boolean): JSX.Element[] {
+function presentCheckpointScheduleDetailInner(props: CheckpointScheduleDetailViewProps): JSX.Element[] {
+    const { scheduleDetailInfo } = props
     return [
-        ...presentCheckpointScheduleInner(
-            scheduleInfo,
-            canManipulate),
+        ...presentCheckpointScheduleInner({
+            ...props,
+            scheduleInfo: scheduleDetailInfo
+        }),
         <li key="remainingCheckpoints">
-            Remaining checkpoints:&nbsp;{scheduleInfo.remainingCheckpoints.toString(10)}
+            Remaining checkpoints:&nbsp;{scheduleDetailInfo.remainingCheckpoints.toString(10)}
         </li>,
         <li key="nextCheckpointDate">
-            Next checkpoint date:&nbsp;{scheduleInfo.nextCheckpointDate.toISOString()}
+            Next checkpoint date:&nbsp;{scheduleDetailInfo.nextCheckpointDate.toISOString()}
         </li>,
     ]
 }
 
 export class CheckpointScheduleView extends Component<CheckpointScheduleViewProps> {
     render() {
-        const {
-            scheduleInfo,
-            canManipulate,
-        } = this.props
-        return <ul>{presentCheckpointScheduleInner(
-            scheduleInfo,
-            canManipulate)
-        }</ul>
+        return <ul>
+            {presentCheckpointScheduleInner(this.props)}
+        </ul>
     }
-}
-
-export interface CheckpointScheduleDetailViewProps {
-    scheduleDetailInfo: CheckpointScheduleDetailsInfoJson
-    canManipulate: boolean
 }
 
 export class CheckpointScheduleDetailView extends Component<CheckpointScheduleDetailViewProps> {
     render() {
-        const {
-            scheduleDetailInfo: scheduleInfo,
-            canManipulate,
-        } = this.props
-        return <ul>{presentCheckpointScheduleDetailInner(
-            scheduleInfo,
-            canManipulate)
-        }</ul>
+        return <ul>
+            {presentCheckpointScheduleDetailInner(this.props)}
+        </ul>
     }
 }
 
 export interface CheckpointScheduleDetailsViewProps {
     schedules: CheckpointScheduleDetailsInfoJson[]
+    pickedCheckpoint: CheckpointInfoJson | null
     canManipulate: boolean
+    onCheckpointPicked: OnCheckpointPicked
 }
 
 export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleDetailsViewProps> {
     render() {
         const {
             schedules,
+            pickedCheckpoint,
             canManipulate,
+            onCheckpointPicked,
         } = this.props
         if (typeof schedules === "undefined" || schedules === null || schedules.length === 0)
             return <div>There are no checkpoint schedules</div>
@@ -95,7 +101,9 @@ export class CheckpointScheduleDetailsView extends Component<CheckpointScheduleD
                     Checkpoint schedule&nbsp;
                     <CheckpointScheduleDetailView
                         scheduleDetailInfo={schedule}
+                        pickedCheckpoint={pickedCheckpoint}
                         canManipulate={canManipulate}
+                        onCheckpointPicked={onCheckpointPicked}
                     />
                 </li>)
         }</ul>

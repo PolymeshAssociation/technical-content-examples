@@ -22,7 +22,7 @@ export interface ClaimTargetViewProps {
 
 export class ClaimTargetView extends Component<ClaimTargetViewProps> {
 
-    onTargetChanged = (e) => this.props.onClaimTargetChanged({
+    onTargetChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimTargetChanged({
         ...this.props.claimTarget,
         target: e.target.value,
     })
@@ -52,7 +52,7 @@ export class ClaimTargetView extends Component<ClaimTargetViewProps> {
                     dateTime={expiry}
                     isOptional={true}
                     isWrongStyle={isWrongStyle}
-                    validDateChanged={this.onExpiryChanged}
+                    onValidDateChanged={this.onExpiryChanged}
                     canManipulate={canManipulate}
                 />
             </li>
@@ -78,7 +78,7 @@ export interface ClaimDataViewProps {
 
 export class ClaimDataView extends Component<ClaimDataViewProps> {
 
-    onStringChanged = (key: keyof ClaimDataFlat) => (e) => this.props.onClaimDataChanged({
+    onStringChanged = (key: keyof ClaimDataFlat) => (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimDataChanged({
         ...convertClaimDataToFlat(this.props.claimData),
         [key]: e.target.value,
     })
@@ -122,7 +122,7 @@ export class ClaimDataView extends Component<ClaimDataViewProps> {
                 <DateTimeEntryView
                     dateTime={expiry}
                     isWrongStyle={isWrongStyle}
-                    validDateChanged={this.onValidExpiryChanged}
+                    onValidDateChanged={this.onValidExpiryChanged}
                     isOptional={false}
                     canManipulate={canManipulate}
                 />

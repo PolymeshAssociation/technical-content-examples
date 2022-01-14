@@ -11,7 +11,7 @@ import {
     TokenInfoJson,
 } from "../../types";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
-import { NewPermissionAgentView, PermissionAgentsView } from "./PermissionAgentView";
+import { NewPermissionAgentView, PermissionAgentWithGroupsView } from "./PermissionAgentView";
 import { NewCustomPermissionGroupView, PermissionGroupsInfoView } from "./PermissionGroupView";
 
 interface PermissionManagerViewState {
@@ -39,7 +39,7 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
         this.loadPermissionsDelayed()
     }
 
-    componentDidUpdate(prevProps: Readonly<PermissionManagerViewProps>, prevState: Readonly<PermissionManagerViewState>, snapshot?: any): void {
+    componentDidUpdate(prevProps: Readonly<PermissionManagerViewProps>, _: Readonly<PermissionManagerViewState>): void {
         if (this.props.token.current === null && prevProps.token.current === null) {
             // Do nothing
         } else if (this.props.token.current === null || prevProps.token.current === null) {
@@ -68,10 +68,17 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
     }
 
     render() {
-        const { permissions, pickedGroup } = this.state
+        const {
+            permissions: {
+                original,
+                groups,
+                agents,
+            },
+            pickedGroup,
+        } = this.state
         const { myDid, token, cardStyle, hasTitleStyle, isWrongStyle } = this.props
         const canManipulate: boolean = token.details?.owner?.did === myDid
-        const canInvite: boolean = canManipulate && permissions.original !== null
+        const canInvite: boolean = canManipulate && original !== null
         return <CollapsibleFieldsetView
             className={cardStyle}
             legend={`Permissions For: ${token.current?.ticker}`}
@@ -83,8 +90,8 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                 collapsed={false}>
 
                 <PermissionGroupsInfoView
-                    permissions={permissions.original}
-                    groups={permissions.groups}
+                    permissions={original}
+                    groups={groups}
                     onGroupPicked={this.onGroupPicked}
                     onGroupsInfoUpdated={this.loadPermissionsDelayed}
                     canManipulate={canManipulate}
@@ -92,7 +99,7 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
 
                 <NewCustomPermissionGroupView
                     cardStyle={cardStyle}
-                    permissions={permissions.original}
+                    permissions={original}
                     onGroupCreated={this.loadPermissionsDelayed}
                     canManipulate={canManipulate}
                 />
@@ -104,16 +111,16 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
                 legend="External Agents"
                 collapsed={false}>
 
-                <PermissionAgentsView
-                    permissions={permissions.original}
-                    agents={permissions.agents.current}
+                <PermissionAgentWithGroupsView
+                    permissions={original}
+                    agents={agents}
                     myDid={myDid}
                     canManipulate={canManipulate}
                     onAgentChanged={this.onAgentChanged}
                 />
 
                 <NewPermissionAgentView
-                    permissions={permissions.original}
+                    permissions={original}
                     cardStyle={cardStyle}
                     hasTitleStyle={hasTitleStyle}
                     isWrongStyle={isWrongStyle}

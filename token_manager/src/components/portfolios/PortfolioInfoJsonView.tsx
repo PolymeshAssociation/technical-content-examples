@@ -40,7 +40,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
         }
     }
 
-    onNewName = (e) => this.setState({ newName: e.target.value })
+    onNewName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ newName: e.target.value })
     onModifyName = async () => {
         const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolio.original
         isNumberedPortfolio(portfolio) ? this.modifyName(portfolio, this.getModifyNameParams()) : Promise.resolve()
@@ -52,7 +52,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     }
     getModifyNameParams = (): RenamePortfolioParams => ({ name: this.state.newName })
 
-    onUpdateNewCustodian = (e) => this.setState({ newCustodian: e.target.value })
+    onUpdateNewCustodian = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ newCustodian: e.target.value })
     onCustodianExpiryChanged = (expiry: Date) => this.setState({ custodianExpiry: expiry })
     onSetCustodian = async () => this.setCustodian(this.props.portfolio.original, this.getNewCustodianParams())
     setCustodian = async (portfolio: (DefaultPortfolio | NumberedPortfolio), params: SetCustodianParams): Promise<PortfolioInfoJson> => {
@@ -144,7 +144,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                 <DateTimeEntryView
                     dateTime={custodianExpiry}
                     isOptional={true}
-                    validDateChanged={this.onCustodianExpiryChanged}
+                    onValidDateChanged={this.onCustodianExpiryChanged}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate && canSetCustody}
                 />

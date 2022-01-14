@@ -63,10 +63,10 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         requirements: requirements,
         modified: true,
     })
-    onFromChanged = (e) => this.setState({ simulationFrom: e.target.value })
-    onFromPicked = async () => this.setState({ simulationFrom: await this.props.myDid })
-    onToChanged = (e) => this.setState({ simulationTo: e.target.value })
-    onToPicked = async () => this.setState({ simulationTo: await this.props.myDid })
+    onFromChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ simulationFrom: e.target.value })
+    onFromPickedMe = async () => this.setState({ simulationFrom: this.props.myDid })
+    onToChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ simulationTo: e.target.value })
+    onToPickedMe = async () => this.setState({ simulationTo: this.props.myDid })
 
     onSaveRequirements = async (): Promise<void> => {
         const updatedToken: SecurityToken = await (await this.props.requirements.original.set(await this.getParams())).run()
@@ -166,7 +166,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                     &nbsp;
                     <button
                         className="submit pick-me-for-sender"
-                        onClick={this.onFromPicked}>
+                        onClick={this.onFromPickedMe}>
                         Pick mine
                     </button>
                 </div>
@@ -178,7 +178,7 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                     &nbsp;
                     <button
                         className="submit pick-me-for-recipient"
-                        onClick={this.onToPicked}>
+                        onClick={this.onToPickedMe}>
                         Pick mine
                     </button>
                 </div>

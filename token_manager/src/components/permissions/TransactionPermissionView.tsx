@@ -37,9 +37,9 @@ export class TxGroupsView extends Component<TxGroupsViewProps> {
         list.splice(index, 1)
         this.props.onTxGroupsChanged(list)
     }
-    onTxGroupChanged = (index: number) => async (e) => {
+    onTxGroupChanged = (index: number) => async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const list: TxGroup[] = this.props.txGroups
-        list[index] = e.target.value
+        list[index] = TxGroup[e.target.value]
         this.props.onTxGroupsChanged(list)
     }
 
@@ -82,7 +82,7 @@ export interface ModuleNameViewProps {
 
 export class ModuleNameView extends Component<ModuleNameViewProps> {
 
-    onModuleNameChanged = async (e) => this.props.onModuleNameChanged(e.target.value)
+    onModuleNameChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onModuleNameChanged(ModuleName[e.target.value])
 
     render() {
         const { value, canManipulate } = this.props
@@ -115,12 +115,12 @@ export class TxTagView extends Component<TxTagViewProps, TxTagViewState> {
         }
     }
 
-    onTxTagGroupChanged = (e) => {
+    onTxTagGroupChanged = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const nextEnum = TxTags[e.target.value]
         const firstOfNextEnum: TxTag = Object.values(nextEnum)[0] as TxTag
         this.props.onTxTagChanged(firstOfNextEnum)
     }
-    onTxTagChanged = async (e) => {
+    onTxTagChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = getTxTagEnum(this.props.value).groupEnum[e.target.value]
         this.props.onTxTagChanged(value)
     }
@@ -241,9 +241,9 @@ export class TxTagOrModulesNameView extends Component<TxTagOrModuleNamesViewProp
         const list: (ModuleName | TxTag)[] = this.props.values
         this.props.onTxTagOrModuleNamesChanged([ModuleName.Asset, ...list])
     }
-    onTypeChanged = (index: number) => async (e) => {
+    onTypeChanged = (index: number) => async (e: React.ChangeEvent<HTMLSelectElement>) => {
         const list: (ModuleName | TxTag)[] = this.props.values
-        const newType: ModuleNameOrTxTag = e.target.value
+        const newType: ModuleNameOrTxTag = ModuleNameOrTxTag[e.target.value]
         switch (newType) {
             case ModuleNameOrTxTag.ModuleName:
                 list[index] = ModuleName.Asset
@@ -321,8 +321,8 @@ export class TransactionPermissionsView extends Component<TransactionPermissions
             values: list,
         })
     }
-    onPermissionTypeChanged = async (e) => {
-        const type: PermissionType = e.target.value
+    onPermissionTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const type: PermissionType = PermissionType[e.target.value]
         this.props.onTransactionPermissionsChanged({
             ...this.props.transactions,
             type: type,

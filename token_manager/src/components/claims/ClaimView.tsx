@@ -39,18 +39,23 @@ export interface ScopeViewProps {
 
 export class ScopeView extends Component<ScopeViewProps> {
 
-    onTypeChanged = async (e) => this.props.onScopeChanged({
+    onTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onScopeChanged({
         ...this.props.scope,
-        type: e.target.value,
+        type: ScopeType[e.target.value],
     })
-    onValueChanged = (e) => this.props.onScopeChanged({
+    onValueChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onScopeChanged({
         ...this.props.scope,
         value: e.target.value,
     })
 
     render() {
-        const { scope, canManipulate } = this.props
-        const { type, value } = scope
+        const {
+            scope: {
+                type,
+                value,
+            },
+            canManipulate,
+        } = this.props
         return <ul>
             <li key="type">Type: &nbsp;
                 <EnumSelectView<ScopeType>
@@ -81,11 +86,11 @@ export interface ClaimViewProps {
 
 export class ClaimView extends Component<ClaimViewProps> {
 
-    onClaimTypeChanged = async (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onClaimTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
-        type: e.target.value,
+        type: ClaimType[e.target.value],
     }))
-    onStringChanged = (key: keyof ClaimFlat) => (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onStringChanged = (key: keyof ClaimFlat) => (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
         [key]: e.target.value,
     }))
@@ -93,14 +98,14 @@ export class ClaimView extends Component<ClaimViewProps> {
         ...convertClaimToFlat(this.props.claim),
         scope: scope,
     }))
-    onCountryCodeChanged = async (e) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onCountryCodeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
-        code: e.target.value,
+        code: CountryCode[e.target.value],
     }))
 
     render() {
         const { claim, canManipulate } = this.props
-        const { type, id, scope, cddId, scopeId, code, } = convertClaimToFlat(claim)
+        const { type, id, scope, cddId, scopeId, code } = convertClaimToFlat(claim)
         const elements: JSX.Element[] = [
             <li key="type">Type:&nbsp;
                 <EnumSelectView<ClaimType>
@@ -230,7 +235,8 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
             [key]: value,
         })
     onScopeChanged = (scope: Scope) => this.setClaimParamValue<Scope>("scope", scope)
-    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e) => this.setClaimParamValue<string>(key, e.target.value)
+    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e: React.ChangeEvent<HTMLInputElement>) =>
+        this.setClaimParamValue<string>(key, e.target.value)
     onFetchMyCddId = async (): Promise<void> => {
         const api: Polymesh = await this.props.apiPromise
         const me: Identity = await api.getCurrentIdentity()
@@ -244,8 +250,17 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
     onValidDateChanged = (newDate: Date) => this.setClaimParamValue<Date>("expiry", newDate)
 
     render() {
-        const { claimParams, isWrongStyle, canManipulate } = this.props
-        const { scope, cddId, expiry, proof, scopeId } = claimParams
+        const {
+            claimParams: {
+                scope,
+                cddId,
+                expiry,
+                proof,
+                scopeId,
+            },
+            isWrongStyle,
+            canManipulate,
+        } = this.props
         const proofToShow = isScopeClaimProof(proof) ? proof.proofScopeIdWellformed : proof
         return <ul>
             <li key="scope">
@@ -297,7 +312,7 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
                     isOptional={true}
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate}
-                    validDateChanged={this.onValidDateChanged}
+                    onValidDateChanged={this.onValidDateChanged}
                 />
             </li>
         </ul >

@@ -20,9 +20,9 @@ export interface AuthorisationViewProps {
 
 export class AuthorisationView extends Component<AuthorisationViewProps> {
 
-    onAuthorizationTypeChanged = async (e) => this.props.onAuthorisationChanged({
+    onAuthorizationTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onAuthorisationChanged({
         ...this.props.authorisation,
-        type: e.target.value,
+        type: AuthorizationType[e.target.value],
     })
     onPermissionsChanged = (permissions: Permissions) => this.props.onAuthorisationChanged({
         type: AuthorizationType.JoinIdentity,
@@ -30,13 +30,18 @@ export class AuthorisationView extends Component<AuthorisationViewProps> {
     })
 
     render() {
-        const { authorisation, myDid, myAddress, canManipulate } = this.props
+        const {
+            authorisation,
+            myDid,
+            myAddress,
+            canManipulate,
+        } = this.props
         const { type } = authorisation
         const elements: JSX.Element[] = [
             <li key="type">
                 Type:&nbsp;
                 <EnumSelectView
-                    defaultValue={authorisation.type}
+                    defaultValue={type}
                     theEnum={AuthorizationType}
                     onChange={this.onAuthorizationTypeChanged}
                     canManipulate={canManipulate}
@@ -170,7 +175,7 @@ export class AuthorisationRequestView extends Component<AuthorisationRequestView
                     canManipulate={false}
                     isOptional={true}
                     isWrongStyle={isWrongStyle}
-                    validDateChanged={() => { }}
+                    onValidDateChanged={() => { }}
                 />
             </li>
             <li key="data">
@@ -198,10 +203,6 @@ export interface AuthorisationRequestsViewProps {
 
 export class AuthorisationRequestsView extends Component<AuthorisationRequestsViewProps> {
 
-    onAuthorisationRequestChanged = (index: number) => (request: AuthorizationRequest) => {
-        this.props.onAuthorisationRequestChanged(request)
-    }
-
     render() {
         const {
             requests,
@@ -218,7 +219,7 @@ export class AuthorisationRequestsView extends Component<AuthorisationRequestsVi
                     myDid={myDid}
                     myAddress={myAddress}
                     isWrongStyle={isWrongStyle}
-                    onAuthorisationRequestChanged={this.onAuthorisationRequestChanged(index)}
+                    onAuthorisationRequestChanged={this.props.onAuthorisationRequestChanged}
                     canManipulate={canManipulate}
                 />
             </li>)

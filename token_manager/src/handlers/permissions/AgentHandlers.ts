@@ -10,8 +10,6 @@ import {
     TxTag,
 } from "@polymathnetwork/polymesh-sdk/types"
 import {
-    AgentInfoJson,
-    AgentsInfoJson,
     isCustomPermissionGroup,
     isKnownPermissionGroup,
     PermissionGroupInfoJson,
@@ -25,7 +23,7 @@ export const patternAgentTags: { [key: string]: (TxTag | ModuleName)[] } = {
         AssetTx.Issue,
         AssetTx.Redeem,
         ModuleName.Sto
-    ]
+    ],
 }
 
 export const isOwner = (group: KnownPermissionGroup | CustomPermissionGroup): boolean =>
@@ -40,9 +38,3 @@ export const areIssuanceAgentGroupPermissions = (permissions: GroupPermissions):
         ?.values
         ?.map((value: TxTag | ModuleName) => patternAgentTags.issuance.indexOf(value)))
         .size === patternAgentTags.issuance.length
-
-export const fetchPermissionAgents = async (agentWithGroups: AgentWithGroup[]): Promise<AgentsInfoJson> => ({
-    current: agentWithGroups.map((agentWithGroup: AgentWithGroup): AgentInfoJson => ({
-        current: agentWithGroup,
-    }))
-})

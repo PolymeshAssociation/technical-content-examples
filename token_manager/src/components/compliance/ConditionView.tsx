@@ -22,7 +22,7 @@ export interface ConditionViewProps {
 
 export class ConditionView extends Component<ConditionViewProps> {
 
-    onStringChanged = (key: keyof ConditionFlat) => async (e) => this.props.onConditionChanged({
+    onStringChanged = (key: keyof ConditionFlat) => async (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.props.onConditionChanged({
         ...this.props.condition,
         [key]: e.target.value,
     })
@@ -40,8 +40,18 @@ export class ConditionView extends Component<ConditionViewProps> {
     })
 
     render() {
-        const { condition, apiPromise, canManipulate } = this.props
-        const { target, trustedClaimIssuers, type, claim, claims, identity } = condition
+        const {
+            condition: {
+                target,
+                trustedClaimIssuers,
+                type,
+                claim,
+                claims,
+                identity,
+            },
+            apiPromise,
+            canManipulate,
+        } = this.props
         const elements: JSX.Element[] = [
             <li key="target">Target:
                 <EnumSelectView<ConditionTarget>

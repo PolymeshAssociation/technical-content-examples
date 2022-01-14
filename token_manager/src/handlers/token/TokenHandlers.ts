@@ -11,12 +11,23 @@ export type OnTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => void
 export type OnTokenInfoChanged = (token: TokenInfoJson) => void
 
 export async function fetchTokenInfoJson(securityToken: SecurityToken): Promise<TokenInfoJson> {
-    const [createdAt, details, currentFundingRound, tokenIdentifiers]: [EventIdentifier, SecurityTokenDetails, string, TokenIdentifier[]] = await Promise.all([
-        securityToken.createdAt(),
-        securityToken.details(),
-        securityToken.currentFundingRound(),
-        securityToken.getIdentifiers(),
-    ])
+    const
+        [
+            createdAt,
+            details,
+            currentFundingRound,
+            tokenIdentifiers,
+        ]: [
+                EventIdentifier,
+                SecurityTokenDetails,
+                string,
+                TokenIdentifier[],
+            ] = await Promise.all([
+                securityToken.createdAt(),
+                securityToken.details(),
+                securityToken.currentFundingRound(),
+                securityToken.getIdentifiers(),
+            ])
     return {
         current: securityToken,
         createdAt: createdAt,

@@ -14,6 +14,7 @@ import {
     getDummyAddInvestorUniquenessClaimParams,
     OnAddInvestorUniquenessClaimParamsChanged,
 } from "../../handlers/claims/ClaimHandlers";
+import { PolyWallet } from '../../types';
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { ClaimDatasView, ClaimTargetView } from "./ClaimDataView";
 import { AddInvestorUniquenessClaimView } from "./ClaimView";
@@ -31,6 +32,7 @@ export interface ClaimsManagerViewProps {
     isWrongStyle: any
     canManipulate: boolean
     apiPromise: Promise<Polymesh>
+    polyWallet: PolyWallet
     onAddInvestorUniquenessClaimParamsChanged: OnAddInvestorUniquenessClaimParamsChanged
 }
 
@@ -46,16 +48,8 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
         }
     }
 
-    onTargetToLoadChanged = (e) => this.setState({
-        targetToLoad: e.target.value,
-    })
-    onPickMyDid = async () => {
-        const api: Polymesh = await this.props.apiPromise
-        const me = await api.getCurrentIdentity()
-        this.setState({
-            targetToLoad: me.did,
-        })
-    }
+    onTargetToLoadChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ targetToLoad: e.target.value })
+    onPickMyDid = async () => this.setState({ targetToLoad: this.props.myDid })
     onLoadAttestationsReceived = async () => {
         const api: Polymesh = await this.props.apiPromise
         const claimResult: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({
@@ -65,9 +59,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
             claimDatas: claimResult.data[0].claims,
         })
     }
-    onAttestationToAddChanged = (newClaimTarget: ClaimTarget) => this.setState({
-        claimTargetToAdd: newClaimTarget,
-    })
+    onAttestationToAddChanged = (newClaimTarget: ClaimTarget) => this.setState({ claimTargetToAdd: newClaimTarget })
     onAddAttestation = async () => {
         const api: Polymesh = await this.props.apiPromise
         await (await api.claims.addClaims({ claims: [this.state.claimTargetToAdd] })).run()
@@ -78,7 +70,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
     onAddInvestorUniquenessClaim = async () => {
         const api: Polymesh = await this.props.apiPromise
         const me: Identity = await api.getCurrentIdentity()
-        const polyWallet = (window || {})["polyWallet"]
+        const { polyWallet } = this.props
         const network = await polyWallet.network.get()
         const crypto = await import('@polymathnetwork/confidential-identity')
         const params: AddInvestorUniquenessClaimParams = this.state.addInvestorUniquenessClaimParams

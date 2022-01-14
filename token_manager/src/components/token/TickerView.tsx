@@ -49,7 +49,7 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             this.onStateChanged)
     }
     onStateChanged = () => this.props.onTickerChanged(this.state.ticker)
-    onUpdateTicker = (e) => this.updateTicker(e.target.value)
+    onUpdateTicker = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.updateTicker(e.target.value)
     onLoadMyTickers = async () => {
         const api: Polymesh = await this.props.apiPromise
         const me: Identity = await api.getCurrentIdentity()
@@ -120,10 +120,32 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
                     name="myTickers"
                     defaultValue={this.state.ticker}
                     onChange={this.onUpdateTicker}>
-                    <option value="reservedTickers" key="reservedTickers" disabled={true}>Reserved tickers</option>
-                    {myReservedTickers.map((ticker: string) => <option value={ticker} key={ticker}>{ticker}</option>)}
-                    <option value="createdTokens" key="createdTokens" disabled={true}>Created tokens</option>
-                    {myTokenTickers.map((ticker: string) => <option value={ticker} key={ticker}>{ticker}</option>)}
+                    <option
+                        value="reservedTickers"
+                        key="reservedTickers"
+                        disabled={true}>
+                        Reserved tickers
+                    </option>
+                    {
+                        myReservedTickers.map((ticker: string) => <option
+                            value={ticker}
+                            key={ticker}>
+                            {ticker}
+                        </option>)
+                    }
+                    <option
+                        value="createdTokens"
+                        key="createdTokens"
+                        disabled={true}>
+                        Created tokens
+                    </option>
+                    {
+                        myTokenTickers.map((ticker: string) => <option
+                            value={ticker}
+                            key={ticker}>
+                            {ticker}
+                        </option>)
+                    }
                 </select>
                 &nbsp;
                 <button

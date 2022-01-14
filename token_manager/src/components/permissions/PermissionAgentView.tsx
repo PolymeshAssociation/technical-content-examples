@@ -4,52 +4,58 @@ import {
     KnownPermissionGroup,
     RemoveExternalAgentParams,
 } from "@polymathnetwork/polymesh-sdk/internal";
-import { Identity } from "@polymathnetwork/polymesh-sdk/types";
+import { AgentWithGroup, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
 import { Component } from "react";
-import { AgentInfoJson, PermissionGroupInfoJson } from "../../types";
+import { PermissionGroupInfoJson } from "../../types";
 import { IdentityView } from "../identity/IdentityView";
 import { PermissionGroupView } from "./PermissionGroupView";
 import { isOwner, OnAgentChanged } from "../../handlers/permissions/AgentHandlers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 
-export interface PermissionAgentViewProps {
+export interface PermissionAgentWithGroupViewProps {
     myDid: string
-    agent: AgentInfoJson
+    agentWithGroup: AgentWithGroup
 }
 
-export class PermissionAgentView extends Component<PermissionAgentViewProps> {
+export class PermissionAgentWithGroupView extends Component<PermissionAgentWithGroupViewProps> {
 
     render() {
-        const { myDid, agent } = this.props
+        const {
+            agentWithGroup: {
+                agent,
+                group,
+            },
+            myDid,
+        } = this.props
         return <ul>
             <li key="did">
-                Did: <IdentityView value={agent.current.agent} lut={{ [myDid]: "me" }} />
+                Did: <IdentityView value={agent} lut={{ [myDid]: "me" }} />
             </li>
-            <li key="isOwner">Is owner: {isOwner(agent.current.group) ? "true" : "false"}</li>
+            <li key="isOwner">Is owner: {isOwner(group) ? "true" : "false"}</li>
             <li key="group">
                 Group:&nbsp;
                 <PermissionGroupView
-                    group={agent.current.group}
+                    group={group}
                 />
             </li>
         </ul>
     }
 }
 
-export interface PermissionAgentsViewProps {
+export interface PermissionAgentWithGroupsViewProps {
     permissions: Permissions
-    agents: AgentInfoJson[]
+    agents: AgentWithGroup[]
     myDid: string
     canManipulate: boolean
     onAgentChanged: OnAgentChanged
 }
 
-export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
-    onRemoveAgent = (agent: AgentInfoJson) => async () => {
-        await (await this.props.permissions.removeAgent(this.getRemoveParams(agent.current.agent))).run()
-        this.props.onAgentChanged(agent.current.agent)
+export class PermissionAgentWithGroupsView extends Component<PermissionAgentWithGroupsViewProps> {
+    onRemoveAgent = (agent: Identity) => async () => {
+        await (await this.props.permissions.removeAgent(this.getRemoveParams(agent))).run()
+        this.props.onAgentChanged(agent)
     }
     getRemoveParams = (agent: Identity): RemoveExternalAgentParams => ({
         target: agent
@@ -59,15 +65,15 @@ export class PermissionAgentsView extends Component<PermissionAgentsViewProps> {
         const { agents, myDid, canManipulate } = this.props
         if (agents.length === 0) return <span>None</span>
         return <ol>{
-            agents.map((agent: AgentInfoJson, index: number) => <li key={index}>
+            agents.map((agentWithGroup: AgentWithGroup, index: number) => <li key={index}>
                 <button
                     className="submit"
-                    onClick={this.onRemoveAgent(agent)}
+                    onClick={this.onRemoveAgent(agentWithGroup.agent)}
                     disabled={!canManipulate}>
                     Remove it
                 </button>
-                <PermissionAgentView
-                    agent={agent}
+                <PermissionAgentWithGroupView
+                    agentWithGroup={agentWithGroup}
                     myDid={myDid} />
             </li>)
         }</ol>
@@ -100,7 +106,7 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
         }
     }
 
-    updateInviteTarget = (e) => this.setState({
+    updateInviteTarget = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
         inviteTarget: e.target.value,
         modified: true,
     })
@@ -149,7 +155,7 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
                     dateTime={expiry}
                     isOptional={true}
                     isWrongStyle={isWrongStyle}
-                    validDateChanged={this.onValidExpiryChanged}
+                    onValidDateChanged={this.onValidExpiryChanged}
                     canManipulate={canManipulate}
                 />
             </div>
