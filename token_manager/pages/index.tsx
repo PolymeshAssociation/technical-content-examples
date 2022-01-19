@@ -217,6 +217,7 @@ export default function Home() {
         <TickerManagerView
           reservation={myInfo.reservation}
           token={myInfo.token}
+          myDid={myInfo.myDid}
           cardStyle={styles.card}
           apiGetter={apiGetter}
           onTickerChanged={setTicker}
