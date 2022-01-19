@@ -1,4 +1,4 @@
-import { IFullSettlementInfo, ISettlementInfo, } from "./settlementInfo"
+import { IFullSettlementInfo, ISettlementInfo } from "./settlementInfo"
 
 export interface ISettlementDb {
     getSettlements: () => Promise<IFullSettlementInfo[]>

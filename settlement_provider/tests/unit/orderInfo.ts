@@ -10,7 +10,7 @@ import {
     OrderJson,
     WrongNumericValueError,
     WrongTypeOrderError,
-    WrongZeroOrderError
+    WrongZeroOrderError,
 } from "../../src/orderInfo"
 
 describe("OrderInfo Unit Tests", () => {

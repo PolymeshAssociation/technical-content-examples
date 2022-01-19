@@ -1,8 +1,8 @@
 import Head from "next/head"
 import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
-import { FullSettlementJson, } from "../src/settlementInfo"
-import { SettlementListJson, } from "../src/ui-types"
+import { FullSettlementJson } from "../src/settlementInfo"
+import { SettlementListJson } from "../src/ui-types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({

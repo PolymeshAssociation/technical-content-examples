@@ -51,6 +51,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
         if (e instanceof UnknownCustomerError) {
             res.status(404).json({ status: "not found" })
         } else {
+            console.log(e)
             res.status(500).json({ status: "internal error" })
         }
     }

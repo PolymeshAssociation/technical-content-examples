@@ -1,7 +1,7 @@
 import { promises as fsPromises } from "fs"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { CustomerInfo, CustomerJson, ICustomerInfo, } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson, ICustomerInfo } from "../../src/customerInfo"
 import { CustomerDbFs } from "../../src/customerDbFs"
 import { UnknownCustomerError } from "../../src/customerDb"
 use(require("chai-as-promised"))
