@@ -7,7 +7,7 @@ export interface ICustomerDb {
 
 export class CustomerDbError {
     constructor() {
-        Error.apply(this, arguments);
+        Error.apply(this, arguments)
     }
 }
 
