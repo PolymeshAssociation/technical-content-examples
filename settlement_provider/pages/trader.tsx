@@ -156,7 +156,7 @@ export default function Home() {
     return response
   }
 
-  async function submitGetMyOrder(e): Promise<void> {
+  async function submitGetMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getMyOrder()
   }
@@ -175,7 +175,7 @@ export default function Home() {
     return response
   }
 
-  async function submitDeleteMyOrder(e): Promise<void> {
+  async function submitDeleteMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await deleteMyOrder()
   }

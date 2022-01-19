@@ -39,6 +39,7 @@ export default function Home() {
   }
 
   async function submitGetOrdersInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
+    e.preventDefault()
     await getOrdersInfo()
   }
 

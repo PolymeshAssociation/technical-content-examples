@@ -1,7 +1,7 @@
 import { describe } from "mocha"
 import { expect } from "chai"
 import { CountryCode } from "@polymathnetwork/polymesh-sdk/generated/types"
-import { CustomerInfo, CustomerJson, IncompleteInfoError, } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson, ICustomerInfo, IncompleteInfoError, } from "../../src/customerInfo"
 
 describe("CustomerInfo Unit Tests", () => {
 
@@ -14,7 +14,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info: CustomerInfo = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.name).to.equal("John Doe")
         expect(info.country).to.equal(CountryCode.Gb)
@@ -62,7 +62,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info: CustomerInfo = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.toJSON()).to.deep.equal(bareInfo)
     })
@@ -97,7 +97,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info: CustomerInfo = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",
@@ -122,7 +122,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: null,
         }
-        const info: CustomerInfo = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",

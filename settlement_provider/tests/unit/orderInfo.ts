@@ -85,7 +85,7 @@ describe("OrderInfo Unit Tests", () => {
             token: "ACME",
             price: "33",
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolioId: "1"
+            portfolioId: "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
@@ -113,7 +113,7 @@ describe("OrderInfo Unit Tests", () => {
             token: "ACME",
             price: "ab",
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolioId: "1"
+            portfolioId: "1",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)
@@ -141,7 +141,7 @@ describe("OrderInfo Unit Tests", () => {
             token: "ACME",
             price: "33",
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolioId: "ab"
+            portfolioId: "ab",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)

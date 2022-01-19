@@ -33,7 +33,7 @@ export default function Home() {
   const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
-    const element: HTMLElement = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
