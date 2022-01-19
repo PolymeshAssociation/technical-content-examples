@@ -10,6 +10,7 @@ import {
     PermissionsInfoJson,
     TokenInfoJson,
 } from "../../types";
+import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { NewPermissionAgentView, PermissionAgentWithGroupsView } from "./PermissionAgentView";
 import { NewCustomPermissionGroupView, PermissionGroupsInfoView } from "./PermissionGroupView";
@@ -51,7 +52,9 @@ export class PermissionManagerView extends Component<PermissionManagerViewProps,
 
     loadPermissionsDelayed = () => setTimeout(this.loadPermissions, 100)
     loadPermissions = async (): Promise<PermissionsInfoJson> => {
+        const cycler: ShowFetchCycler = showFetchCycle("Token permissions")
         const permissionsInfo = await fetchPermissions(this.props.token.current)
+        cycler.fetched()
         this.setState({
             permissions: permissionsInfo,
         })

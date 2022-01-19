@@ -37,7 +37,6 @@ export class PermissionsView extends Component<PermissionsViewProps> {
         portfolios: permissions,
     })
 
-
     render() {
         const {
             permissions: {

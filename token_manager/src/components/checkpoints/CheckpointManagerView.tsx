@@ -1,4 +1,4 @@
-import { Checkpoint, CreateCheckpointScheduleParams } from "@polymathnetwork/polymesh-sdk/internal";
+import { Checkpoint, CreateCheckpointScheduleParams, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
 import { CalendarUnit, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import {
@@ -15,6 +15,7 @@ import {
     CheckpointsInfoJson,
     TokenInfoJson,
 } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
@@ -57,8 +58,14 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
 
     onCreateCheckpointSchedule = async () => this.createCheckpointSchedule()
     createCheckpointSchedule = async (): Promise<CheckpointScheduleInfoJson> => {
-        const schedule: CheckpointSchedule = await (await this.props.token.current.checkpoints.schedules.create(this.getCheckpointScheduleParams())).run()
+        const cyclerCreate: ShowRequestCycler = showRequestCycle("Creating checkpoint schedule")
+        const queue: TransactionQueue<CheckpointSchedule, CheckpointSchedule> = await this.props.token.current.checkpoints.schedules.create(this.getCheckpointScheduleParams())
+        cyclerCreate.running()
+        const schedule: CheckpointSchedule = await queue.run()
+        cyclerCreate.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Checkpoint schedule")
         const info: CheckpointScheduleDetailsInfoJson = await fetchCheckpointScheduleInfoJson(schedule)
+        cycler.fetched()
         this.props.onCheckpointSchedulesChanged([...this.props.checkpoints.scheduleDetails, info])
         return info
     }
@@ -73,8 +80,14 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
 
     onCreateCheckpoint = async () => this.onCreateCheckpoint()
     createCheckpoint = async (): Promise<CheckpointInfoJson> => {
-        const created: Checkpoint = await (await this.props.token.current.checkpoints.create()).run()
+        const cyclerCreate: ShowRequestCycler = showRequestCycle("Creating checkpoint")
+        const queue: TransactionQueue<Checkpoint, Checkpoint> = await this.props.token.current.checkpoints.create()
+        cyclerCreate.running()
+        const created: Checkpoint = await (queue).run()
+        cyclerCreate.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Checkpoint")
         const info: CheckpointInfoJson = await fetchCheckpointInfoJson(created)
+        cycler.fetched()
         this.props.onCheckpointsChanged([...this.props.checkpoints.details, info])
         return info
     }

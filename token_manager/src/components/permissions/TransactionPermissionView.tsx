@@ -169,6 +169,7 @@ export class TxTagsView extends Component<TxTagsViewProps> {
         list[index] = txTag
         this.props.onTxTagsChanged(list)
     }
+
     render() {
         const { values, canManipulate } = this.props
         const addButton: JSX.Element = <button

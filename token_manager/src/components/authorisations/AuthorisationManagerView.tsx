@@ -2,6 +2,7 @@ import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AuthorizationRequest, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { ApiGetter } from "../../types";
+import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
 import { AuthorisationRequestsView } from "./AuthorisationView";
 
@@ -39,13 +40,19 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
     })
     onLoadAuthorisationRequests = async () => {
         const api: Polymesh = await this.props.apiGetter()
+        const cyclerId: ShowFetchCycler = showFetchCycle("Identity")
         const whose: Identity = await api.getIdentity({ did: this.state.whose })
+        cyclerId.fetched()
+        const cyclerRec: ShowFetchCycler = showFetchCycle("Your received authorisation requests")
         this.setState({
             receivedRequests: await whose.authorizations.getReceived(),
         })
+        cyclerRec.fetched()
+        const cyclerSent: ShowFetchCycler = showFetchCycle("Your sent authorisation requests")
         this.setState({
             sentRequests: (await whose.authorizations.getSent()).data,
         })
+        cyclerSent.fetched()
     }
 
     render() {

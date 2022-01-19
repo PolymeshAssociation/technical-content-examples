@@ -6,7 +6,6 @@ import {
     ClaimData,
     ClaimType,
     CountryCode,
-    Identity,
     isInvestorUniquenessClaim,
     isScopedClaim,
     Scope,
@@ -29,6 +28,7 @@ import {
     isJurisdictionClaim,
     isScopeClaimProof,
 } from "../../types";
+import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 
@@ -222,6 +222,7 @@ export class ClaimsView extends Component<ClaimsViewProps> {
 
 export interface AddInvestorUniquenessClaimViewProps {
     claimParams: AddInvestorUniquenessClaimParams
+    myDid: string
     isWrongStyle: any
     canManipulate: boolean
     apiGetter: ApiGetter
@@ -240,11 +241,12 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
         this.setClaimParamValue<string>(key, e.target.value)
     onFetchMyCddId = async (): Promise<void> => {
         const api: Polymesh = await this.props.apiGetter()
-        const me: Identity = await api.getCurrentIdentity()
+        const cycler: ShowFetchCycler = showFetchCycle("CDD claims")
         const claims: ClaimData<CddClaim>[] = (await api.claims.getCddClaims({
-            target: me,
+            target: this.props.myDid,
             includeExpired: false,
         }))
+        cycler.fetched()
         // TODO Handle more than the first.
         this.setClaimParamValue<string>("cddId", claims[0].claim.id)
     }

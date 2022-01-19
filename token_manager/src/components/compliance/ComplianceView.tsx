@@ -13,6 +13,8 @@ import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/Tok
 import { ApiGetter, RequirementsInfoJson, TokenInfoJson } from "../../types";
 import { RequirementsView } from "./RequirementView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 
 export interface ComplianceCheckParams {
     from?: string | Identity
@@ -69,8 +71,17 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
     onToPickedMe = async () => this.setState({ simulationTo: this.props.myDid })
 
     onSaveRequirements = async (): Promise<void> => {
-        const updatedToken: SecurityToken = await (await this.props.requirements.original.set(await this.getParams())).run()
+        const cyclerParams: ShowFetchCycler = showFetchCycle("Requirements params")
+        const params: SetAssetRequirementsParams = await this.getParams()
+        cyclerParams.fetched()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Saving requirements")
+        const queue: TransactionQueue<SecurityToken, SecurityToken> = await this.props.requirements.original.set(params)
+        cyclerReq.running()
+        const updatedToken: SecurityToken = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated security token")
         const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        cycler.fetched()
         this.props.onTokenInfoChanged(updatedInfo)
     }
     getParams = async (): Promise<SetAssetRequirementsParams> => {
@@ -84,22 +95,39 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         }
     }
 
-    onSimulateCompliance = async () => this.setState({
-        compliance: await this.props.requirements.original.checkSettle(this.getSimulateParams())
-    })
+    onSimulateCompliance = async () => {
+        const cycler: ShowFetchCycler = showFetchCycle("Checking settle")
+        const result = await this.props.requirements.original.checkSettle(this.getSimulateParams())
+        cycler.fetched()
+        this.setState({
+            compliance: result,
+        })
+    }
     getSimulateParams = () => ({
         from: this.state.simulationFrom === "" ? undefined : this.state.simulationFrom,
         to: this.state.simulationTo,
     })
 
     onPauseCompliance = async (): Promise<void> => {
-        const updatedToken: SecurityToken = await (await this.props.requirements.original.pause()).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Pausing compliance")
+        const queue: TransactionQueue<SecurityToken, SecurityToken> = await this.props.requirements.original.pause()
+        cyclerReq.running()
+        const updatedToken: SecurityToken = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Token info")
         const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        cycler.fetched()
         this.props.onTokenInfoChanged(updatedInfo)
     }
     onResumeCompliance = async (): Promise<void> => {
-        const updatedToken: SecurityToken = await (await this.props.requirements.original.unpause()).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Resuming compliance")
+        const queue: TransactionQueue<SecurityToken, SecurityToken> = await this.props.requirements.original.unpause()
+        cyclerReq.running()
+        const updatedToken: SecurityToken = await (queue).run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Token info")
         const updatedInfo: TokenInfoJson = await fetchTokenInfoJson(updatedToken)
+        cycler.fetched()
         this.props.onTokenInfoChanged(updatedInfo)
     }
 

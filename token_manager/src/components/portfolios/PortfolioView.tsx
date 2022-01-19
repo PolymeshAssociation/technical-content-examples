@@ -9,6 +9,7 @@ import {
 } from "../../handlers/portfolios/PortfolioHandlers";
 import { IdentityView } from "../identity/IdentityView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 
 export interface PortfolioViewProps {
     portfolio: DefaultPortfolio | NumberedPortfolio
@@ -74,9 +75,17 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
     onCreatePortfolio = async () => this.createPortfolio(this.getCreateParams())
     createPortfolio = async (newName: NewPortfolioParams): Promise<PortfolioInfoJson> => {
         const api: Polymesh = await this.props.apiGetter()
+        const cyclerId: ShowFetchCycler = showFetchCycle("Your current identity")
         const me: Identity = await api.getCurrentIdentity()
-        const created: NumberedPortfolio = await (await me.portfolios.create(newName)).run()
+        cyclerId.fetched()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Your new portfolio")
+        const queue = await me.portfolios.create(newName)
+        cyclerReq.running()
+        const created: NumberedPortfolio = await queue.run()
+        cyclerReq.hasRun()
+        const cyclerInfo: ShowFetchCycler = showFetchCycle("Your new portfolio info")
         const createdInfo: PortfolioInfoJson = await fetchPortfolioInfoJson(created)
+        cyclerInfo.fetched()
         this.props.onPortfolioInfoCreated(createdInfo)
         return createdInfo
     }

@@ -1,4 +1,5 @@
 import Head from "next/head"
+import { NotificationContainer } from 'react-notifications';
 import { useState } from "react"
 import styles from "../styles/Home.module.css"
 import { Requirement, SecurityToken, DistributionWithDetails } from "@polymathnetwork/polymesh-sdk/types"
@@ -18,7 +19,7 @@ import {
   TokenInfoJson,
 } from "../src/types"
 import { DividendDistribution, Identity } from "@polymathnetwork/polymesh-sdk/internal"
-import { getBasicPolyWalletApi } from "../src/ui-helpers"
+import { getBasicPolyWalletApi, showFetchCycle, ShowFetchCycler, showInfo } from "../src/ui-helpers"
 import { CheckpointManagerView } from "../src/components/checkpoints/CheckpointManagerView"
 import { PermissionManagerView } from "../src/components/permissions/PermissionManagerView"
 import { ComplianceManagerView } from "../src/components/compliance/ComplianceView"
@@ -35,14 +36,11 @@ import { fetchDividendDistributionInfosWithDetails } from "../src/handlers/distr
 export default function Home() {
   const [myInfo, setMyInfo] = useState(getEmptyMyInfo())
 
-  function setStatus(content: string): void {
-    const element = document.getElementById("status") as HTMLElement
-    element.innerHTML = content
-  }
-
   async function getPolyWalletApi(): Promise<Polymesh> {
-    const [api, polyWallet]: [Polymesh, PolyWallet] = await getBasicPolyWalletApi(setStatus)
+    const [api, polyWallet]: [Polymesh, PolyWallet] = await getBasicPolyWalletApi()
+    const cycler: ShowFetchCycler = showFetchCycle("Your identity")
     const myIdentity: Identity = await api.getCurrentIdentity()
+    cycler.fetched()
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       api: api,
@@ -53,6 +51,7 @@ export default function Home() {
   }
 
   function setTicker(newTicker: string): void {
+    showInfo(`Ticker set to ${newTicker}`)
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       ticker: newTicker,
@@ -88,13 +87,14 @@ export default function Home() {
   }
 
   async function loadComplianceRequirements(token: SecurityToken | null): Promise<Requirement[] | null> {
-    setStatus("Loading compliance requirements")
     if (token === null) {
       setComplianceRequirements(null, null, false)
       return null
     }
+    const cycler: ShowFetchCycler = showFetchCycle("Compliance requirements")
     const requirements: Requirement[] = await token.compliance.requirements.get()
     const arePaused: boolean = await token.compliance.requirements.arePaused()
+    cycler.fetched()
     setComplianceRequirements(token, requirements, arePaused)
     return requirements
   }
@@ -129,7 +129,9 @@ export default function Home() {
   }
 
   async function loadCheckpointsInfo(token: TokenInfoJson): Promise<CheckpointsInfoJson> {
+    const cycler: ShowFetchCycler = showFetchCycle("Checkpoints")
     const checkpoints: CheckpointsInfoJson = await fetchCheckpointsInfo(token)
+    cycler.fetched()
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       checkpoints: checkpoints,
@@ -174,14 +176,17 @@ export default function Home() {
   }
 
   async function loadDividendDistributions(token: SecurityToken): Promise<DistributionWithDetails[]> {
-    setStatus("Loading dividend distributions")
+    const cycler: ShowFetchCycler = showFetchCycle("Dividend distributions")
     const actions: DistributionWithDetails[] = await token.corporateActions.distributions.get()
+    cycler.fetched()
     await setDividendDistributions(actions)
     return actions
   }
 
   async function setDividendDistributions(actionsWithDetails: DistributionWithDetails[]): Promise<DividendDistributionInfoJson[]> {
+    const cycler: ShowFetchCycler = showFetchCycle("Dividend distribution details")
     const actionInfos: DividendDistributionInfoJson[] = await fetchDividendDistributionInfosWithDetails(actionsWithDetails)
+    cycler.fetched()
     setMyInfo((prev: MyInfoJson) => ({
       ...prev,
       corporateActions: {
@@ -326,6 +331,8 @@ export default function Home() {
           <img src="/polymath.svg" alt="Polymath Logo" className={styles.logo} />
         </a>
       </footer>
+
+      <NotificationContainer />
 
     </div>
   )

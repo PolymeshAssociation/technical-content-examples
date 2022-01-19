@@ -1,6 +1,7 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import { Distributions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/CorporateActions/Distributions"
 import { ConfigureDividendDistributionParams } from "@polymathnetwork/polymesh-sdk/api/procedures/configureDividendDistribution"
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import { DividendDistribution, DividendDistributionDetails } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
 import { OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers"
@@ -12,6 +13,7 @@ import {
     PortfolioInfoJson,
     TokenInfoJson,
 } from "../../types"
+import { showRequestCycle, ShowRequestCycler } from "../../ui-helpers"
 import { CheckpointView } from "../checkpoints/CheckpointView"
 import { getCorporateActionInfoJsonViewInner } from "../corporateActions/CorporateActionView"
 import { DateTimeEntryView } from "../elements/DateTimeEntry"
@@ -266,7 +268,11 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
         expiryDate: this.state.expiryDate ?? undefined,
     })
     onCreateDividendDistribution = async () => {
-        const distribution: DividendDistribution = await (await this.props.distributions.configureDividendDistribution(this.getCreationParams())).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Creating dividend distribution")
+        const queue: TransactionQueue<DividendDistribution, DividendDistribution> = await this.props.distributions.configureDividendDistribution(this.getCreationParams())
+        cycler.running()
+        const distribution: DividendDistribution = await queue.run()
+        cycler.hasRun()
         this.props.onDividendDistributionCreated(distribution)
     }
 

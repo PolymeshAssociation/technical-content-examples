@@ -1,4 +1,5 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
 import { Claim, ClaimData, ClaimTarget } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import {
@@ -9,6 +10,7 @@ import {
     OnClaimTargetChanged,
 } from "../../handlers/claims/ClaimDataHandlers";
 import { ApiGetter, isIdentity } from "../../types";
+import { showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { ClaimView } from "./ClaimView";
 
@@ -157,12 +159,16 @@ export class ClaimDatasView extends Component<ClaimDatasViewProps> {
     }
     onRevokeAttestation = (claimData: ClaimData) => async () => {
         const api: Polymesh = await this.props.apiGetter()
-        await (await api.claims.revokeClaims({
+        const cycler: ShowRequestCycler = showRequestCycle("Revoke attestation")
+        const queue: TransactionQueue<void, void> = await api.claims.revokeClaims({
             claims: [{
                 target: claimData.target,
                 claim: claimData.claim,
             }],
-        })).run()
+        })
+        cycler.running()
+        await (queue).run()
+        cycler.hasRun()
     }
 
     render() {

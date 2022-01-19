@@ -6,13 +6,13 @@ import {
     KnownPermissionGroup,
     PermissionGroup,
     SetGroupPermissionsParams,
+    TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal";
 import {
     GroupPermissions,
     PermissionGroupType,
     PermissionType,
     TransactionPermissions,
-    TransactionQueue,
     TxGroup,
 } from "@polymathnetwork/polymesh-sdk/types";
 import React, { Component } from "react";
@@ -31,6 +31,7 @@ import {
     PermissionGroupInfoJson,
     PermissionGroupsInfoJson
 } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { EnumSelectView } from "../EnumView";
 import { LongHexView } from "../LongHexView";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
@@ -223,11 +224,16 @@ export class CustomPermissionGroupInfoView extends Component<CustomPermissionGro
     })
     onUpdatePerms = async () => {
         const groupId: BigNumber = this.props.group.current.id
-        const queue: TransactionQueue = await this.props.group.current.setPermissions(this.getUpdatePermParams())
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Updating group permissions")
+        const queue: TransactionQueue<void, void> = await this.props.group.current.setPermissions(this.getUpdatePermParams())
         this.setState({ modified: false })
+        cyclerReq.running()
         await queue.run()
+        cyclerReq.hasRun()
         const updatedGroup = await this.props.permissions.getGroup({ id: groupId })
+        const cycler: ShowFetchCycler = showFetchCycle("Updated permission group")
         this.setState(this.getStateFromNewPerms(await updatedGroup.getPermissions()))
+        cycler.fetched()
         this.props.onGroupUpdated(updatedGroup)
     }
     getUpdatePermParams = (): SetGroupPermissionsParams => ({
@@ -420,9 +426,12 @@ export class NewCustomPermissionGroupView extends Component<NewCustomPermissionG
 
     onCreateCustomGroup = async (): Promise<void> => {
         const params: CreateGroupParams = this.getCreateParams()
+        const cycler: ShowRequestCycler = showRequestCycle("Creating permission group")
         const queue = await this.props.permissions.createGroup(params)
+        cycler.running()
         this.setState({ modified: false })
         const group: CustomPermissionGroup = await queue.run()
+        cycler.hasRun()
         this.props.onGroupCreated(group)
     }
     getCreateParams = (): CreateGroupParams => ({

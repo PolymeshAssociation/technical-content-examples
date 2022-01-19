@@ -3,6 +3,7 @@ import {
     NumberedPortfolio,
     RenamePortfolioParams,
     SetCustodianParams,
+    TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal";
 import { Component } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
@@ -15,6 +16,7 @@ import {
     OnPortfolioPicked,
 } from "../../handlers/portfolios/PortfolioHandlers";
 import { PortfolioView } from "./PortfolioView";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 
 interface PortfolioInfoJsonViewState {
     newName: string
@@ -43,10 +45,17 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     onNewName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ newName: e.target.value })
     onModifyName = async () => {
         const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolio.original
-        isNumberedPortfolio(portfolio) ? this.modifyName(portfolio, this.getModifyNameParams()) : Promise.resolve()
+        isNumberedPortfolio(portfolio) ? await this.modifyName(portfolio, this.getModifyNameParams()) : Promise.resolve()
     }
     modifyName = async (portfolio: NumberedPortfolio, params: RenamePortfolioParams): Promise<PortfolioInfoJson> => {
-        const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(await (await portfolio.modifyName(params)).run())
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Modifying portfolio name")
+        const queue: TransactionQueue<NumberedPortfolio, NumberedPortfolio> = await portfolio.modifyName(params)
+        cyclerReq.running()
+        const updatedPortfolio: NumberedPortfolio = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated portfolio")
+        const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(updatedPortfolio)
+        cycler.fetched()
         this.props.onPortfolioInfoChanged(updated)
         return updated
     }
@@ -56,8 +65,14 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     onCustodianExpiryChanged = (expiry: Date) => this.setState({ custodianExpiry: expiry })
     onSetCustodian = async () => this.setCustodian(this.props.portfolio.original, this.getNewCustodianParams())
     setCustodian = async (portfolio: (DefaultPortfolio | NumberedPortfolio), params: SetCustodianParams): Promise<PortfolioInfoJson> => {
-        await (await portfolio.setCustodian(params)).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Setting custodian")
+        const queue: TransactionQueue<void, void> = await portfolio.setCustodian(params)
+        cyclerReq.running()
+        await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated portfolio")
         const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(portfolio)
+        cycler.fetched()
         this.props.onPortfolioInfoChanged(updated)
         return updated
     }
@@ -68,8 +83,14 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
 
     onQuitCustody = async () => this.quitCustody(this.props.portfolio.original)
     quitCustody = async (portfolio: DefaultPortfolio | NumberedPortfolio): Promise<PortfolioInfoJson> => {
-        await (await portfolio.quitCustody()).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Quitting custody")
+        const queue: TransactionQueue<void, void> = await portfolio.quitCustody()
+        cyclerReq.running()
+        await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated portfolio")
         const updated: PortfolioInfoJson = await fetchPortfolioInfoJson(portfolio)
+        cycler.fetched()
         this.props.onPortfolioInfoChanged(updated)
         return updated
     }
@@ -172,7 +193,11 @@ export class PortfolioJsonInfosView extends Component<PortfolioJsonInfosViewProp
     deletePortfolio = async (toDelete: NumberedPortfolio, index: number) => {
         const list: PortfolioInfoJson[] = this.props.portfolios
         const onPortfolioInfosChanged: OnPortfolioInfosChanged = this.props.onPortfolioInfosChanged
-        await (await toDelete.delete()).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Deleting portfolio")
+        const queue = await toDelete.delete()
+        cycler.running()
+        await queue.run()
+        cycler.hasRun()
         list.splice(index, 1)
         onPortfolioInfosChanged(list)
     }

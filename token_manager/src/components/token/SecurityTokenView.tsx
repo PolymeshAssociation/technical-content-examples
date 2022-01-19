@@ -1,8 +1,9 @@
-import { TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
+import { TransactionQueue, TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { Identity, SecurityToken, SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import { IdentitiesView, IdentityView } from "../identity/IdentityView";
@@ -139,8 +140,14 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
     updateOwnershipTarget = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ ownershipTarget: e.target.value })
     onOwnershipExpiryChanged = (expiry: Date) => this.setState({ ownershipExpiry: expiry })
     onTransferReservationOwnership = async () => {
-        const securityToken: SecurityToken = await (await this.props.token.current.transferOwnership(this.getTransferParams())).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Token ownership transfer")
+        const queue: TransactionQueue<SecurityToken, SecurityToken> = await this.props.token.current.transferOwnership(this.getTransferParams())
+        cyclerReq.running()
+        const securityToken: SecurityToken = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated token info")
         const tokenInfo: TokenInfoJson = await fetchTokenInfoJson(securityToken)
+        cycler.fetched()
         this.props.onSecurityTokenChanged(tokenInfo)
     }
     getTransferParams = () => ({

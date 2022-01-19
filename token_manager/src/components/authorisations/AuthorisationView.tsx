@@ -1,7 +1,9 @@
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/base/TransactionQueue";
 import { Authorization, AuthorizationRequest, AuthorizationType, Permissions } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { OnAuthorisationChanged, OnAuthorisationRequestChanged } from "../../handlers/authorisations/AuthorisationHandlers";
 import { assertUnreachable, isIdentityNotAccount } from "../../types";
+import { showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { IdentityView } from "../identity/IdentityView";
@@ -109,11 +111,19 @@ export interface AuthorisationRequestViewProps {
 export class AuthorisationRequestView extends Component<AuthorisationRequestViewProps> {
 
     onAcceptRequest = async () => {
-        await (await this.props.request.accept()).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Accepting authorisation request")
+        const queue: TransactionQueue<void, void> = await this.props.request.accept()
+        cycler.running()
+        await queue.run()
+        cycler.hasRun()
         this.props.onAuthorisationRequestChanged(this.props.request)
     }
     onRejectRequest = async () => {
-        await (await this.props.request.remove()).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Rejecting authorisation request")
+        const queue = await this.props.request.remove()
+        cycler.running()
+        await queue.run()
+        cycler.hasRun()
         this.props.onAuthorisationRequestChanged(this.props.request)
     }
 

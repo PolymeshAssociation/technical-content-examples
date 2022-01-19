@@ -2,6 +2,7 @@ import { BigNumber } from "@polymathnetwork/polymesh-sdk";
 import { Component } from "react";
 import { CheckpointLoadBalanceParams, OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers";
 import { CheckpointInfoJson } from "../../types";
+import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
 
 interface CheckpointViewState {
     whoseBalance: string
@@ -24,7 +25,12 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
 
     updateNewWhoseBalance = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ whoseBalance: e.target.value })
     onGetBalanceOf = async () => this.setState({ balance: await this.loadBalance() })
-    loadBalance = async (): Promise<BigNumber> => this.props.checkpointInfo.checkpoint.balance(this.getLoadBalanceParams())
+    loadBalance = async (): Promise<BigNumber> => {
+        const cycler: ShowFetchCycler = showFetchCycle("Balance of holder")
+        const balance: BigNumber = await this.props.checkpointInfo.checkpoint.balance(this.getLoadBalanceParams())
+        cycler.fetched()
+        return balance
+    }
     getLoadBalanceParams = (): CheckpointLoadBalanceParams => ({ identity: this.state.whoseBalance })
 
     render() {

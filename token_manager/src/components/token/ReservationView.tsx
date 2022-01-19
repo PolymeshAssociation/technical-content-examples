@@ -1,5 +1,9 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
-import { CreateSecurityTokenParams, TransferTickerOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
+import {
+    CreateSecurityTokenParams,
+    TransactionQueue,
+    TransferTickerOwnershipParams,
+} from "@polymathnetwork/polymesh-sdk/internal";
 import {
     KnownTokenType,
     SecurityToken,
@@ -11,6 +15,7 @@ import { Component } from "react";
 import { fetchReservationInfoJson, OnReservationInfoChanged } from "../../handlers/token/ReservationHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { ReservationInfoJson, TokenInfoJson } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EnumSelectView } from "../EnumView";
 import { IdentityView } from "../identity/IdentityView";
@@ -71,10 +76,16 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         target: this.state.transferTarget,
         expiry: this.state.transferExpiry,
     }) as TransferTickerOwnershipParams
-    onTransferReservationOwnership = async () => await this.transferOwnership()
-    transferOwnership = async () => {
-        const updated: TickerReservation = await (await this.props.reservation.current.transferOwnership(this.getTransferParams())).run()
-        this.props.onReservationInfoChanged(await fetchReservationInfoJson(updated))
+    onTransferReservationOwnership = async () => {
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Ticker ownership transfer")
+        const queue: TransactionQueue<TickerReservation, TickerReservation> = await this.props.reservation.current.transferOwnership(this.getTransferParams())
+        cyclerReq.running()
+        const updated: TickerReservation = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Updated ticker reservation")
+        const reservation: ReservationInfoJson = await fetchReservationInfoJson(updated)
+        cycler.fetched()
+        this.props.onReservationInfoChanged(reservation)
     }
 
     render() {
@@ -172,8 +183,14 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
     onUniquenessChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ requiresUniqueness: e.target.checked })
     onTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
     onCreateToken = async () => {
-        const securityToken: SecurityToken = await (await this.props.reservation.current.createToken(this.getTokenParams())).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Creating token")
+        const queue: TransactionQueue<SecurityToken, SecurityToken> = await this.props.reservation.current.createToken(this.getTokenParams())
+        cyclerReq.running()
+        const securityToken: SecurityToken = await (queue).run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Token info")
         const tokenInfo: TokenInfoJson = await fetchTokenInfoJson(securityToken)
+        cycler.fetched()
         this.props.onSecurityTokenChanged(tokenInfo)
     }
     getTokenParams = () => ({

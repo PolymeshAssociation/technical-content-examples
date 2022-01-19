@@ -1,11 +1,12 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { PolymeshError } from "@polymathnetwork/polymesh-sdk/base/PolymeshError";
-import { ReserveTickerParams } from "@polymathnetwork/polymesh-sdk/internal";
-import { Identity, SecurityToken, TickerReservation } from "@polymathnetwork/polymesh-sdk/types";
+import { ReserveTickerParams, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
+import { SecurityToken, TickerReservation } from "@polymathnetwork/polymesh-sdk/types";
 import { Component } from "react";
 import { fetchReservationInfoJson, OnReservationInfoChanged, OnTickerChanged } from "../../handlers/token/ReservationHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { ApiGetter, getEmptyReservation, getEmptyTokenInfoJson, ReservationInfoJson, TokenInfoJson } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showInfoFetched, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 
 interface TickerManagerViewState {
     ticker: string
@@ -17,6 +18,7 @@ interface TickerManagerViewState {
 export interface TickerManagerViewProps {
     reservation: ReservationInfoJson
     token: TokenInfoJson
+    myDid: string
     cardStyle: any
     apiGetter: ApiGetter
     onTickerChanged: OnTickerChanged
@@ -52,10 +54,13 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
     onUpdateTicker = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.updateTicker(e.target.value)
     onLoadMyTickers = async () => {
         const api: Polymesh = await this.props.apiGetter()
-        const me: Identity = await api.getCurrentIdentity()
-        const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: me });
+        const cyclerRes: ShowFetchCycler = showFetchCycle("Your ticker reservations")
+        const myReservations: TickerReservation[] = await api.getTickerReservations({ owner: this.props.myDid });
+        cyclerRes.fetched()
         const myReservedTickers: string[] = myReservations.map((element: TickerReservation) => element.ticker)
-        const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: me })
+        const cyclerTok: ShowFetchCycler = showFetchCycle("Your tokens")
+        const myTokens: SecurityToken[] = await api.getSecurityTokens({ owner: this.props.myDid })
+        cyclerTok.fetched()
         const myTokenTickers: string[] = myTokens.map((element: SecurityToken) => element.ticker)
         const ticker: string = [...myReservedTickers, ...myTokenTickers][0] ?? ""
         this.setState({
@@ -64,35 +69,54 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             ticker: ticker,
         })
     }
-    onReserveTicker = async () => this.reserveTicker()
-    reserveTicker = async (): Promise<ReservationInfoJson> => {
+    onReserveTicker = async (): Promise<ReservationInfoJson> => {
         const api: Polymesh = await this.props.apiGetter()
-        const reserved: TickerReservation = await (await api.reserveTicker(this.getReserveTickerParams())).run()
+        const cyclerReq: ShowRequestCycler = showRequestCycle("Ticker reservation")
+        const queue: TransactionQueue<TickerReservation, TickerReservation> = await api.reserveTicker(this.getReserveTickerParams())
+        cyclerReq.running()
+        const reserved: TickerReservation = await queue.run()
+        cyclerReq.hasRun()
+        const cycler: ShowFetchCycler = showFetchCycle("Ticker reservation info")
         const reservedInfo: ReservationInfoJson = await fetchReservationInfoJson(reserved)
+        cycler.fetched()
         this.props.onReservationInfoChanged(reservedInfo)
         return reservedInfo
     }
     getReserveTickerParams = (): ReserveTickerParams => ({ ticker: this.state.ticker })
     loadReservation = async () => {
         this.setState({ fetchTimer: null })
+        const { ticker } = this.state
         const api: Polymesh = await this.props.apiGetter()
         try {
-            const reservation: TickerReservation = await api.getTickerReservation({ ticker: this.state.ticker })
-            this.props.onReservationInfoChanged(await fetchReservationInfoJson(reservation))
+            const cyclerRes: ShowFetchCycler = showFetchCycle(`Reservation for ticker ${ticker}`)
+            const reservation: TickerReservation = await api.getTickerReservation({ ticker: ticker })
+            cyclerRes.fetched()
+            const cyclerInfo: ShowFetchCycler = showFetchCycle(`Reservation info for ticker ${ticker}`)
+            const info: ReservationInfoJson = await fetchReservationInfoJson(reservation)
+            cyclerInfo.fetched()
+            this.props.onReservationInfoChanged(info)
             this.props.onTokenInfoChanged(getEmptyTokenInfoJson())
         } catch (e) {
             if (!(e instanceof PolymeshError)) throw e
+            showInfoFetched(`No reservation for ${ticker}`)
             this.props.onReservationInfoChanged(getEmptyReservation())
             await this.loadToken()
         }
     }
     loadToken = async () => {
         const api: Polymesh = await this.props.apiGetter()
+        const { ticker } = this.state
         try {
-            const securityToken: SecurityToken = await api.getSecurityToken({ ticker: this.state.ticker })
-            this.props.onTokenInfoChanged(await fetchTokenInfoJson(securityToken))
+            const cyclerTok: ShowFetchCycler = showFetchCycle(`Security token of ${ticker}`)
+            const securityToken: SecurityToken = await api.getSecurityToken({ ticker: ticker })
+            cyclerTok.fetched()
+            const cyclerInfo: ShowFetchCycler = showFetchCycle("Token info")
+            const info: TokenInfoJson = await fetchTokenInfoJson(securityToken)
+            cyclerInfo.fetched()
+            this.props.onTokenInfoChanged(info)
         } catch (e) {
             if (!(e instanceof PolymeshError)) throw e
+            showInfoFetched(`No security token for ${ticker}`)
             this.props.onTokenInfoChanged(getEmptyTokenInfoJson())
         }
     }

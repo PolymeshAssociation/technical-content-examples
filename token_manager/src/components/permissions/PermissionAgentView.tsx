@@ -3,6 +3,7 @@ import {
     InviteExternalAgentParams,
     KnownPermissionGroup,
     RemoveExternalAgentParams,
+    TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal";
 import { AgentWithGroup, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
@@ -13,6 +14,7 @@ import { PermissionGroupView } from "./PermissionGroupView";
 import { isOwner, OnAgentChanged } from "../../handlers/permissions/AgentHandlers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
+import { showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 
 export interface PermissionAgentWithGroupViewProps {
     myDid: string
@@ -54,7 +56,11 @@ export interface PermissionAgentWithGroupsViewProps {
 
 export class PermissionAgentWithGroupsView extends Component<PermissionAgentWithGroupsViewProps> {
     onRemoveAgent = (agent: Identity) => async () => {
-        await (await this.props.permissions.removeAgent(this.getRemoveParams(agent))).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Removing agent")
+        const queue: TransactionQueue<void, void> = await this.props.permissions.removeAgent(this.getRemoveParams(agent))
+        cycler.running()
+        await queue.run()
+        cycler.hasRun()
         this.props.onAgentChanged(agent)
     }
     getRemoveParams = (agent: Identity): RemoveExternalAgentParams => ({
@@ -121,7 +127,11 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
     })
     onInviteAgent = async () => {
         const params: InviteExternalAgentParams = this.getInviteParams()
-        await (await this.props.permissions.inviteAgent(params)).run()
+        const cycler: ShowRequestCycler = showRequestCycle("Inviting agent")
+        const queue: TransactionQueue<void, void> = await this.props.permissions.inviteAgent(params)
+        cycler.running()
+        await queue.run()
+        cycler.hasRun()
     }
 
     render() {

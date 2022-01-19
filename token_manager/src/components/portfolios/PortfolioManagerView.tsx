@@ -1,8 +1,9 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
-import { Identity } from "@polymathnetwork/polymesh-sdk/types"
+import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types"
 import { Component } from "react"
 import { fetchPortfolioInfoJsons, OnPortfolioPicked } from "../../handlers/portfolios/PortfolioHandlers"
 import { ApiGetter, assertUnreachable, PortfolioInfoJson } from "../../types"
+import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers"
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView"
 import { PortfolioJsonInfosView } from "./PortfolioInfoJsonView"
 import { NewPortfolioView } from "./PortfolioView"
@@ -63,7 +64,10 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     }
     fetchMyPortfolios = async (): Promise<PortfolioInfoJson[]> => {
         const api: Polymesh = await this.props.apiGetter()
-        return await this.fetchPortfolios(await api.getCurrentIdentity())
+        const cycler: ShowFetchCycler = showFetchCycle("My identity")
+        const me: Identity = await api.getCurrentIdentity()
+        cycler.fetched()
+        return await this.fetchPortfolios(me)
     }
     onLoadOtherPortfolios = async () => {
         const loadedOtherOwner: string = this.state.otherOwner
@@ -75,11 +79,20 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     }
     fetchOtherPortfolios = async (): Promise<PortfolioInfoJson[]> => {
         const api: Polymesh = await this.props.apiGetter()
+        const cycler: ShowFetchCycler = showFetchCycle("Portfolio owner identity")
         const otherOwner: Identity = await api.getIdentity({ did: this.state.otherOwner })
+        cycler.fetched()
         return this.fetchPortfolios(otherOwner)
     }
-    fetchPortfolios = async (owner: Identity): Promise<PortfolioInfoJson[]> =>
-        fetchPortfolioInfoJsons(await owner.portfolios.getPortfolios())
+    fetchPortfolios = async (owner: Identity): Promise<PortfolioInfoJson[]> => {
+        const cyclerPort: ShowFetchCycler = showFetchCycle(`Portfolios of ${owner.did}`)
+        const portfolios: (DefaultPortfolio | NumberedPortfolio)[] = await owner.portfolios.getPortfolios()
+        cyclerPort.fetched()
+        const cyclerInfo: ShowFetchCycler = showFetchCycle("Infos of portfolios")
+        const infos = await fetchPortfolioInfoJsons(portfolios)
+        cyclerInfo.fetched()
+        return infos
+    }
 
     onLoadMyCustodiedPortfolios = async () => {
         this.setState({ listType: PortfolioListType.MyCustodied })
@@ -87,11 +100,20 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
     }
     fetchMyCustodiedPortfolios = async (): Promise<PortfolioInfoJson[]> => {
         const api: Polymesh = await this.props.apiGetter()
+        const cycler: ShowFetchCycler = showFetchCycle("Your current identity")
         const me: Identity = await api.getCurrentIdentity()
+        cycler.fetched()
         return this.fetchCustodiedPortfolios(me)
     }
-    fetchCustodiedPortfolios = async (custodian: Identity): Promise<PortfolioInfoJson[]> =>
-        fetchPortfolioInfoJsons((await custodian.portfolios.getCustodiedPortfolios()).data)
+    fetchCustodiedPortfolios = async (custodian: Identity): Promise<PortfolioInfoJson[]> => {
+        const cyclerPort: ShowFetchCycler = showFetchCycle("My custodied portfolios")
+        const custodied: (DefaultPortfolio | NumberedPortfolio)[] = (await custodian.portfolios.getCustodiedPortfolios()).data
+        cyclerPort.fetched()
+        const cyclerInfo: ShowFetchCycler = showFetchCycle("Custodied portfolios infos")
+        const infos: PortfolioInfoJson[] = await fetchPortfolioInfoJsons(custodied)
+        cyclerInfo.fetched()
+        return infos
+    }
 
     onPortfolioInfosChanged = (listType: PortfolioListType) => (changed: PortfolioInfoJson[]) => {
         switch (listType) {
