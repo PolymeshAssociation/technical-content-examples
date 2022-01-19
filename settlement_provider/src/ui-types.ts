@@ -1,4 +1,4 @@
-import { FullSettlementJson } from "./settlementInfo";
+import { FullSettlementJson } from "./settlementInfo"
 
 export interface SimpleVenueJson {
     ownerDid: string

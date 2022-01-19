@@ -10,7 +10,7 @@ export interface ISettlementDb {
 export class SettlementDbError extends Error {
     constructor(message?: string) {
         super(message)
-        Error.apply(this, arguments);
+        Error.apply(this, arguments)
     }
 }
 
