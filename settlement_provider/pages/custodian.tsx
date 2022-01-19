@@ -1,23 +1,23 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
 import { FullSettlementJson, } from "../src/settlementInfo"
 import { SettlementListJson, } from "../src/ui-types"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    traderId: "" as string,
+    traderId: "",
     info: {
       settlements: [],
-    } as SettlementListJson,
+    },
   })
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
-  function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onTraderIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       traderId: e.target.value,
@@ -39,13 +39,13 @@ export default function Home() {
     return response
   }
 
-  async function submitGetPendingSettlements(e): Promise<void> {
+  async function submitGetPendingSettlements(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getPendingSettlements(myInfo.traderId)
   }
 
   async function sendSettlementAction(settlement: FullSettlementJson, settlementSide: string): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
+    const response: Response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
       await getPendingSettlements(myInfo.traderId)
@@ -55,15 +55,15 @@ export default function Home() {
     return response
   }
 
-  function submitSettlementActionCreator(settlement: FullSettlementJson, settlementSide: string): (e) => Promise<void> {
-    return async function (e): Promise<void> {
+  function submitSettlementActionCreator(settlement: FullSettlementJson, settlementSide: string): (e: MouseEvent<HTMLButtonElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLButtonElement>): Promise<void> {
       e.preventDefault()
       await sendSettlementAction(settlement, settlementSide)
     }
   }
 
   async function sendSettlementReject(settlement: FullSettlementJson): Promise<Response> {
-    const response = await fetch(`/api/settlement/${settlement.id}`, { method: "DELETE" })
+    const response: Response = await fetch(`/api/settlement/${settlement.id}`, { method: "DELETE" })
     if (response.status == 200) {
       setStatus("Settlement deleted")
       await getPendingSettlements(myInfo.traderId)
@@ -73,14 +73,14 @@ export default function Home() {
     return response
   }
 
-  function submitSettlementRejectCreator(settlement: FullSettlementJson): (e) => Promise<void> {
-    return async function (e): Promise<void> {
+  function submitSettlementRejectCreator(settlement: FullSettlementJson): (e: MouseEvent<HTMLButtonElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLButtonElement>): Promise<void> {
       e.preventDefault()
       await sendSettlementReject(settlement)
     }
   }
 
-  function getInstructionHtml(settlement: FullSettlementJson) {
+  function getInstructionHtml(settlement: FullSettlementJson): JSX.Element {
     const buyerTitle: string = settlement.buyer.id
     const sellerTitle: string = settlement.seller.id
     const isBuyerRelevant: boolean = myInfo.traderId === settlement.buyer.id && !settlement.isPaid

@@ -36,7 +36,7 @@ export class SettlementDbFs implements ISettlementDb {
             .map(([id, settlement]: [string, SettlementJson]) => new FullSettlementInfo({ ...settlement, id }))
             .reduce(
                 (list: IFullSettlementInfo[], settlementInfo: IFullSettlementInfo) => [...list, settlementInfo],
-                [] as IFullSettlementInfo[])
+                [])
     }
 
     async getSettlementInfoById(id: string): Promise<ISettlementInfo> {

@@ -1,5 +1,5 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { MouseEvent, useState } from "react"
 import { AssignedOrderJson } from "../src/orderInfo"
 import { FullSettlementJson } from "../src/settlementInfo"
 import styles from "../styles/Home.module.css"
@@ -7,16 +7,16 @@ import styles from "../styles/Home.module.css"
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
     info: {
-      orders: [] as AssignedOrderJson[],
+      orders: [],
     },
     picked: {
-      sell: "" as string,
-      buy: "" as string,
+      sell: "",
+      buy: "",
     },
   })
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
@@ -37,12 +37,13 @@ export default function Home() {
     return response
   }
 
-  async function submitGetOrdersInfo(e): Promise<void> {
+  async function submitGetOrdersInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
+    e.preventDefault()
     await getOrdersInfo()
   }
 
-  function onTradeSelected(isBuy: boolean) {
-    return function (e: React.MouseEvent<HTMLElement, MouseEvent>): void {
+  function onTradeSelected(isBuy: boolean): (e: MouseEvent<HTMLElement>) => void {
+    return function (e: MouseEvent<HTMLElement>): void {
       const tradeId: string = e.currentTarget.getAttribute("data-order-id")
       setMyInfo((prevInfo) => ({
         ...prevInfo,
@@ -56,8 +57,8 @@ export default function Home() {
 
   async function createMatch(): Promise<Response> {
     setStatus("Sending settlement")
-    const settlementResponse = await fetch(`/api/settlements/?buyerId=${myInfo.picked.buy}&sellerId=${myInfo.picked.sell}`, {
-      method: "POST"
+    const settlementResponse: Response = await fetch(`/api/settlements/?buyerId=${myInfo.picked.buy}&sellerId=${myInfo.picked.sell}`, {
+      method: "POST",
     })
     if (settlementResponse.status == 200) {
       const settlement: FullSettlementJson = await settlementResponse.json()
@@ -70,7 +71,7 @@ export default function Home() {
     return settlementResponse
   }
 
-  async function submitMatch(e): Promise<void> {
+  async function submitMatch(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await createMatch()
     await getOrdersInfo()

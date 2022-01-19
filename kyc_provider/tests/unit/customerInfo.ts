@@ -1,6 +1,6 @@
 import { describe } from "mocha"
 import { expect } from "chai"
-import { CustomerInfo, CustomerJson, } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson, ICustomerInfo, IncompleteInfoError } from "../../src/customerInfo"
 
 describe("CustomerInfo Unit Tests", () => {
 
@@ -12,7 +12,7 @@ describe("CustomerInfo Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.name).to.equal("John Doe")
         expect(info.country).to.equal("Gb")
@@ -21,20 +21,15 @@ describe("CustomerInfo Unit Tests", () => {
         expect(info.jurisdiction).to.equal("Ie")
     })
 
-    it("can construct from incomplete JSON", () => {
+    it("cannot construct from missing jurisdiction", () => {
         const bareInfo: CustomerJson = <CustomerJson>{
             name: "John Doe",
             country: "Gb",
+            passport: "12345",
             valid: true,
-            jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
-
-        expect(info.name).to.equal("John Doe")
-        expect(info.country).to.equal("Gb")
-        expect(info.passport).to.be.undefined
-        expect(info.valid).to.be.true
-        expect(info.jurisdiction).to.equal("Ie")
+        expect(() => new CustomerInfo(bareInfo)).to.throw(IncompleteInfoError)
+            .that.satisfies((e: IncompleteInfoError) => e.field === "jurisdiction")
     })
 
     it("can convert to JSON", () => {
@@ -45,7 +40,7 @@ describe("CustomerInfo Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.toJSON()).to.deep.equal(bareInfo)
     })
@@ -58,7 +53,7 @@ describe("CustomerInfo Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",
@@ -78,7 +73,7 @@ describe("CustomerInfo Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",

@@ -36,7 +36,7 @@ export class ExchangeDbFs implements IExchangeDb {
             .map(([id, trade]: [string, OrderJson]) => new AssignedOrderInfo({ ...trade, id }))
             .reduce(
                 (list: IAssignedOrderInfo[], tradeInfo: IAssignedOrderInfo) => [...list, tradeInfo],
-                [] as IAssignedOrderInfo[])
+                [])
     }
 
     async getOrderInfoById(id: string): Promise<IOrderInfo> {

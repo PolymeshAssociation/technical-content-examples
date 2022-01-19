@@ -1,5 +1,5 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
 import { CountryInfo, getCountryList } from "../src/types"
@@ -14,18 +14,19 @@ export default function Home() {
       passport: "",
       valid: false,
       jurisdiction: "",
-    } as CustomerJson,
+    },
     modified: false,
   })
   const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
   async function getMyInfo(): Promise<Response> {
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
+    setStatus("Fetching your information")
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
     } else if (response.status == 200) {
@@ -42,7 +43,7 @@ export default function Home() {
     return response
   }
 
-  async function submitGetMyInfo(e): Promise<void> {
+  async function submitGetMyInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getMyInfo()
   }
@@ -53,7 +54,7 @@ export default function Home() {
       modified: false,
     }))
     setStatus("Submitting info...")
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
       method: "PUT",
       body: JSON.stringify(myInfo.info),
     })
@@ -69,19 +70,19 @@ export default function Home() {
     }
   }
 
-  async function submitMyInfo(e): Promise<void> {
+  async function submitMyInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault()
     sendMyInfo()
   }
 
-  function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       id: e.target.value,
     }))
   }
 
-  function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyInfoChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       info: {

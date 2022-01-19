@@ -7,7 +7,7 @@ import {
     WrongZeroOrderError,
     OrderJson,
 } from "../../../src/orderInfo"
-import { UnknownTraderError } from "../../../src/exchangeDb"
+import { IExchangeDb, UnknownTraderError } from "../../../src/exchangeDb"
 import exchangeDbFactory from "../../../src/exchangeDbFactory"
 
 async function getOrderInfoById(req: NextApiRequest): Promise<OrderJson> {
@@ -16,16 +16,16 @@ async function getOrderInfoById(req: NextApiRequest): Promise<OrderJson> {
 
 async function setOrderInfo(req: NextApiRequest): Promise<void> {
     const id = <string>req.query.id
-    const exchangeDb = await exchangeDbFactory()
-    const orderInfo = new OrderInfo(typeof req.body === "string"
+    const exchangeDb: IExchangeDb = await exchangeDbFactory()
+    const orderInfo: IOrderInfo = new OrderInfo(typeof req.body === "string"
         ? JSON.parse(req.body)
         : req.body)
     await exchangeDb.setOrderInfo(id, orderInfo)
 }
 
 async function deleteOrderInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id
-    const exchangeDb = await exchangeDbFactory()
+    const id: string = <string>req.query.id
+    const exchangeDb: IExchangeDb = await exchangeDbFactory()
     await exchangeDb.deleteOrderInfoById(id)
 }
 

@@ -1,28 +1,28 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
 import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 
 export default function Home() {
   const emptyOrder: OrderJson = {
-    isBuy: true as boolean,
-    quantity: "" as string,
-    token: "" as string,
-    price: "" as string,
+    isBuy: true,
+    quantity: "",
+    token: "",
+    price: "",
   }
   const [myInfo, setMyInfo] = useState({
-    id: "" as string,
-    order: Object.assign({}, emptyOrder) as OrderJson,
-    modified: false as boolean,
+    id: "",
+    order: Object.assign({}, emptyOrder),
+    modified: false,
   })
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
   async function getMyOrder(): Promise<Response> {
-    const response = await fetch(`/api/trader/${myInfo.id}`, { method: "GET" })
+    const response: Response = await fetch(`/api/trader/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Order not found, enter your order info")
       setMyInfo((prevInfo) => ({
@@ -43,13 +43,13 @@ export default function Home() {
     return response
   }
 
-  async function submitGetMyOrder(e): Promise<void> {
+  async function submitGetMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getMyOrder()
   }
 
   async function deleteMyOrder(): Promise<Response> {
-    const response = await fetch(`/api/trader/${myInfo.id}`, { method: "DELETE" })
+    const response: Response = await fetch(`/api/trader/${myInfo.id}`, { method: "DELETE" })
     if (response.status == 200) {
       setStatus("Order deleted")
       setMyInfo((prevInfo) => ({
@@ -62,7 +62,7 @@ export default function Home() {
     return response
   }
 
-  async function submitDeleteMyOrder(e): Promise<void> {
+  async function submitDeleteMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await deleteMyOrder()
   }
@@ -73,7 +73,7 @@ export default function Home() {
       modified: false,
     }))
     setStatus("Submitting order...")
-    const response = await fetch(`/api/trader/${myInfo.id}`, {
+    const response: Response = await fetch(`/api/trader/${myInfo.id}`, {
       method: "PUT",
       body: JSON.stringify(myInfo.order),
     })
@@ -88,12 +88,12 @@ export default function Home() {
     }
   }
 
-  async function submitMyOrder(e): Promise<void> {
+  async function submitMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault()
     sendMyOrder()
   }
 
-  function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       id: e.target.value,
@@ -111,11 +111,11 @@ export default function Home() {
     }))
   }
 
-  async function onMyOrderChanged(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+  async function onMyOrderChanged(e: ChangeEvent<HTMLInputElement>): Promise<void> {
     await changeMyOrder(e.target.name, e.target.value)
   }
 
-  function onBuyChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onBuyChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       order: {

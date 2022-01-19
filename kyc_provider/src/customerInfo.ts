@@ -12,8 +12,17 @@ export interface ICustomerInfo {
     passport: string
     valid: boolean
     jurisdiction: string
-    toJSON(): CustomerJson
-    patch(extra: Partial<CustomerJson>): void
+    toJSON: () => CustomerJson
+    patch: (extra: Partial<CustomerJson>) => void
+}
+
+function requireDesiredType(info: any, field: string, receivedType: string) {
+    if (typeof info === "undefined") {
+        throw new IncompleteInfoError(field)
+    }
+    if (typeof info !== receivedType) {
+        throw new WrongTypeError(field, typeof info)
+    }
 }
 
 export class CustomerInfo implements ICustomerInfo {
@@ -24,13 +33,17 @@ export class CustomerInfo implements ICustomerInfo {
     jurisdiction: string
 
     constructor(info: CustomerJson) {
+        requireDesiredType(info.name, "name", "string")
         this.name = info.name
+        requireDesiredType(info.country, "country", "string")
         if (info.country === "") {
             throw new IncompleteInfoError("country")
         }
         this.country = info.country
+        requireDesiredType(info.passport, "passport", "string")
         this.passport = info.passport
         this.valid = typeof info.valid === "undefined" ? false : info.valid
+        requireDesiredType(info.jurisdiction, "jurisdiction", "string")
         if (info.jurisdiction === "") {
             throw new IncompleteInfoError("jurisdiction")
         }

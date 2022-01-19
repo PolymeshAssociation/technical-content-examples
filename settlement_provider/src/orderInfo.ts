@@ -9,7 +9,7 @@ export interface IOrderInfo {
     quantity: number
     token: string
     price: number
-    toJSON(): OrderJson
+    toJSON: () => OrderJson
 }
 
 export interface AssignedOrderJson extends OrderJson {
@@ -18,7 +18,7 @@ export interface AssignedOrderJson extends OrderJson {
 
 export interface IAssignedOrderInfo extends IOrderInfo {
     id: string
-    toJSON(): AssignedOrderJson
+    toJSON: () => AssignedOrderJson
 }
 
 function requireDesiredType(info: any, field: string, receivedType: string) {

@@ -3,7 +3,7 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
-import { OrderInfo, OrderJson } from "../../src/orderInfo"
+import { IOrderInfo, OrderInfo, OrderJson } from "../../src/orderInfo"
 import { IExchangeDb } from "../../src/exchangeDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import handleTraderId from "../../pages/api/trader/[id]"
@@ -90,7 +90,7 @@ describe("/api/trader/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const order = await exchangeDb.getOrderInfoById("4")
+            const order: IOrderInfo = await exchangeDb.getOrderInfoById("4")
             expect(order.toJSON()).to.deep.equal(bareInfo)
         })
 

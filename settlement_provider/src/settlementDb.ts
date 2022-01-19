@@ -1,10 +1,10 @@
 import { IFullSettlementInfo, ISettlementInfo, } from "./settlementInfo"
 
 export interface ISettlementDb {
-    getSettlements(): Promise<IFullSettlementInfo[]>
-    getSettlementInfoById(id: any): Promise<ISettlementInfo>
-    setSettlementInfo(id: any, info: ISettlementInfo): Promise<void>
-    deleteSettlementInfo(id: any): Promise<void>
+    getSettlements: () => Promise<IFullSettlementInfo[]>
+    getSettlementInfoById: (id: any) => Promise<ISettlementInfo>
+    setSettlementInfo: (id: any, info: ISettlementInfo) => Promise<void>
+    deleteSettlementInfo: (id: any) => Promise<void>
 }
 
 export class SettlementDbError extends Error {

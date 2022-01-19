@@ -10,7 +10,7 @@ export interface SettlementPartyJson {
 
 export interface ISettlementParty {
     id: string
-    toJSON(): SettlementPartyJson
+    toJSON: () => SettlementPartyJson
 }
 
 export interface SettlementJson {
@@ -35,12 +35,12 @@ export interface ISettlementInfo {
     price: number
     isPaid: boolean
     isTransferred: boolean
-    toJSON(): SettlementJson
+    toJSON: () => SettlementJson
 }
 
 export interface IFullSettlementInfo extends ISettlementInfo {
     id: string
-    toJSON(): FullSettlementJson
+    toJSON: () => FullSettlementJson
 }
 
 function requireDesiredType(info: any, field: string, receivedType: string) {

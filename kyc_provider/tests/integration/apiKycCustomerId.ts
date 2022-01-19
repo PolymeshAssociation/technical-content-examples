@@ -1,11 +1,14 @@
-import { promises as fsPromises } from "fs"
+import { exists as existsAsync, promises as fsPromises } from "fs"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
+import { promisify } from "util"
 import handleKycCustomerId from "../../pages/api/kycCustomer/[id]"
 import { CustomerInfo, CustomerJson, ICustomerInfo } from "../../src/customerInfo"
 import { ICustomerDb } from "../../src/customerDb"
 import customerDbFactory from "../../src/customerDbFactory"
+
+const exists = promisify(existsAsync)
 
 describe("/api/kycCustomer/[id] Integration Tests", () => {
     let dbPath: string
@@ -22,7 +25,9 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
 
     afterEach("restore env", async () => {
         toRestore()
-        await fsPromises.unlink(dbPath)
+        if (await exists(dbPath)) {
+            await fsPromises.unlink(dbPath)
+        }
     })
 
     describe("GET", () => {
@@ -68,7 +73,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
 
     describe("PUT", () => {
 
-        it("returns 200 on set info", async () => {
+        it("returns 200 on set info not valid", async () => {
             const bareInfo: CustomerJson = {
                 name: "John Doe",
                 country: "Gb",

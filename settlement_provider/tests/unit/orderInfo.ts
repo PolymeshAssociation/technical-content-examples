@@ -5,6 +5,7 @@ import {
     AssignedOrderJson,
     IAssignedOrderInfo,
     IncompleteOrderInfoError,
+    IOrderInfo,
     OrderInfo,
     OrderJson,
     WrongNumericValueError,
@@ -22,7 +23,7 @@ describe("OrderInfo Unit Tests", () => {
             price: "33",
         }
 
-        const info = new OrderInfo(bareInfo)
+        const info: IOrderInfo = new OrderInfo(bareInfo)
 
         expect(info.isBuy).to.be.true
         expect(info.quantity.toString(10)).to.equal("12345")
@@ -71,7 +72,7 @@ describe("OrderInfo Unit Tests", () => {
             isBuy: true,
             quantity: "ab",
             token: "ACME",
-            price: "3",
+            price: "33",
         }
 
         expect(() => new OrderInfo(bareInfo)).to.throw(WrongNumericValueError)

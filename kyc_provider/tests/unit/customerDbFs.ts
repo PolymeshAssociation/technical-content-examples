@@ -7,23 +7,23 @@ import { UnknownCustomerError } from "../../src/customerDb"
 use(require("chai-as-promised"))
 
 describe("CustomerDbFs Unit Tests", () => {
-    let dbPath
+    let dbPath: string
 
-    beforeEach("prepare dbStore", async() => {
+    beforeEach("prepare dbStore", async () => {
         dbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
     })
 
-    afterEach("clear dbStore", async() => {
+    afterEach("clear dbStore", async () => {
         await fsPromises.unlink(dbPath)
     })
 
-    it("throws when missing id", async() => {
+    it("throws when missing id", async () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         await expect(db.getCustomerInfoById("1")).to.be.eventually.rejected
             .that.satisfies((error: UnknownCustomerError) => error.id === "1")
     })
 
-    it("can save customer info in an empty db", async() => {
+    it("can save customer info in an empty db", async () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo: CustomerJson = {
             name: "John Doe",
@@ -36,7 +36,7 @@ describe("CustomerDbFs Unit Tests", () => {
         await db.setCustomerInfo("1", info)
     })
 
-    it("can get saved customer info", async() => {
+    it("can get saved customer info", async () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo: CustomerJson = {
             name: "John Doe",
@@ -56,7 +56,7 @@ describe("CustomerDbFs Unit Tests", () => {
         expect(retrieved.jurisdiction).to.equal("Ie")
     })
 
-    it("can save and get 2 saved customer infos", async() => {
+    it("can save and get 2 saved customer infos", async () => {
         const db: CustomerDbFs = new CustomerDbFs(dbPath)
         const bareInfo1: CustomerJson = {
             name: "John Doe",
