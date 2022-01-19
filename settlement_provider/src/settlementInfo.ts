@@ -1,7 +1,5 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk"
-import {
-    PortfolioLike,
-} from "@polymathnetwork/polymesh-sdk/types"
+import { PortfolioLike } from "@polymathnetwork/polymesh-sdk/types"
 import {
     IOrderInfo,
     InvalidPolymeshDidError,

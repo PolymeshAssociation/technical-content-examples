@@ -5,7 +5,7 @@ import { expect, use } from "chai"
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { Portfolios } from "@polymathnetwork/polymesh-sdk/api/entities/Identity/Portfolios"
 import { Context, DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/internal"
-import { Identity, } from "@polymathnetwork/polymesh-sdk/types"
+import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 import {
     IAssignedOrderInfo,
     InvalidPortfolioError,

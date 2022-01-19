@@ -1,7 +1,7 @@
 import Head from "next/head"
 import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
-import { Polymesh, } from '@polymathnetwork/polymesh-sdk'
+import { Polymesh } from '@polymathnetwork/polymesh-sdk'
 import {
   Authorization,
   AuthorizationRequest,
@@ -11,9 +11,7 @@ import {
   NumberedPortfolio,
   ResultSet,
 } from '@polymathnetwork/polymesh-sdk/types'
-import {
-  TransactionQueue,
-} from "@polymathnetwork/polymesh-sdk/internal"
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import { getPolyWalletApi } from "../src/ui-helpers"
 import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
 import { isIdentityNotAccount, isNumberedPortfolio } from "../src/types"
