@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import ClaimForwarderFactory from "../../src/claimForwarderFactory"
 import { IClaimForwarder, NonExistentKycIdentityError } from "../../src/claimForwarder"
-import { Identity } from "@polymathnetwork/polymesh-sdk/internal"
+import { Identity } from "@polymathnetwork/polymesh-sdk/types"
 
 async function getKycProviderInfo(req: NextApiRequest): Promise<JSON> {
     const claimForwarder: IClaimForwarder = await ClaimForwarderFactory()
     const providerDid: Identity = await claimForwarder.getServiceProviderIdentity()
     return <JSON><unknown>{
-        did: providerDid.did
+        did: providerDid.did,
     }
 }
 

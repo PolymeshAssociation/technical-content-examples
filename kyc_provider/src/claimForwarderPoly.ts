@@ -20,12 +20,15 @@ import {
     ScopeType,
 } from "@polymathnetwork/polymesh-sdk/types"
 import {
-    CurrentIdentity,
     TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal"
 
 export interface ClaimsAddedResultPoly extends ClaimsAddedResult {
     blockHashes: string[]
+}
+
+export interface ClaimsRevokedResultPoly extends ClaimsRevokedResult {
+    txHashes: string[]
 }
 
 export class TooManyIdentitiesCustomerError extends ClaimForwarderError {
@@ -46,7 +49,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
     }
 
     async getServiceProviderIdentity(): Promise<Identity> {
-        const providerId: CurrentIdentity = await this.api.getCurrentIdentity()
+        const providerId: Identity = await this.api.getCurrentIdentity()
         if (providerId === null) {
             throw new NonExistentKycIdentityError(this.api.getAccount().address)
         }
@@ -66,7 +69,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             throw new NonExistentCustomerPolymeshIdError(customer)
         }
 
-        const myId: CurrentIdentity = await this.api.getCurrentIdentity()
+        const myId: Identity = await this.api.getCurrentIdentity()
         const issuedClaims: ResultSet<IdentityWithClaims> = await this.api.claims.getIdentitiesWithClaims({
             targets: [customer.polymeshDid],
             trustedClaimIssuers: [myId],
@@ -128,7 +131,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
         }
     }
 
-    async revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResult> {
+    async revokeJurisdictionClaim(customer: ICustomerInfo): Promise<ClaimsRevokedResultPoly> {
         let claim: ClaimData<JurisdictionClaim>
         try {
             claim = await this.getJurisdictionClaim(customer)
@@ -137,6 +140,7 @@ export class ClaimForwarderPoly implements IClaimForwarder {
                 // Nothing to revoke, assume ok.
                 return {
                     status: true,
+                    txHashes: [],
                 }
             }
             throw e
@@ -145,10 +149,9 @@ export class ClaimForwarderPoly implements IClaimForwarder {
             claims: [claim],
         })
         await revokeQueue.run()
-        // revokeQueue.transactions.map(tx => tx.txHash) // TODO
-
         return {
             status: true,
+            txHashes: revokeQueue.transactions.map(tx => tx.txHash!),
         }
     }
 

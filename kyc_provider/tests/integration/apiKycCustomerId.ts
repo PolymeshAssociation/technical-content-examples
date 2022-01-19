@@ -1,13 +1,16 @@
-import { promises as fsPromises } from "fs"
+import { exists as existsAsync, promises as fsPromises } from "fs"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
+import { promisify } from "util"
 import * as nextConfig from "../../next.config.js"
 import handleKycCustomerId from "../../pages/api/kycCustomer/[id]"
 import { CustomerInfo, CustomerJson, ICustomerInfo } from "../../src/customerInfo"
 import { ICustomerDb, UnknownCustomerError } from "../../src/customerDb"
 import customerDbFactory from "../../src/customerDbFactory"
 import { CountryCode } from "@polymathnetwork/polymesh-sdk/types"
+
+const exists = promisify(existsAsync)
 
 describe("/api/kycCustomer/[id] Integration Tests", () => {
     const onTrustDid = "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e"
@@ -38,7 +41,9 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
 
     afterEach("restore env", async () => {
         toRestore()
-        await fsPromises.unlink(dbPath)
+        if (await exists(dbPath)) {
+            await fsPromises.unlink(dbPath)
+        }
     })
 
     describe("GET", () => {
@@ -103,7 +108,6 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             })
 
             await handleKycCustomerId(req, res)
-
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 status: "ok",

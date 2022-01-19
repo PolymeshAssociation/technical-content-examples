@@ -1,12 +1,12 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
 import {
   ClaimData,
   ClaimType,
   CountryCode,
-  CurrentIdentity,
+  Identity,
   IdentityWithClaims,
   ResultSet,
   ScopedClaim,
@@ -26,20 +26,20 @@ export default function Home() {
       valid: false,
       jurisdiction: "",
       polymeshDid: "",
-    } as CustomerJson,
+    },
     modified: false,
-    myAttestations: [] as IdentityWithClaims[],
+    myAttestations: [],
   })
   const countryList: CountryInfo[] = getCountryList()
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status") as HTMLElement
     element.innerHTML = content
   }
 
   async function getEzKycDid(): Promise<string> {
     setStatus("Fetching EzKyc did")
-    const response = await fetch("/api/kycProvider", { method: "GET" })
+    const response: Response = await fetch("/api/kycProvider", { method: "GET" })
     if (response.status != 200) {
       setStatus("Something went wrong when getting the EzKyc information")
       console.log(response)
@@ -51,7 +51,7 @@ export default function Home() {
 
   async function getMyInfo(): Promise<Response> {
     setStatus("Fetching your information")
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Customer not found, enter your information")
     } else if (response.status == 200) {
@@ -68,7 +68,7 @@ export default function Home() {
     return response
   }
 
-  async function submitGetMyInfo(e): Promise<void> {
+  async function submitGetMyInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getMyInfo()
   }
@@ -79,7 +79,7 @@ export default function Home() {
       modified: false,
     }))
     setStatus("Submitting info...")
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
       method: "PUT",
       body: JSON.stringify(myInfo.info),
     })
@@ -95,19 +95,19 @@ export default function Home() {
     }
   }
 
-  async function submitMyInfo(e): Promise<void> {
+  async function submitMyInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault()
     sendMyInfo()
   }
 
-  function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       id: e.target.value,
     }))
   }
 
-  function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onMyInfoChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       info: {
@@ -146,19 +146,19 @@ export default function Home() {
     return did
   }
 
-  async function submitDidFromPolyWallet(e): Promise<string> {
+  async function submitDidFromPolyWallet(e: MouseEvent<HTMLButtonElement>): Promise<string> {
     e.preventDefault()
     return setDidFromPolyWallet()
   }
 
-  async function fetchMyAttestations(e): Promise<IdentityWithClaims[]> {
+  async function fetchMyAttestations(e: MouseEvent<HTMLButtonElement>): Promise<IdentityWithClaims[]> {
     e.preventDefault() // prevent page from submitting form
     const [ezKycDid, api]: [string, Polymesh] = await Promise.all([
       getEzKycDid(),
       getPolyWalletApi(setStatus)
     ])
     setStatus("Fetching your identity")
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     setStatus("Fetching your jurisdiction claims from EzKyc")
     const issuedClaims: ResultSet<IdentityWithClaims> = await api.claims.getIdentitiesWithClaims({
       targets: [me.did],

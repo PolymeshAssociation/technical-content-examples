@@ -1,9 +1,8 @@
 import Head from "next/head"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import Select from "react-select"
 import styles from "../styles/Home.module.css"
 import { CountryInfo, getCountryList } from "../src/types"
-import { CustomerJson } from "../src/customerInfo"
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
@@ -15,7 +14,7 @@ export default function Home() {
       valid: false,
       jurisdiction: "",
       polymeshDid: "",
-    } as CustomerJson,
+    },
   })
   const countryList: CountryInfo[] = getCountryList()
 
@@ -24,7 +23,7 @@ export default function Home() {
     element.innerHTML = content
   }
 
-  function onCustomerIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onCustomerIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       id: e.target.value,
@@ -32,7 +31,7 @@ export default function Home() {
   }
 
   async function getCustomerInfo(): Promise<Response> {
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, { method: "GET" })
     if (response.status == 404) {
       setStatus("Customer not found, reload the page and enter your information")
     } else if (response.status == 200) {
@@ -48,7 +47,7 @@ export default function Home() {
     return response
   }
 
-  async function submitGetCustomerInfo(e): Promise<void> {
+  async function submitGetCustomerInfo(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getCustomerInfo()
   }
@@ -62,7 +61,7 @@ export default function Home() {
       },
     }))
     setStatus("Submitting info...")
-    const response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
+    const response: Response = await fetch(`/api/kycCustomer/${myInfo.id}`, {
       method: "PATCH",
       body: JSON.stringify({
         valid: valid,
@@ -77,7 +76,7 @@ export default function Home() {
     }
   }
 
-  async function submitValid(e: React.MouseEvent<HTMLButtonElement, MouseEvent>): Promise<void> {
+  async function submitValid(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     await sendValidInfo((e.target as HTMLButtonElement).getAttribute("data-valid") === "true")
   }
 

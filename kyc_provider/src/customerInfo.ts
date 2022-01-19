@@ -16,8 +16,8 @@ export interface ICustomerInfo {
     valid: boolean
     jurisdiction: CountryCode
     polymeshDid: string | null
-    toJSON(): CustomerJson
-    patch(extra: Partial<CustomerJson>): void
+    toJSON: () => CustomerJson
+    patch: (extra: Partial<CustomerJson>) => void
 }
 
 const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
@@ -77,7 +77,7 @@ export class CustomerInfo implements ICustomerInfo {
             passport: this.passport,
             valid: this.valid,
             jurisdiction: this.jurisdiction,
-            polymeshDid: this.polymeshDid
+            polymeshDid: this.polymeshDid,
         }
     }
 

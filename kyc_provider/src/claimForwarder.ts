@@ -16,9 +16,9 @@ export interface IClaimForwarder {
 }
 
 export type JurisdictionClaim = {
-    type: ClaimType.Jurisdiction;
-    code: CountryCode;
-    scope: Scope;
+    type: ClaimType.Jurisdiction
+    code: CountryCode
+    scope: Scope
 }
 
 export interface ClaimsAddedResult {
@@ -30,38 +30,38 @@ export interface ClaimsRevokedResult {
 }
 
 export class ClaimForwarderError extends Error {
-    constructor (message?: string) {
+    constructor(message?: string) {
         super(message)
         Error.apply(this, arguments)
     }
 }
 
 export class NonExistentKycIdentityError extends ClaimForwarderError {
-    constructor (public address: string, message?: string) {
+    constructor(public address: string, message?: string) {
         super(message)
     }
 }
 
 export class NoClaimForCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo, message?: string) {
+    constructor(public customer: ICustomerInfo, message?: string) {
         super(message)
     }
 }
 
 export class InvalidCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo, message?: string) {
+    constructor(public customer: ICustomerInfo, message?: string) {
         super(message)
     }
 }
 
 export class IncompleteCustomerError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo, message?: string) {
+    constructor(public customer: ICustomerInfo, message?: string) {
         super(message)
     }
 }
 
 export class NonExistentCustomerPolymeshIdError extends ClaimForwarderError {
-    constructor (public customer: ICustomerInfo, message?: string) {
+    constructor(public customer: ICustomerInfo, message?: string) {
         super(message)
     }
 }

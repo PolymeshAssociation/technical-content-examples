@@ -16,7 +16,7 @@ module.exports = {
         polymesh: {
             nodeUrl: process.env.POLY_NODE_URL
                 || keys["rpcNetwork"]
-                || "wss://alcyone-rpc.polymesh.live",
+                || "wss://testnet-rpc.polymesh.live",
             // TODO choose where the middleware info goes. Server only or public (i.e. shared)?
             middlewareLink: process.env.MIDDLEWARE_LINK || keys["middlewareLink"],
             middlewareKey: process.env.MIDDLEWARE_KEY || keys["middlewareKey"],

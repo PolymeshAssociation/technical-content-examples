@@ -44,7 +44,7 @@ async function updateCustomerInfo(req: NextApiRequest): Promise<ClaimsAddedResul
         ? JSON.parse(req.body)
         : req.body)
     let toReturn: ClaimsAddedResult | ClaimsRevokedResult = {
-        status: true
+        status: true,
     }
     if (customerInfo.polymeshDid !== null) {
         const claimForwarder: IClaimForwarder = await ClaimForwarderFactory()

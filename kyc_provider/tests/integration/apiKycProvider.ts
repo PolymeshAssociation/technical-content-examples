@@ -17,7 +17,7 @@ describe("/api/kycProvider Integration Tests", () => {
     } = nextConfig
     let toRestore: RestoreFn
 
-    beforeEach("mock env", async() => {
+    beforeEach("mock env", async () => {
         toRestore = mockedEnv({
             POLY_NODE_URL: nodeUrl,
             POLY_ACCOUNT_MNEMONIC: accountMnemonic,
@@ -26,7 +26,7 @@ describe("/api/kycProvider Integration Tests", () => {
         })
     })
 
-    afterEach("restore env", async() => {
+    afterEach("restore env", async () => {
         toRestore()
     })
 

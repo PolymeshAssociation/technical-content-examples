@@ -14,7 +14,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.name).to.equal("John Doe")
         expect(info.country).to.equal(CountryCode.Gb)
@@ -32,7 +32,7 @@ describe("CustomerInfo Unit Tests", () => {
             valid: true,
             jurisdiction: CountryCode.Ie,
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.name).to.equal("John Doe")
         expect(info.country).to.equal(CountryCode.Gb)
@@ -62,7 +62,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         expect(info.toJSON()).to.deep.equal(bareInfo)
     })
@@ -76,7 +76,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",
@@ -97,7 +97,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",
@@ -122,7 +122,7 @@ describe("CustomerInfo Unit Tests", () => {
             jurisdiction: CountryCode.Ie,
             polymeshDid: null,
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: CustomerInfo = new CustomerInfo(bareInfo)
 
         info.patch({
             name: "Jane Doe",

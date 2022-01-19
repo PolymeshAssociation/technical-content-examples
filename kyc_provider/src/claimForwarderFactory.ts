@@ -3,7 +3,7 @@ import { IClaimForwarder } from "./claimForwarder"
 import { ClaimForwarderPoly } from "./claimForwarderPoly"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 
-export default async function(): Promise<IClaimForwarder> {
+export default async function (): Promise<IClaimForwarder> {
     const {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
@@ -14,14 +14,18 @@ export default async function(): Promise<IClaimForwarder> {
             middlewareKey,
         }, },
     } = getConfig() || {
-        serverRuntimeConfig: { polymesh: {
-            accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
-        }, },
-        publicRuntimeConfig: { polymesh: {
-            nodeUrl: process.env.POLY_NODE_URL,
-            middlewareLink: process.env.MIDDLEWARE_LINK,
-            middlewareKey: process.env.MIDDLEWARE_KEY,
-        }, },
+        serverRuntimeConfig: {
+            polymesh: {
+                accountMnemonic: process.env.POLY_ACCOUNT_MNEMONIC,
+            },
+        },
+        publicRuntimeConfig: {
+            polymesh: {
+                nodeUrl: process.env.POLY_NODE_URL,
+                middlewareLink: process.env.MIDDLEWARE_LINK,
+                middlewareKey: process.env.MIDDLEWARE_KEY,
+            },
+        },
     }
     const api = await Polymesh.connect({
         nodeUrl,
