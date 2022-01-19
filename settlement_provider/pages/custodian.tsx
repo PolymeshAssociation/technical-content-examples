@@ -25,7 +25,7 @@ export default function Home() {
   }
 
   async function getPendingSettlements(traderId: string): Promise<Response> {
-    const response = await fetch(`/api/settlements/?traderId=${traderId}`, { method: "GET" })
+    const response: Response = await fetch(`/api/settlements/?traderId=${traderId}`, { method: "GET" })
     if (response.status == 200) {
       setStatus("Settlements fetched")
       const body: SettlementListJson = await response.json()

@@ -90,7 +90,7 @@ export default function Home() {
 
   async function submitMyOrder(e: MouseEvent<HTMLElement>): Promise<void> {
     e.preventDefault()
-    sendMyOrder()
+    await sendMyOrder()
   }
 
   function onMyIdChanged(e: ChangeEvent<HTMLInputElement>): void {

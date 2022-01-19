@@ -1,7 +1,7 @@
 import { promises as fsPromises } from "fs"
 import { describe } from "mocha"
 import { expect, use } from "chai"
-import { CustomerInfo, CustomerJson, } from "../../src/customerInfo"
+import { CustomerInfo, CustomerJson, ICustomerInfo, } from "../../src/customerInfo"
 import { CustomerDbFs } from "../../src/customerDbFs"
 import { UnknownCustomerError } from "../../src/customerDb"
 use(require("chai-as-promised"))
@@ -32,7 +32,7 @@ describe("CustomerDbFs Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
     })
 
@@ -45,7 +45,7 @@ describe("CustomerDbFs Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info = new CustomerInfo(bareInfo)
+        const info: ICustomerInfo = new CustomerInfo(bareInfo)
         await db.setCustomerInfo("1", info)
         const retrieved: CustomerInfo = await db.getCustomerInfoById("1")
 
@@ -65,7 +65,7 @@ describe("CustomerDbFs Unit Tests", () => {
             valid: true,
             jurisdiction: "Ie",
         }
-        const info1 = new CustomerInfo(bareInfo1)
+        const info1: ICustomerInfo = new CustomerInfo(bareInfo1)
         const bareInfo2: CustomerJson = {
             name: "Jane Doe",
             country: "Gb",
@@ -73,7 +73,7 @@ describe("CustomerDbFs Unit Tests", () => {
             valid: false,
             jurisdiction: "Fr",
         }
-        const info2 = new CustomerInfo(bareInfo2)
+        const info2: ICustomerInfo = new CustomerInfo(bareInfo2)
         await db.setCustomerInfo("1", info1)
         await db.setCustomerInfo("2", info2)
         const retrieved1: CustomerInfo = await db.getCustomerInfoById("1")
