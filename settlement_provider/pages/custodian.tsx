@@ -2,7 +2,7 @@ import Head from "next/head"
 import getConfig from "next/config"
 import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
-import { BigNumber, Polymesh, } from '@polymathnetwork/polymesh-sdk'
+import { BigNumber, Polymesh } from '@polymathnetwork/polymesh-sdk'
 import {
   TransactionQueue,
 } from '@polymathnetwork/polymesh-sdk/internal'
@@ -19,7 +19,7 @@ import {
 } from '@polymathnetwork/polymesh-sdk/types'
 import { getPolyWalletApi } from "../src/ui-helpers"
 import { FullSettlementJson, PolymeshPartyJson, PublishedSettlementJson } from "../src/settlementInfo"
-import { SettlementListJson, SimpleVenueJson, } from "../src/ui-types"
+import { SettlementListJson, SimpleVenueJson } from "../src/ui-types"
 import { isNumberedPortfolio } from "../src/types"
 
 export default function Home() {
