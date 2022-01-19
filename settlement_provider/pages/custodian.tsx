@@ -134,7 +134,7 @@ export default function Home() {
   }
 
   async function createSettlementFromVenueJson(settlement: Instruction, legs: Leg[], parties: PolymeshPartyJson[]): Promise<PublishedSettlementJson | null> {
-    // Aggressive way to weed out 
+    // Aggressive way to weed out
     if (legs.length != 2) return null
     if (!areLegsRelevantToParties(legs, parties)) return null
     const sellerLeg: Leg = legs.find((leg: Leg) => leg.token !== usdToken)
