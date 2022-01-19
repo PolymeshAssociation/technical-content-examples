@@ -1,6 +1,6 @@
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import {
-    CurrentIdentity,
+    Identity,
     Instruction,
     PortfolioLike,
     Venue,
@@ -27,7 +27,7 @@ export class SettlementEnginePoly implements ISettlementEngine {
 
     async getVenue(): Promise<VenueInfo> {
         this.api = this.api || await this.apiCreator()
-        const nextDaq: CurrentIdentity = await this.api.getCurrentIdentity()
+        const nextDaq: Identity = await this.api.getCurrentIdentity()
         if (nextDaq === null) throw new NonExistentAccountError(this.api.getAccount().address)
         const venues: Venue[] = await nextDaq.getVenues()
         const venue: Venue = venues.find((found: Venue) => found.id.toString(10) === this.venueId)
@@ -60,7 +60,7 @@ export class SettlementEnginePoly implements ISettlementEngine {
         const instruction: Instruction = await settlementQueue.run()
         return new PublishedSettlementInfo({
             ...settlement.toJSON(),
-            instructionId: instruction.id.toString(10)
+            instructionId: instruction.id.toString(10),
         })
     }
 

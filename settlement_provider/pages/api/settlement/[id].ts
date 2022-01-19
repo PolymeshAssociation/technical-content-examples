@@ -6,7 +6,6 @@ import {
     DuplicatePartiesSettlementError,
     NoActionToDoSettlementError,
     DuplicatePolymeshDidSettlementError,
-    PublishedSettlementInfo,
     IPublishedSettlementInfo,
     PublishedSettlementJson,
 } from "../../../src/settlementInfo"
@@ -18,7 +17,7 @@ async function getSettlementInfoById(req: NextApiRequest): Promise<PublishedSett
 }
 
 async function deleteSettlementInfo(req: NextApiRequest): Promise<void> {
-    const id = <string>req.query.id
+    const id: string = <string>req.query.id
     const settlementDb: ISettlementDb = await settlementDbFactory()
     await settlementDb.deleteSettlementInfo(id)
 }

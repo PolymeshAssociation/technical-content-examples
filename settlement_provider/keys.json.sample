@@ -1,6 +1,6 @@
 {
     "accountMnemonic": "lock basic ...",
     "rpcNetwork": "wss://alcyone-rpc.polymesh.live",
-    "middlewareLink": "https://middleware.polymath.live/dev/graphql",
+    "middlewareLink": "https://testnet-middleware.polymesh.live/testnet/graphql",
     "middlewareKey": "0123456789abcdefghijklmnopqrstuvwxyzABCD"
 }

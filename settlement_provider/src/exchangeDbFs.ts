@@ -2,10 +2,10 @@ import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import {
+    Identity,
     NumberedPortfolio,
-    Portfolio,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { PolymeshCreator } from "./types"
+import { isNumberedPortfolio, PolymeshCreator } from "./types"
 import {
     AssignedOrderInfo,
     IAssignedOrderInfo,
@@ -46,7 +46,7 @@ export class ExchangeDbFs implements IExchangeDb {
             .map(([id, trade]: [string, OrderJson]) => new AssignedOrderInfo({ ...trade, id }))
             .reduce(
                 (list: IAssignedOrderInfo[], tradeInfo: IAssignedOrderInfo) => [...list, tradeInfo],
-                [] as IAssignedOrderInfo[])
+                [])
     }
 
     async getOrderInfoById(id: string): Promise<IOrderInfo> {
@@ -61,9 +61,9 @@ export class ExchangeDbFs implements IExchangeDb {
             throw new NonExistentCustomerPolymeshIdError(info.polymeshDid)
         }
         if (info.portfolioId !== null) {
-            const trader = this.api.getIdentity({ did: info.polymeshDid })
-            const found: Portfolio = (await trader.portfolios.getPortfolios())
-                .slice(1)
+            const trader: Identity = await this.api.getIdentity({ did: info.polymeshDid })
+            const found: NumberedPortfolio = (await trader.portfolios.getPortfolios())
+                .filter(isNumberedPortfolio)
                 .find((portfolio: NumberedPortfolio) => portfolio.id.isEqualTo(info.portfolioId))
             if (typeof found === "undefined" || found === null) {
                 throw new InvalidPortfolioError(info.polymeshDid, info.portfolioId)

@@ -3,6 +3,9 @@ import { promisify } from "util"
 import { describe } from "mocha"
 import { expect, use } from "chai"
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
+import { Portfolios } from "@polymathnetwork/polymesh-sdk/api/entities/Identity/Portfolios"
+import { Context, DefaultPortfolio, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/internal"
+import { Identity, } from "@polymathnetwork/polymesh-sdk/types"
 import {
     IAssignedOrderInfo,
     InvalidPortfolioError,
@@ -13,13 +16,6 @@ import {
 } from "../../src/orderInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ExchangeDbFs } from "../../src/exchangeDbFs"
-import { Identity, } from "@polymathnetwork/polymesh-sdk/types"
-import {
-    Context,
-    DefaultPortfolio,
-    NumberedPortfolio,
-} from "@polymathnetwork/polymesh-sdk/internal"
-import { Portfolios } from "@polymathnetwork/polymesh-sdk/api/entities/Identity/Portfolios"
 use(require("chai-as-promised"))
 
 const exists = promisify(existsAsync)
@@ -71,7 +67,7 @@ describe("ExchangeDbFs Unit Tests", () => {
 
     const buildMockedApi = (identities: MockedIdentity[]) => {
         mockedApi.isIdentityValid = ({ identity }) => Promise.resolve(typeof findMockedIdentity(identities, identity) !== "undefined")
-        mockedApi.getIdentity = ({ did }) => createIdentity(findMockedIdentity(identities, did))
+        mockedApi.getIdentity = async ({ did }) => createIdentity(findMockedIdentity(identities, did))
     }
 
     it("throws when missing id", async () => {
@@ -83,7 +79,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("can save order info in an empty db", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: ["1", "2"]
+            portfolios: ["1", "2"],
         }])
         const bareInfo: OrderJson = {
             isBuy: true,
@@ -99,7 +95,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("can save order info with default portfolio being the only one", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: []
+            portfolios: [],
         }])
         const bareInfo: OrderJson = <OrderJson><unknown>{
             isBuy: true,
@@ -114,7 +110,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("can save order info with default portfolio being one of them", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: ["1"]
+            portfolios: ["1"],
         }])
         const bareInfo: OrderJson = {
             isBuy: true,
@@ -130,7 +126,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("cannot save order info with non-existent identity", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: ["1", "2"]
+            portfolios: ["1", "2"],
         }])
         const bareInfo: OrderJson = {
             isBuy: true,
@@ -147,7 +143,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("cannot save order info with non-existent portfolio", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: ["1", "2"]
+            portfolios: ["1", "2"],
         }])
         const bareInfo: OrderJson = {
             isBuy: true,
@@ -166,7 +162,7 @@ describe("ExchangeDbFs Unit Tests", () => {
     it("can get saved order info", async () => {
         buildMockedApi([{
             did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-            portfolios: ["1", "2"]
+            portfolios: ["1", "2"],
         }])
         const bareInfo: OrderJson = {
             isBuy: true,
@@ -186,11 +182,11 @@ describe("ExchangeDbFs Unit Tests", () => {
         buildMockedApi([
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                portfolios: ["1"]
+                portfolios: ["1"],
             },
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-                portfolios: ["1", "2"]
+                portfolios: ["1", "2"],
             },
         ])
         const bareInfo1: OrderJson = {
@@ -223,11 +219,11 @@ describe("ExchangeDbFs Unit Tests", () => {
         buildMockedApi([
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                portfolios: ["1"]
+                portfolios: ["1"],
             },
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
-                portfolios: ["1", "2"]
+                portfolios: ["1", "2"],
             },
         ])
         const bareInfo1: OrderJson = {
@@ -259,11 +255,11 @@ describe("ExchangeDbFs Unit Tests", () => {
         buildMockedApi([
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
-                portfolios: ["1"]
+                portfolios: ["1"],
             },
             {
                 did: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
-                portfolios: ["3", "2"]
+                portfolios: ["3", "2"],
             },
         ])
         const bareInfo1: OrderJson = {

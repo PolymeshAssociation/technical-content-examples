@@ -13,13 +13,13 @@ describe("SettlementEnginePoly Integration Tests", () => {
         serverRuntimeConfig: { polymesh: {
             accountMnemonic,
             middlewareLink,
-            middlewareKey
-        } },
+            middlewareKey,
+        }, },
         publicRuntimeConfig: { polymesh: {
             nodeUrl,
             venueId,
             usdToken,
-        } }
+        }, },
     } = nextConfig
 
     it("getVenue works for the configured account", async () => {
@@ -28,8 +28,8 @@ describe("SettlementEnginePoly Integration Tests", () => {
             accountMnemonic,
             middleware: {
                 link: middlewareLink,
-                key: middlewareKey
-            }
+                key: middlewareKey,
+            },
         })
         const settlementEngine: ISettlementEngine = new SettlementEnginePoly(
             apiCreator,

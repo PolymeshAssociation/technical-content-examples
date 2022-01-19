@@ -8,7 +8,6 @@ import {
     IPublishedSettlementInfo,
     PublishedSettlementInfo,
     PublishedSettlementJson,
-    SettlementInfo,
 } from "../../src/settlementInfo"
 import { ISettlementDb } from "../../src/settlementDb"
 import settlementDbFactory from "../../src/settlementDbFactory"

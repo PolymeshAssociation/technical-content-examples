@@ -1,8 +1,7 @@
 import { describe } from "mocha"
 import { expect } from "chai"
-import {
-    PortfolioLike,
-} from "@polymathnetwork/polymesh-sdk/types"
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+import { PortfolioLike } from "@polymathnetwork/polymesh-sdk/types"
 import {
     SettlementParty,
     SettlementInfo,
@@ -29,7 +28,6 @@ import {
     WrongNumericValueError,
     WrongZeroOrderError,
 } from "../../src/orderInfo"
-import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 
 describe("SettlementParty Unit Tests", () => {
 

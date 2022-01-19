@@ -22,8 +22,8 @@ export interface ISettlementParty {
     id: string
     polymeshDid: string
     portfolioId: BigNumber | null
-    toJSON(): SettlementPartyJson
-    toPortfolioLike(): PortfolioLike
+    toJSON: () => SettlementPartyJson
+    toPortfolioLike: () => PortfolioLike
 }
 
 export interface SettlementJson {
@@ -52,17 +52,17 @@ export interface ISettlementInfo {
     price: BigNumber
     isPaid: boolean
     isTransferred: boolean
-    toJSON(): SettlementJson
+    toJSON: () => SettlementJson
 }
 
 export interface IPublishedSettlementInfo extends ISettlementInfo {
     instructionId: BigNumber
-    toJSON(): PublishedSettlementJson
+    toJSON: () => PublishedSettlementJson
 }
 
 export interface IFullSettlementInfo extends IPublishedSettlementInfo {
     id: string
-    toJSON(): FullSettlementJson
+    toJSON: () => FullSettlementJson
 }
 
 function requireDesiredType(info: any, field: string, receivedType: string) {
@@ -85,7 +85,7 @@ export class SettlementParty implements ISettlementParty {
         requireDesiredType(info.id, "id", "string")
         this.id = info.id
         requireDesiredType(info.polymeshDid, "polymeshDid", "string")
-        if (!(info.polymeshDid as string).match(polymeshDidRegex)) {
+        if (!info.polymeshDid.match(polymeshDidRegex)) {
             throw new InvalidPolymeshDidError(info.polymeshDid)
         }
         this.polymeshDid = info.polymeshDid
@@ -219,7 +219,7 @@ export function createByMatchingOrders(buyerId: string, buyOrder: IOrderInfo, se
         throw new IncompatibleOrderTypeError(buyOrder.token, sellOrder.token)
     }
     const quantity: BigNumber = BigNumber.min(buyOrder.quantity, sellOrder.quantity)
-    const price: BigNumber =  (buyOrder.price.plus(sellOrder.price)).dividedBy(new BigNumber("2"))
+    const price: BigNumber = (buyOrder.price.plus(sellOrder.price)).dividedBy(new BigNumber("2"))
     const settlement: SettlementJson = {
         buyer: {
             id: buyerId,

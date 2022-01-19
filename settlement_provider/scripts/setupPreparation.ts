@@ -2,24 +2,21 @@
 /*
  * Bunch of actions to enable when you want to prepare your NextDaq exchange setup.
  */
-export {}
+export { }
 import * as prompts from "prompts"
 import * as colors from "colors"
 import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import {
     AccountBalance,
-    CurrentIdentity,
     DefaultPortfolio,
     Identity,
     Instruction,
     KnownTokenType,
     NumberedPortfolio,
-    Portfolio,
     PortfolioBalance,
     SecurityToken,
     TickerReservation,
-    TokenType,
     Venue,
     VenueDetails,
     VenueType,
@@ -27,6 +24,7 @@ import {
 import * as nextConfig from "../next.config.js"
 import { SettlementEnginePoly } from "../src/settlementEnginePoly"
 import { ISettlementEngine } from "../src/settlementEngine"
+import { isNumberedPortfolio } from "../src/types.js"
 
 const {
     serverRuntimeConfig: { polymesh: {
@@ -42,11 +40,11 @@ const {
 } = nextConfig
 
 // There are a lot of warnings, so we need to make visible the important parts.
-const logVisible = function(text): void {
+const logVisible = function (text: string): void {
     console.log(colors.inverse(text))
 }
 
-const getApi = async function(): Promise<Polymesh> {
+const getApi = async function (): Promise<Polymesh> {
     return Polymesh.connect({
         nodeUrl,
         accountMnemonic,
@@ -57,16 +55,16 @@ const getApi = async function(): Promise<Polymesh> {
     })
 }
 
-const getVenueInfo = async function(venue: Venue): Promise<string> {
+const getVenueInfo = async function (venue: Venue): Promise<string> {
     const details: VenueDetails = await venue.details()
     return `id: ${venue.id.toString(10)}, type: ${details.type}, description: ${details.description}`
 }
 
 logVisible(`Network: ${nodeUrl}, preset venue id: ${venueId}, USD token: ${usdToken}`)
 getApi()
-    .then(async(api: Polymesh) => {
+    .then(async (api: Polymesh) => {
         // Identity
-        const me: CurrentIdentity = await api.getCurrentIdentity()
+        const me: Identity = await api.getCurrentIdentity()
         if (me === null) throw new Error("You do not have an account open. Go to https://dashboard.polymesh.live/")
         const balance: AccountBalance = await api.getAccount().getBalance()
         logVisible(`Your account is ${me.did}, you have ${balance.free} free POLYX and ${balance.locked} locked ones`)
@@ -88,17 +86,17 @@ getApi()
             const { createOrNot } = await prompts({
                 type: "text",
                 name: "createOrNot",
-                message: "Create 1 Exchange venue now? y/n"
+                message: "Create 1 Exchange venue now? y/n",
             })
             if (createOrNot !== "y") throw new Error(`Not creating a venue`)
             const { details } = await prompts({
                 type: "text",
                 name: "details",
-                message: "What details to add?"
+                message: "What details to add?",
             })
             const myVenueQueue: TransactionQueue<Venue> = await me.createVenue({
                 details: details,
-                type: VenueType.Exchange
+                type: VenueType.Exchange,
             })
             presetVenue = await myVenueQueue.run()
             logVisible(`Venue created. Save its id, ${presetVenue.id.toString(10)}, in the config`)
@@ -123,7 +121,7 @@ getApi()
                 const { reserveOrNot } = await prompts({
                     type: "text",
                     name: "reserveOrNot",
-                    message: `Reserve the security token ${usdToken}? y/n`
+                    message: `Reserve the security token ${usdToken}? y/n`,
                 })
                 if (reserveOrNot !== "y") throw new Error(`Not reserving ${usdToken}`)
                 const reserveQueue: TransactionQueue<TickerReservation> = await api.reserveTicker({ ticker: usdToken })
@@ -134,13 +132,13 @@ getApi()
                 {
                     type: "text",
                     name: "createOrNot",
-                    message: `Create the security token ${usdToken}? y/n`
+                    message: `Create the security token ${usdToken}? y/n`,
                 },
                 {
                     type: (prev) => prev === "y" ? "number" : null,
                     name: "totalSupply",
-                    message: `With what total supply?`
-                }
+                    message: `With what total supply?`,
+                },
             ])
             if (createOrNot !== "y") throw new Error(`Not creating ${usdToken}`)
             logVisible(`supply ${totalSupply}`)
@@ -148,7 +146,7 @@ getApi()
                 name: usdToken,
                 totalSupply: new BigNumber(totalSupply),
                 isDivisible: false,
-                tokenType: KnownTokenType.Commodity,
+                tokenType: KnownTokenType.StableCoin,
             })
             usdSecurity = await createQueue.run()
             logVisible(`${usdToken} is now created by you`)
@@ -156,42 +154,44 @@ getApi()
 
         // Your balance
         const myDefaultPortolio: DefaultPortfolio = await me.portfolios.getPortfolio()
-        const myUsdBalance: PortfolioBalance = (await myDefaultPortolio.getTokenBalances({ tokens: [ usdToken] }))[0]
+        const myUsdBalance: PortfolioBalance = (await myDefaultPortolio.getTokenBalances({ tokens: [usdToken] }))[0]
         logVisible(`You have ${myUsdBalance.total.toString(10)} ${usdToken}, of which ${myUsdBalance.locked.toString(10)} are locked`)
 
         // USD for participants
-        usdSecurity
         let looping: boolean = true
         const allFundings = []
-        while(looping) {
+        while (looping) {
             const { fundOthers, otherDid } = await prompts([
                 {
                     type: "text",
                     name: "fundOthers",
-                    message: `Send ${usdToken} to others? y/n`
+                    message: `Send ${usdToken} to others? y/n`,
                 },
                 {
                     type: (prev) => prev === "y" ? "text" : null,
                     name: "otherDid",
-                    message: "Which account Did?"
-                }
+                    message: "Which account Did?",
+                },
             ])
             if (fundOthers !== "y") {
                 looping = false
                 continue
             }
-            const recipient: Identity = api.getIdentity({ did: otherDid })
-            const [ { amountToSend }, portfolioInfos ] = await Promise.all([
+            const recipient: Identity = await api.getIdentity({ did: otherDid })
+            const [{ amountToSend }, portfolioInfos] = await Promise.all([
                 prompts({
                     type: "number",
                     name: "amountToSend",
-                    message: "By what amount?"
+                    message: "By what amount?",
                 }),
-                (await Promise.all((await recipient.portfolios.getPortfolios()).map(async(portfolio: Portfolio) => {
-                        if ((<NumberedPortfolio>portfolio).id) return (<NumberedPortfolio>portfolio).getName()
-                            .then((name: string) => `${(<NumberedPortfolio>portfolio).id} - ${name}`)
-                        return "default"
-                    })))
+                (await Promise.all(
+                    (await recipient.portfolios.getPortfolios())
+                        .map(async (portfolio: DefaultPortfolio | NumberedPortfolio) => {
+                            if (isNumberedPortfolio(portfolio))
+                                return portfolio.getName().then((name: string) => `${portfolio.id} - ${name}`)
+                            return "default"
+                        })
+                ))
                     .filter(id => id !== "default")
             ])
             logVisible("Recipient portfolios:")
@@ -199,7 +199,7 @@ getApi()
             const { otherPortfolioId } = await prompts({
                 type: "number",
                 name: "otherPortfolioId",
-                message: `In which portfolio (default: default portfolio)`
+                message: `In which portfolio? (default: default portfolio)`,
             })
             const instructionQueue: TransactionQueue<Instruction> = await presetVenue.addInstruction({
                 legs: [{
@@ -211,8 +211,8 @@ getApi()
                             id: otherPortfolioId
                         },
                     amount: new BigNumber(amountToSend),
-                    token: usdToken
-                }]
+                    token: usdToken,
+                }],
             })
             allFundings.push(instructionQueue.run())
         }
@@ -221,8 +221,9 @@ getApi()
             logVisible(`instruction ${instruction.id} mined`)
         })
 
-        const pendingInstructions: Instruction[] = await presetVenue.getPendingInstructions()
-        const pendingIds: string = pendingInstructions.map((instruction: Instruction) => instruction.id.toString(10))
+        const pendingInstructions: Instruction[] = (await presetVenue.getInstructions()).pending
+        const pendingIds: string = pendingInstructions
+            .map((instruction: Instruction) => instruction.id.toString(10))
             .join(", ")
         logVisible(`You have ${pendingInstructions.length} pending instructions: ${[pendingIds]}`)
     })

@@ -4,7 +4,7 @@ import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
 import * as nextConfig from "../../next.config.js"
-import { OrderInfo, OrderJson } from "../../src/orderInfo"
+import { IOrderInfo, OrderInfo, OrderJson } from "../../src/orderInfo"
 import { IExchangeDb } from "../../src/exchangeDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
 import handleTraderId from "../../pages/api/trader/[id]"
@@ -108,7 +108,7 @@ describe("/api/trader/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const order = await exchangeDb.getOrderInfoById("4")
+            const order: IOrderInfo = await exchangeDb.getOrderInfoById("4")
             expect(order.toJSON()).to.deep.equal(bareInfo)
         }).timeout(30000)
 
@@ -212,7 +212,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     price: "33",
                     polymeshDid: wrongId,
                     portfolioId: "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -236,7 +236,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     price: "33",
                     polymeshDid: wrongId,
                     portfolioId: "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -259,7 +259,7 @@ describe("/api/trader/[id] Integration Tests", () => {
                     price: "33",
                     polymeshDid: onTrustDid,
                     portfolioId: "1",
-                }
+                },
             })
 
             await handleTraderId(req, res)
@@ -283,14 +283,14 @@ describe("/api/trader/[id] Integration Tests", () => {
                 query: {
                     id: "4",
                 },
-                body: bareInfo
+                body: bareInfo,
             })
 
             await handleTraderId(req, res)
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const order = await exchangeDb.getOrderInfoById("4")
+            const order: IOrderInfo = await exchangeDb.getOrderInfoById("4")
             expect(order.toJSON()).to.deep.equal(bareInfo)
         }).timeout(30000)
 

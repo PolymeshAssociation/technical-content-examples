@@ -16,11 +16,12 @@ export interface AddressObject {
 }
 
 export interface Accounts {
-    get(): Promise<AddressObject[]>
-    subscribe(handler: (update: AddressObject[]) => void | any): () => {}
+    get: () => Promise<AddressObject[]>
+    subscribe: (handler: (update: AddressObject[]) => void | any) => () => {}
 }
 
 export enum NetworkName {
+    testnet = "testnet",
     alcyone = "alcyone",
 }
 

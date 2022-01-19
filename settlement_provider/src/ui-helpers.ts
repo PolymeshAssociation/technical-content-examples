@@ -19,7 +19,7 @@ export async function getPolyWalletApi(setStatus: (content: string) => void): Pr
         publicRuntimeConfig: {
             appName,
             polymesh: { nodeUrl },
-        }
+        },
     } = getConfig()
     setStatus(`Enabling the app ${appName}`)
     const polkaDotExtensions = await web3Enable(appName)

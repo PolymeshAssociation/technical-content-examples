@@ -1,26 +1,26 @@
 import Head from "next/head"
 import getConfig from "next/config"
-import React, { useState } from "react"
+import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
 import { BigNumber, Polymesh, } from '@polymathnetwork/polymesh-sdk'
 import {
-  DefaultPortfolio,
-  Instruction,
-  NumberedPortfolio,
   TransactionQueue,
 } from '@polymathnetwork/polymesh-sdk/internal'
 import {
   AffirmationStatus,
-  CurrentIdentity,
+  DefaultPortfolio,
   Identity,
+  Instruction,
   InstructionAffirmation,
   Leg,
+  NumberedPortfolio,
   ResultSet,
   Venue,
 } from '@polymathnetwork/polymesh-sdk/types'
 import { getPolyWalletApi } from "../src/ui-helpers"
 import { FullSettlementJson, PolymeshPartyJson, PublishedSettlementJson } from "../src/settlementInfo"
 import { SettlementListJson, SimpleVenueJson, } from "../src/ui-types"
+import { isNumberedPortfolio } from "../src/types"
 
 export default function Home() {
   const {
@@ -28,27 +28,27 @@ export default function Home() {
       polymesh: {
         usdToken,
       },
-    }
+    },
   } = getConfig()
   const [myInfo, setMyInfo] = useState({
-    traderId: "" as string,
+    traderId: "",
     info: {
       settlements: [],
       venue: {
         ownerDid: "",
         venueId: "",
       },
-    } as SettlementListJson,
-    yourPortfolios: [] as PolymeshPartyJson[],
-    fromVenue: [] as FullSettlementJson[],
+    },
+    yourPortfolios: [],
+    fromVenue: [],
   })
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
+    const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
   }
 
-  function onTraderIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
+  function onTraderIdChanged(e: ChangeEvent<HTMLInputElement>): void {
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       traderId: e.target.value,
@@ -58,7 +58,7 @@ export default function Home() {
   async function getPendingSettlements(traderId: string): Promise<Response> {
     const response = (await Promise.all([
       fetch(`/api/settlements/?traderId=${traderId}`, { method: "GET" }),
-      getPolyWalletApi(setStatus)
+      getPolyWalletApi(setStatus),
     ]))[0]
     if (response.status == 200) {
       setStatus("Settlements fetched")
@@ -75,7 +75,7 @@ export default function Home() {
     return response
   }
 
-  async function submitGetPendingSettlements(e): Promise<void> {
+  async function submitGetPendingSettlements(e: MouseEvent<HTMLButtonElement>): Promise<void> {
     e.preventDefault() // prevent page from submitting form
     await getPendingSettlements(myInfo.traderId)
   }
@@ -83,7 +83,7 @@ export default function Home() {
   function createPolymeshPartyJson(portfolio: (DefaultPortfolio | NumberedPortfolio)): PolymeshPartyJson {
     return {
       polymeshDid: portfolio.owner.did,
-      portfolioId: portfolio instanceof NumberedPortfolio ? portfolio.id.toString(10) : null,
+      portfolioId: isNumberedPortfolio(portfolio) ? portfolio.id.toString(10) : null,
     }
   }
 
@@ -94,7 +94,7 @@ export default function Home() {
     }))
     const api: Polymesh = await getPolyWalletApi(setStatus)
     setStatus("Fetching your identity")
-    const me: CurrentIdentity = await api.getCurrentIdentity()
+    const me: Identity = await api.getCurrentIdentity()
     setStatus("Fetching your portfolios")
     const yourPortfolios: PolymeshPartyJson[] = (await me.portfolios.getPortfolios())
       .map(createPolymeshPartyJson)
@@ -112,8 +112,8 @@ export default function Home() {
 
   function isPortfolioSameAsParty(party: PolymeshPartyJson, portfolio: DefaultPortfolio | NumberedPortfolio): boolean {
     return party.polymeshDid == portfolio.owner.did &&
-      (party.portfolioId === null && (portfolio instanceof DefaultPortfolio) ||
-        portfolio instanceof NumberedPortfolio && party.portfolioId === portfolio.id.toString(10))
+      (party.portfolioId === null && (!isNumberedPortfolio(portfolio)) ||
+        isNumberedPortfolio(portfolio) && party.portfolioId === portfolio.id.toString(10))
   }
 
   function isPortfolioRelevantToParties(portfolio: DefaultPortfolio | NumberedPortfolio, parties: PolymeshPartyJson[]): boolean {
@@ -137,8 +137,8 @@ export default function Home() {
     // Aggressive way to weed out 
     if (legs.length != 2) return null
     if (!areLegsRelevantToParties(legs, parties)) return null
-    const sellerLeg = legs.find((leg: Leg) => leg.token !== usdToken)
-    const buyerLeg = getUsdLeg(legs)
+    const sellerLeg: Leg = legs.find((leg: Leg) => leg.token !== usdToken)
+    const buyerLeg: Leg = getUsdLeg(legs)
     const affirmations: InstructionAffirmation[] = (await settlement.getAffirmations()).data
     const buyerAffirmation = affirmations.find((affirmation: InstructionAffirmation) => affirmation.identity.did === buyerLeg.from.owner.did)
     const sellerAffirmation = affirmations.find((affirmation: InstructionAffirmation) => affirmation.identity.did === sellerLeg.from.owner.did)
@@ -196,7 +196,7 @@ export default function Home() {
     const tradingVenue: Venue = (await trader.getVenues())
       .find((venue: Venue) => venue.id.toString(10) == myInfo.info.venue.venueId)
     setStatus("Finding the pending instruction")
-    const myInstruction: Instruction = (await tradingVenue.getPendingInstructions())
+    const myInstruction: Instruction = (await tradingVenue.getInstructions()).pending
       .find((instruction: Instruction) => instruction.id.toString(10) == instructionId)
     if (myInstruction == null) {
       setStatus(`Instruction ${instructionId} not found in the venue, or not pending`)
@@ -204,16 +204,16 @@ export default function Home() {
     }
     setStatus("Setting up affirmation queue")
     const affirmQueue: TransactionQueue<Instruction> = await (affirm ? myInstruction.affirm() : myInstruction.reject())
-    setStatus(`${affirm ? "Affirming": "Rejecting"} transaction`)
+    setStatus(`${affirm ? "Affirming" : "Rejecting"} instruction`)
     const updatedInstruction: Instruction = await affirmQueue.run()
-    setStatus("Transaction affirmed")
+    setStatus("Instruction affirmed")
     return updatedInstruction
   }
 
   async function sendSettlementAction(settlement: FullSettlementJson, settlementSide: string): Promise<Response> {
     const instructionId: string = settlement.instructionId
     await affirmOrReject(instructionId, true)
-    const response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
+    const response: Response = await fetch(`/api/settlement/${settlement.id}?${settlementSide}`, { method: "PATCH" })
     if (response.status == 200) {
       setStatus("Settlement updated")
       await getPendingSettlements(myInfo.traderId)
@@ -223,8 +223,8 @@ export default function Home() {
     return response
   }
 
-  function submitSettlementActionCreator(settlement: FullSettlementJson, settlementSide: string): (e) => Promise<void> {
-    return async function (e): Promise<void> {
+  function submitSettlementActionCreator(settlement: FullSettlementJson, settlementSide: string): (e: MouseEvent<HTMLButtonElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLButtonElement>): Promise<void> {
       e.preventDefault()
       await sendSettlementAction(settlement, settlementSide)
     }
@@ -233,7 +233,7 @@ export default function Home() {
   async function sendSettlementReject(settlement: FullSettlementJson): Promise<Response> {
     const instructionId: string = settlement.instructionId
     await affirmOrReject(instructionId, false)
-    const response = await fetch(`/api/settlement/${settlement.id}`, { method: "DELETE" })
+    const response: Response = await fetch(`/api/settlement/${settlement.id}`, { method: "DELETE" })
     if (response.status == 200) {
       setStatus("Settlement deleted")
       await getPendingSettlements(myInfo.traderId)
@@ -243,8 +243,8 @@ export default function Home() {
     return response
   }
 
-  function submitSettlementRejectCreator(settlement: FullSettlementJson): (e) => Promise<void> {
-    return async function (e): Promise<void> {
+  function submitSettlementRejectCreator(settlement: FullSettlementJson): (e: MouseEvent<HTMLButtonElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLButtonElement>): Promise<void> {
       e.preventDefault()
       await sendSettlementReject(settlement)
     }
@@ -255,9 +255,9 @@ export default function Home() {
       party.portfolioId === portfolio.portfolioId)
   }
 
-  function getInstructionHtml(settlement: FullSettlementJson, yourPortfolios: PolymeshPartyJson[]) {
-    const buyerTitle: string = `${settlement.buyer.polymeshDid} - ${settlement.buyer.portfolioId  || "default"}`
-    const sellerTitle: string = `${settlement.seller.polymeshDid} - ${settlement.seller.portfolioId  || "default"}`
+  function getInstructionHtml(settlement: FullSettlementJson, yourPortfolios: PolymeshPartyJson[]): JSX.Element {
+    const buyerTitle: string = `${settlement.buyer.polymeshDid} - ${settlement.buyer.portfolioId || "default"}`
+    const sellerTitle: string = `${settlement.seller.polymeshDid} - ${settlement.seller.portfolioId || "default"}`
     const isBuyerRelevant: boolean = isPartyRelevant(settlement.buyer, yourPortfolios)
     const isSellerRelevant: boolean = isPartyRelevant(settlement.seller, yourPortfolios)
     return <fieldset className={`${styles.card} ${styles.unbreakable}`}>

@@ -6,6 +6,7 @@ import {
     IAssignedOrderInfo,
     IncompleteOrderInfoError,
     InvalidPolymeshDidError,
+    IOrderInfo,
     OrderInfo,
     OrderJson,
     WrongNumericValueError,
@@ -25,7 +26,7 @@ describe("OrderInfo Unit Tests", () => {
             portfolioId: "1",
         }
 
-        const info = new OrderInfo(bareInfo)
+        const info: IOrderInfo = new OrderInfo(bareInfo)
 
         expect(info.isBuy).to.be.true
         expect(info.quantity.toString(10)).to.equal("12345")

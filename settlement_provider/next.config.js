@@ -17,7 +17,7 @@ module.exports = {
         polymesh: {
             nodeUrl: process.env.POLY_NODE_URL
                 || keys["rpcNetwork"]
-                || "wss://alcyone-rpc.polymesh.live",
+                || "wss://testnet-rpc.polymesh.live",
             venueId: process.env.POLY_VENUE_ID || "90",
             usdToken: process.env.POLY_USD_TOKEN || "DEEPUSD2",
             // TODO choose where the middleware info goes. Server only or public (i.e. shared)?

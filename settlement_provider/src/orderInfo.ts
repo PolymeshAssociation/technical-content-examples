@@ -16,7 +16,7 @@ export interface IOrderInfo {
     price: BigNumber
     polymeshDid: string
     portfolioId: BigNumber | null
-    toJSON(): OrderJson
+    toJSON: () => OrderJson
 }
 
 const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
@@ -27,7 +27,7 @@ export interface AssignedOrderJson extends OrderJson {
 
 export interface IAssignedOrderInfo extends IOrderInfo {
     id: string
-    toJSON(): AssignedOrderJson
+    toJSON: () => AssignedOrderJson
 }
 
 function requireDesiredType(info: any, field: string, receivedType: string) {
@@ -67,7 +67,7 @@ export class OrderInfo implements IOrderInfo {
             throw new WrongNumericValueError("price", info.price)
         }
         requireDesiredType(info.polymeshDid, "polymeshDid", "string")
-        if (!(info.polymeshDid as string).match(polymeshDidRegex)) {
+        if (!info.polymeshDid.match(polymeshDidRegex)) {
             throw new InvalidPolymeshDidError(info.polymeshDid)
         }
         this.polymeshDid = info.polymeshDid
