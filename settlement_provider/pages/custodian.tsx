@@ -56,7 +56,7 @@ export default function Home() {
   }
 
   async function getPendingSettlements(traderId: string): Promise<Response> {
-    const response = (await Promise.all([
+    const response: Response = (await Promise.all([
       fetch(`/api/settlements/?traderId=${traderId}`, { method: "GET" }),
       getPolyWalletApi(setStatus),
     ]))[0]

@@ -230,6 +230,28 @@ describe("SettlementInfo Unit Tests", () => {
             .that.satisfies((error: DuplicatePartiesSettlementError) => error.partyId === "1")
     })
 
+    it("cannot construct from 0 quantity", () => {
+        const bareInfo: SettlementJson = {
+            buyer: {
+                id: "1",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                portfolioId: "1",
+            },
+            seller: {
+                id: "2",
+                polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                portfolioId: null,
+            },
+            quantity: "0",
+            token: "ACME",
+            price: "33",
+            isPaid: false,
+            isTransferred: false,
+        }
+        expect(() => new SettlementInfo(bareInfo)).to.throw(WrongZeroOrderError)
+            .that.satisfies((error: WrongZeroOrderError) => error.field === "quantity")
+    })
+
     it("cannot construct from same seller and buyer polymeshDid", () => {
         const bareInfo: SettlementJson = {
             buyer: {

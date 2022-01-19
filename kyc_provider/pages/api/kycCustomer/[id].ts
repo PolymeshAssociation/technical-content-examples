@@ -95,6 +95,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
         } else if (e instanceof TooManyClaimsCustomerError) {
             res.status(400).json({ status: `too many claims, ${e.count}, for this customer Polymesh Did ${e.customer.polymeshDid}` })
         } else {
+            console.log(e)
             res.status(500).json({ status: "internal error" })
         }
     }

@@ -12,7 +12,7 @@ import {
   ScopedClaim,
 } from "@polymathnetwork/polymesh-sdk/types"
 import { Polymesh } from '@polymathnetwork/polymesh-sdk'
-import { CountryInfo, getCountryList, } from "../src/types"
+import { CountryInfo, getCountryList } from "../src/types"
 import { CustomerJson } from "../src/customerInfo"
 import { getPolyWalletApi } from "../src/ui-helpers"
 

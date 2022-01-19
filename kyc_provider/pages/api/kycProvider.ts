@@ -24,6 +24,7 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
         if (e instanceof NonExistentKycIdentityError) {
             res.status(500).json({ status: "kyc provider does not exist on this network" })
         } else {
+            console.log(e)
             res.status(500).json({ status: "internal error" })
         }
     }

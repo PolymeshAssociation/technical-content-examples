@@ -12,8 +12,6 @@ import { CountryCode } from "@polymathnetwork/polymesh-sdk/types"
 
 const exists = promisify(existsAsync)
 
-const exists = promisify(existsAsync)
-
 describe("/api/kycCustomer/[id] Integration Tests", () => {
     const onTrustDid = "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e"
     const nextDaqDid = "0xd80bfa2b0ef45a6093fb04cff8bde3545ef731d0247b363824bb8978c3bd8d76"
@@ -110,6 +108,7 @@ describe("/api/kycCustomer/[id] Integration Tests", () => {
             })
 
             await handleKycCustomerId(req, res)
+
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 status: "ok",
