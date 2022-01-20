@@ -24,7 +24,7 @@ import {
 import * as nextConfig from "../next.config.js"
 import { SettlementEnginePoly } from "../src/settlementEnginePoly"
 import { ISettlementEngine } from "../src/settlementEngine"
-import { isNumberedPortfolio } from "../src/types.js"
+import { isNumberedPortfolio } from "../src/types"
 
 const {
     serverRuntimeConfig: { polymesh: {
@@ -99,7 +99,7 @@ getApi()
                 type: VenueType.Exchange,
             })
             presetVenue = await myVenueQueue.run()
-            logVisible(`Venue created. Save its id, ${presetVenue.id.toString(10)}, in the config`)
+            logVisible(`Venue created. A good idea is to save its id, ${presetVenue.id.toString(10)}, in next.config.js`)
         }
 
         // USD Token

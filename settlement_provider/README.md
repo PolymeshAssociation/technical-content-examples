@@ -14,6 +14,44 @@ You need some setup before using it.
 1. Enter your `keys.json` following the model found in `keys.json.sample`.
 2. Enter your own exchange `venueId` and `usdToken`  in `next.config.js`.
 
+## Scripted setup
+
+If you need more things to be prepared, like a stable coin or a venue, look into `./scripts/setupPreparation.ts`. In there you can adjust for your preferred parameters.
+
+To run this script:
+
+```sh
+$ npm run setup
+```
+It is an interactive process that can be restarted at any point. You do not need to duplicate actions if you restart. Example:
+
+```
+Network: wss://testnet-rpc.polymesh.live, preset venue id: 90, USD token: DEEPUSD2
+Your account is 0x35a84a72dccf1070bb36e6335456617df993f9be1feb2b52b18c58c0d9008443, you have 96999.358735 free POLYX and 0 locked ones
+You do not have any venues at all
+✔ Create 1 Exchange venue now? y/n … y
+✔ What details to add? … Best exchange
+Venue created. Save its id, 95, in the config
+DEEPUSD2 does not exist
+✔ Reserve the security token DEEPUSD2? y/n … y
+DEEPUSD2 is now reserved by you
+✔ Create the security token DEEPUSD2? y/n … y
+✔ With what total supply? … 1000000000
+supply 1000000000
+DEEPUSD2 is now created by you
+You have 1000000000 DEEPUSD2, of which 0 are locked
+✔ Send DEEPUSD2 to others? y/n … y
+✔ Which account Did? … 0x8efe473faf995715699f625c79c2f118621974521a60b3eda226e5108f38ee1a
+✔ By what amount? … 100000
+Recipient portfolios:
+1 - NextDaq Custody
+✔ In which portfolio? (default: default portfolio) … 
+✔ Send DEEPUSD2 to others? y/n … n
+instruction 225 mined
+You have 1 pending instructions: 225
+```
+In this case, the recipient of this instruction should open the `/custodian` page and accept the instruction.
+
 ## `/trader`
 
 In this simplified version, a trader is known by its id. You can give any id, even one from someone else. There can be only 1 order per trader id at any one time. In effect, making it an order id.
@@ -42,7 +80,7 @@ Switch to the custodian's account. And:
 
 When acting as a custodian, you can enter an order on behalf of a trader. It is possible to simply pick the desired portfolio from the list of custodied portfolios.
 
-### `/exchange`
+## `/exchange`
 
 In this simplified version, the exchange does not automatically match orders. Instead, you are presented with 2 conveniently sorted lists:
 
@@ -60,7 +98,7 @@ Select 1 order from each side and click "Submit the match". With this, the serve
 
 When an order has been removed, its former id can be reused. In effect
 
-### `/custodian`
+## `/custodian`
 
 In this simplified version, you can load all the pending settlements pertaining to a trader id. For each of them, the page tries its best to activate only the buttons relevant to you. Again there is no login or safety when a party claims having paid or transferred. It is meant to be simple.
 

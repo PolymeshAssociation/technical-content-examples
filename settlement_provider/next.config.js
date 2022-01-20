@@ -18,7 +18,7 @@ module.exports = {
             nodeUrl: process.env.POLY_NODE_URL
                 || keys["rpcNetwork"]
                 || "wss://testnet-rpc.polymesh.live",
-            venueId: process.env.POLY_VENUE_ID || "90",
+            venueId: process.env.POLY_VENUE_ID || "95",
             usdToken: process.env.POLY_USD_TOKEN || "DEEPUSD2",
             // TODO choose where the middleware info goes. Server only or public (i.e. shared)?
             middlewareLink: process.env.MIDDLEWARE_LINK || keys["middlewareLink"],
@@ -29,7 +29,7 @@ module.exports = {
         // Note: we provide webpack above so you should not `require` it
         // Perform customizations to webpack config
         // config.plugins.push(new webpack.IgnorePlugin(/\/__tests__\//))
-    
+
         config.module.rules.push({
             test: /\.mjs$/,
             include: /node_modules/,
