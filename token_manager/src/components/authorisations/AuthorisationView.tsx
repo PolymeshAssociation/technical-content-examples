@@ -1,6 +1,6 @@
 import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/base/TransactionQueue";
 import { Authorization, AuthorizationRequest, AuthorizationType, Permissions } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { OnAuthorisationChanged, OnAuthorisationRequestChanged } from "../../handlers/authorisations/AuthorisationHandlers";
 import { assertUnreachable, isIdentityNotAccount } from "../../types";
 import { showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
@@ -22,7 +22,7 @@ export interface AuthorisationViewProps {
 
 export class AuthorisationView extends Component<AuthorisationViewProps> {
 
-    onAuthorizationTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onAuthorisationChanged({
+    onAuthorizationTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.props.onAuthorisationChanged({
         ...this.props.authorisation,
         type: AuthorizationType[e.target.value],
     })

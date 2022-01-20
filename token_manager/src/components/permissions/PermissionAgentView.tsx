@@ -7,7 +7,7 @@ import {
 } from "@polymathnetwork/polymesh-sdk/internal";
 import { AgentWithGroup, Identity } from "@polymathnetwork/polymesh-sdk/types";
 import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { PermissionGroupInfoJson } from "../../types";
 import { IdentityView } from "../identity/IdentityView";
 import { PermissionGroupView } from "./PermissionGroupView";
@@ -112,7 +112,7 @@ export class NewPermissionAgentView extends Component<NewPermissionAgentViewProp
         }
     }
 
-    updateInviteTarget = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    updateInviteTarget = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         inviteTarget: e.target.value,
         modified: true,
     })

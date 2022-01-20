@@ -1,5 +1,5 @@
 import { TokenIdentifier, TokenIdentifierType } from "@polymathnetwork/polymesh-sdk/types"
-import { Component } from "react"
+import { ChangeEvent, Component } from "react"
 import { OnTokenIdentifierChanged, OnTokenIdentifiersChanged } from "../../handlers/token/TokenHandlers";
 import { EnumSelectView } from "../EnumView";
 
@@ -28,10 +28,10 @@ export class TokenIdentifierView extends Component<TokenIdentifierViewProps, Tok
         type: this.state.type,
         value: this.state.value,
     })
-    onTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState(
+    onTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.setState(
         { type: TokenIdentifierType[e.target.value] },
         this.onStateChanged)
-    onValueChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState(
+    onValueChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState(
         { value: e.target.value },
         this.onStateChanged)
 

@@ -1,6 +1,6 @@
 import { Checkpoint, CreateCheckpointScheduleParams, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
 import { CalendarUnit, CheckpointSchedule } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import {
     fetchCheckpointInfoJson,
     fetchCheckpointScheduleInfoJson,
@@ -52,9 +52,9 @@ export class CheckpointManagerView extends Component<CheckpointManagerViewProps,
     }
 
     onValidDateChanged = (newStartDate: Date) => this.setState({ start: newStartDate })
-    updatePeriodValue = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ periodValue: parseInt(e.target.value) })
-    updatePeriodUnit = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState({ periodUnit: CalendarUnit[e.target.value] })
-    updateRepetitions = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ repetitions: parseInt(e.target.value) })
+    updatePeriodValue = (e: ChangeEvent<HTMLInputElement>) => this.setState({ periodValue: parseInt(e.target.value) })
+    updatePeriodUnit = async (e: ChangeEvent<HTMLSelectElement>) => this.setState({ periodUnit: CalendarUnit[e.target.value] })
+    updateRepetitions = (e: ChangeEvent<HTMLInputElement>) => this.setState({ repetitions: parseInt(e.target.value) })
 
     onCreateCheckpointSchedule = async () => this.createCheckpointSchedule()
     createCheckpointSchedule = async (): Promise<CheckpointScheduleInfoJson> => {

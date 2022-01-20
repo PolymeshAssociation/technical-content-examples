@@ -11,7 +11,7 @@ import {
     Scope,
     ScopeType,
 } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import {
     ClaimFlat,
     convertClaimFlatToClaim,
@@ -40,11 +40,11 @@ export interface ScopeViewProps {
 
 export class ScopeView extends Component<ScopeViewProps> {
 
-    onTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onScopeChanged({
+    onTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.props.onScopeChanged({
         ...this.props.scope,
         type: ScopeType[e.target.value],
     })
-    onValueChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onScopeChanged({
+    onValueChanged = (e: ChangeEvent<HTMLInputElement>) => this.props.onScopeChanged({
         ...this.props.scope,
         value: e.target.value,
     })
@@ -87,11 +87,11 @@ export interface ClaimViewProps {
 
 export class ClaimView extends Component<ClaimViewProps> {
 
-    onClaimTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onClaimTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
         type: ClaimType[e.target.value],
     }))
-    onStringChanged = (key: keyof ClaimFlat) => (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onStringChanged = (key: keyof ClaimFlat) => (e: ChangeEvent<HTMLInputElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
         [key]: e.target.value,
     }))
@@ -99,7 +99,7 @@ export class ClaimView extends Component<ClaimViewProps> {
         ...convertClaimToFlat(this.props.claim),
         scope: scope,
     }))
-    onCountryCodeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
+    onCountryCodeChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.props.onClaimChanged(convertClaimFlatToClaim({
         ...convertClaimToFlat(this.props.claim),
         code: CountryCode[e.target.value],
     }))
@@ -237,7 +237,7 @@ export class AddInvestorUniquenessClaimView extends Component<AddInvestorUniquen
             [key]: value,
         })
     onScopeChanged = (scope: Scope) => this.setClaimParamValue<Scope>("scope", scope)
-    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    onParamsStringChanged = (key: keyof AddInvestorUniquenessClaimParams) => (e: ChangeEvent<HTMLInputElement>) =>
         this.setClaimParamValue<string>(key, e.target.value)
     onFetchMyCddId = async (): Promise<void> => {
         const api: Polymesh = await this.props.apiGetter()

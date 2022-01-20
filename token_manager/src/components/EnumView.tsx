@@ -1,4 +1,4 @@
-import { Component } from "react"
+import { ChangeEvent, Component } from "react"
 
 export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
     const selects: JSX.Element[] = []
@@ -13,7 +13,7 @@ export function presentEnumOptions<EnumType>(theEnum: EnumType): JSX.Element[] {
 export interface EnumSelectViewProps<EnumType> {
     theEnum: any
     defaultValue: EnumType
-    onChange: ((e: React.ChangeEvent<HTMLSelectElement>) => Promise<void>) | undefined
+    onChange: ((e: ChangeEvent<HTMLSelectElement>) => Promise<void>) | undefined
     canManipulate: boolean
 }
 

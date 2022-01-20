@@ -1,5 +1,5 @@
 import { ClaimType } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import {
     getDummyTrustedClaimIssuerFlat,
     OnTrustedIssuerChanged,
@@ -16,7 +16,7 @@ export interface TrustedClaimIssuerViewProps {
 
 export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProps> {
 
-    onChangeIdentity = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onTrustedIssuerChanged({
+    onChangeIdentity = (e: ChangeEvent<HTMLInputElement>) => this.props.onTrustedIssuerChanged({
         ...this.props.trustedIssuer,
         identity: e.target.value,
     })
@@ -27,7 +27,7 @@ export class TrustedClaimIssuerView extends Component<TrustedClaimIssuerViewProp
             ...this.props.trustedIssuer.trustedFor,
         ]
     })
-    onChangeTrustedForAt = (index: number) => async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChangeTrustedForAt = (index: number) => async (e: ChangeEvent<HTMLSelectElement>) => {
         const trustedFor: ClaimType[] = this.props.trustedIssuer.trustedFor
         trustedFor[index] = ClaimType[e.target.value]
         this.props.onTrustedIssuerChanged({

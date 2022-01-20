@@ -11,7 +11,7 @@ import {
     TickerReservationStatus,
     TokenIdentifier,
 } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { fetchReservationInfoJson, OnReservationInfoChanged } from "../../handlers/token/ReservationHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { ReservationInfoJson, TokenInfoJson } from "../../types";
@@ -70,7 +70,7 @@ export class TickerReservationTransferView extends Component<TickerReservationTr
         }
     }
 
-    onTargetChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ transferTarget: e.target.value })
+    onTargetChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ transferTarget: e.target.value })
     onTransferExpiryChanged = (expiry: Date) => this.setState({ transferExpiry: expiry })
     getTransferParams = () => ({
         target: this.state.transferTarget,
@@ -175,12 +175,12 @@ export class TokenCreatorView extends Component<TokenCreatorViewProps, TokenCrea
         }
     }
 
-    onLongNameChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ longName: e.target.value })
-    onIsDivisibleChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ isDivisible: e.target.checked })
-    onAssetTypeFromInputChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ assetType: e.target.value })
-    onAssetTypeFromDropDownChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => this.setState({ assetType: e.target.value })
-    onFundingRoundChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ fundingRound: e.target.value })
-    onUniquenessChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ requiresUniqueness: e.target.checked })
+    onLongNameChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ longName: e.target.value })
+    onIsDivisibleChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ isDivisible: e.target.checked })
+    onAssetTypeFromInputChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ assetType: e.target.value })
+    onAssetTypeFromDropDownChanged = async (e: ChangeEvent<HTMLSelectElement>) => this.setState({ assetType: e.target.value })
+    onFundingRoundChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ fundingRound: e.target.value })
+    onUniquenessChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ requiresUniqueness: e.target.checked })
     onTokenIdentifiersChanged = (identifiers: TokenIdentifier[]) => this.setState({ tokenIdentifiers: identifiers })
     onCreateToken = async () => {
         const cyclerReq: ShowRequestCycler = showRequestCycle("Creating token")

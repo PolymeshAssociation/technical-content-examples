@@ -1,7 +1,7 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
 import { Claim, ClaimData, ClaimTarget } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import {
     ClaimDataFlat,
     convertClaimDataToFlat,
@@ -24,7 +24,7 @@ export interface ClaimTargetViewProps {
 
 export class ClaimTargetView extends Component<ClaimTargetViewProps> {
 
-    onTargetChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimTargetChanged({
+    onTargetChanged = (e: ChangeEvent<HTMLInputElement>) => this.props.onClaimTargetChanged({
         ...this.props.claimTarget,
         target: e.target.value,
     })
@@ -80,7 +80,7 @@ export interface ClaimDataViewProps {
 
 export class ClaimDataView extends Component<ClaimDataViewProps> {
 
-    onStringChanged = (key: keyof ClaimDataFlat) => (e: React.ChangeEvent<HTMLInputElement>) => this.props.onClaimDataChanged({
+    onStringChanged = (key: keyof ClaimDataFlat) => (e: ChangeEvent<HTMLInputElement>) => this.props.onClaimDataChanged({
         ...convertClaimDataToFlat(this.props.claimData),
         [key]: e.target.value,
     })

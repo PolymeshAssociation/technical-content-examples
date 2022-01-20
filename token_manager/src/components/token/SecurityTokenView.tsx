@@ -1,6 +1,6 @@
 import { TransactionQueue, TransferTokenOwnershipParams } from "@polymathnetwork/polymesh-sdk/internal";
 import { Identity, SecurityToken, SecurityTokenDetails } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { TokenInfoJson } from "../../types";
 import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
@@ -137,7 +137,7 @@ export class SecurityTokenOwnerTransferView extends Component<SecurityTokenOwner
         }
     }
 
-    updateOwnershipTarget = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ ownershipTarget: e.target.value })
+    updateOwnershipTarget = (e: ChangeEvent<HTMLInputElement>) => this.setState({ ownershipTarget: e.target.value })
     onOwnershipExpiryChanged = (expiry: Date) => this.setState({ ownershipExpiry: expiry })
     onTransferReservationOwnership = async () => {
         const cyclerReq: ShowRequestCycler = showRequestCycle("Token ownership transfer")

@@ -1,5 +1,5 @@
 import { Claim, ConditionTarget, ConditionType } from "@polymathnetwork/polymesh-sdk/types";
-import React, { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { TrustedClaimIssuerFlat } from "../../handlers/claims/TrustedClaimIssuerHandlers";
 import {
     ConditionFlat,
@@ -21,7 +21,7 @@ export interface ConditionViewProps {
 
 export class ConditionView extends Component<ConditionViewProps> {
 
-    onStringChanged = (key: keyof ConditionFlat) => async (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.props.onConditionChanged({
+    onStringChanged = (key: keyof ConditionFlat) => async (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.props.onConditionChanged({
         ...this.props.condition,
         [key]: e.target.value,
     })

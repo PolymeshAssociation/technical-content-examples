@@ -3,7 +3,7 @@ import { Distributions } from "@polymathnetwork/polymesh-sdk/api/entities/Securi
 import { ConfigureDividendDistributionParams } from "@polymathnetwork/polymesh-sdk/api/procedures/configureDividendDistribution"
 import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
 import { DividendDistribution, DividendDistributionDetails } from "@polymathnetwork/polymesh-sdk/types"
-import { Component } from "react"
+import { ChangeEvent, Component } from "react"
 import { OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers"
 import { OnDividendDistributionCreated } from "../../handlers/distribution/DividendDistributionHandlers"
 import {
@@ -238,16 +238,16 @@ export class DividendDistributionCreateView extends Component<DividendDistributi
     onDeclarationDateChanged = (newDeclarationDate: Date | null) => this.setState({
         declarationDate: newDeclarationDate,
     })
-    onDescriptionChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    onDescriptionChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         description: e.target.value,
     })
-    onCurrencyChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    onCurrencyChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         currency: e.target.value,
     })
-    onPerShareChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    onPerShareChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         perShare: new BigNumber(e.target.value),
     })
-    onMaxAmountChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    onMaxAmountChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         maxAmount: new BigNumber(e.target.value),
     })
     onPaymentDateChanged = (newPaymentDate: Date) => this.setState({

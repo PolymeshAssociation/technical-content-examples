@@ -5,7 +5,7 @@ import {
     SectionPermissions,
     SecurityToken,
 } from "@polymathnetwork/polymesh-sdk/types"
-import { Component } from "react"
+import { ChangeEvent, Component } from "react"
 import { PortfoliosView } from "../portfolios/PortfolioView"
 import { OnSectionPermissionsChanged } from "../../handlers/permissions/SectionPermissionsHandler"
 import { EnumSelectView } from "../EnumView"
@@ -33,7 +33,7 @@ export interface SectionPermissionsSecurityTokenViewProps {
 
 export class SectionPermissionsSecurityTokenView extends Component<SectionPermissionsSecurityTokenViewProps> {
 
-    onPermissionTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onPermissionTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => {
         const type: PermissionType = PermissionType[e.target.value]
         this.props.onSectionPermissionsChanged({
             ...this.props.permissions,
@@ -74,7 +74,7 @@ export interface SectionPermissionsPortfolioViewProps {
 
 export class SectionPermissionsPortfolioView extends Component<SectionPermissionsPortfolioViewProps> {
 
-    onPermissionTypeChanged = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onPermissionTypeChanged = async (e: ChangeEvent<HTMLSelectElement>) => {
         const type: PermissionType = PermissionType[e.target.value]
         this.props.onSectionPermissionsChanged({
             ...this.props.permissions,

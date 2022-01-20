@@ -2,7 +2,7 @@ import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { PolymeshError } from "@polymathnetwork/polymesh-sdk/base/PolymeshError";
 import { ReserveTickerParams, TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal";
 import { SecurityToken, TickerReservation } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component } from "react";
 import { fetchReservationInfoJson, OnReservationInfoChanged, OnTickerChanged } from "../../handlers/token/ReservationHandlers";
 import { fetchTokenInfoJson, OnTokenInfoChanged } from "../../handlers/token/TokenHandlers";
 import { ApiGetter, getEmptyReservation, getEmptyTokenInfoJson, ReservationInfoJson, TokenInfoJson } from "../../types";
@@ -51,7 +51,7 @@ export class TickerManagerView extends Component<TickerManagerViewProps, TickerM
             this.onStateChanged)
     }
     onStateChanged = () => this.props.onTickerChanged(this.state.ticker)
-    onUpdateTicker = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.updateTicker(e.target.value)
+    onUpdateTicker = (e: ChangeEvent<HTMLSelectElement | HTMLInputElement>) => this.updateTicker(e.target.value)
     onLoadMyTickers = async () => {
         const api: Polymesh = await this.props.apiGetter()
         const cyclerRes: ShowFetchCycler = showFetchCycle("Your ticker reservations")

@@ -1,4 +1,4 @@
-import { Component } from "react"
+import { ChangeEvent, Component } from "react"
 import { OnValidDateChanged } from "../../handlers/elements/DateTimeEntryHandlers"
 
 export interface DateTimeEntryViewState {
@@ -25,7 +25,7 @@ export class DateTimeEntryView extends Component<DateTimeEntryViewProps, DateTim
         }
     }
 
-    onDateTimeChanged = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onDateTimeChanged = (e: ChangeEvent<HTMLInputElement>) => {
         const newDate: string = e.target.value
         const isDateTimeValid: boolean = new Date(newDate).toString() !== "Invalid Date"
         this.setState({
@@ -34,7 +34,7 @@ export class DateTimeEntryView extends Component<DateTimeEntryViewProps, DateTim
         })
         if (isDateTimeValid) this.props.onValidDateChanged(new Date(newDate))
     }
-    onHasDateTimeChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState((prev: DateTimeEntryViewState) => {
+    onHasDateTimeChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState((prev: DateTimeEntryViewState) => {
         const isDateTimeValid: boolean = new Date(prev.dateTime).toString() !== "Invalid Date"
         if (!e.target.checked) this.props.onValidDateChanged(null)
         else if (isDateTimeValid) this.props.onValidDateChanged(new Date(prev.dateTime))
