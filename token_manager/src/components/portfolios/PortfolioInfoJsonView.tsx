@@ -5,8 +5,10 @@ import {
     SetCustodianParams,
     TransactionQueue,
 } from "@polymathnetwork/polymesh-sdk/internal";
-import { Component } from "react";
+import { PortfolioBalance } from "@polymathnetwork/polymesh-sdk/types";
+import { ChangeEvent, Component, KeyboardEvent } from "react";
 import { isNumberedPortfolio, PortfolioInfoJson } from "../../types";
+import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
 import { DateTimeEntryView } from "../elements/DateTimeEntry";
 import { EventIdentifierView } from "../elements/EventIdentifierView";
 import {
@@ -15,13 +17,14 @@ import {
     fetchPortfolioInfoJson,
     OnPortfolioPicked,
 } from "../../handlers/portfolios/PortfolioHandlers";
-import { PortfolioView } from "./PortfolioView";
-import { showFetchCycle, ShowFetchCycler, showRequestCycle, ShowRequestCycler } from "../../ui-helpers";
+import { PortfolioBalanceView, PortfolioView } from "./PortfolioView";
 
 interface PortfolioInfoJsonViewState {
     newName: string
     newCustodian: string
     custodianExpiry: Date | null
+    tickerForBalance: string
+    balanceOFTicker: PortfolioBalance | null
 }
 
 export interface PortfolioInfoJsonViewProps {
@@ -39,10 +42,12 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
             newCustodian: props.portfolio.custodian,
             custodianExpiry: new Date(),
             newName: props.portfolio.name,
+            tickerForBalance: "",
+            balanceOFTicker: null,
         }
     }
 
-    onNewName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ newName: e.target.value })
+    onNewName = (e: ChangeEvent<HTMLInputElement>) => this.setState({ newName: e.target.value })
     onModifyName = async () => {
         const portfolio: DefaultPortfolio | NumberedPortfolio = this.props.portfolio.original
         isNumberedPortfolio(portfolio) ? await this.modifyName(portfolio, this.getModifyNameParams()) : Promise.resolve()
@@ -61,7 +66,7 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
     }
     getModifyNameParams = (): RenamePortfolioParams => ({ name: this.state.newName })
 
-    onUpdateNewCustodian = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ newCustodian: e.target.value })
+    onUpdateNewCustodian = (e: ChangeEvent<HTMLInputElement>) => this.setState({ newCustodian: e.target.value })
     onCustodianExpiryChanged = (expiry: Date) => this.setState({ custodianExpiry: expiry })
     onSetCustodian = async () => this.setCustodian(this.props.portfolio.original, this.getNewCustodianParams())
     setCustodian = async (portfolio: (DefaultPortfolio | NumberedPortfolio), params: SetCustodianParams): Promise<PortfolioInfoJson> => {
@@ -95,8 +100,18 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
         return updated
     }
 
+    onTickerForBalanceChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ tickerForBalance: e.target.value })
+    onTickerKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") return this.onFetchTickerBalance()
+    }
+    onFetchTickerBalance = async () => this.setState({
+        balanceOFTicker: (await this.props.portfolio.original.getTokenBalances({
+            tokens: [this.state.tickerForBalance],
+        }))[0],
+    })
+
     render() {
-        const { newCustodian, custodianExpiry, newName } = this.state
+        const { newCustodian, custodianExpiry, newName, tickerForBalance, balanceOFTicker } = this.state
         const { portfolio, myDid, isWrongStyle, canManipulate } = this.props
         const isCustodied: boolean = portfolio.original.owner.did !== portfolio.custodian
         const isMine: boolean = portfolio.original.owner.did === myDid
@@ -139,7 +154,8 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                 <EventIdentifierView eventId={portfolio.createdAt}
                 />
             </li>
-            <li key="custodian">Custodian:&nbsp;
+            <li key="custodian">
+                Custodian:&nbsp;
                 <input
                     defaultValue={newCustodian}
                     placeholder="0x123"
@@ -169,6 +185,30 @@ export class PortfolioInfoJsonView extends Component<PortfolioInfoJsonViewProps,
                     isWrongStyle={isWrongStyle}
                     canManipulate={canManipulate && canSetCustody}
                 />
+            </li>
+            <li key="balance">
+                Balance of ticker:&nbsp;
+                <input
+                    value={tickerForBalance}
+                    placeholder="ACME"
+                    onChange={this.onTickerForBalanceChanged}
+                    onKeyDown={this.onTickerKeyDown}
+                    disabled={false}
+                />
+                &nbsp;
+                <button
+                    className="submit fetch-balance"
+                    onClick={this.onFetchTickerBalance}
+                    disabled={false}>
+                    Fetch
+                </button>
+                {(function () {
+                    if (typeof balanceOFTicker === "undefined" || balanceOFTicker === null)
+                        return <div>Nothing</div>
+                    return <PortfolioBalanceView
+                        balance={balanceOFTicker}
+                    />
+                })()}
             </li>
         </ul>
     }

@@ -1,6 +1,6 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
-import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { DefaultPortfolio, Identity, NumberedPortfolio, PortfolioBalance } from "@polymathnetwork/polymesh-sdk/types";
+import { ChangeEvent, Component } from "react";
 import { ApiGetter, isNumberedPortfolio, PortfolioInfoJson } from "../../types";
 import {
     NewPortfolioParams,
@@ -71,7 +71,7 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
         }
     }
 
-    updateName = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ name: e.target.value })
+    updateName = (e: ChangeEvent<HTMLInputElement>) => this.setState({ name: e.target.value })
     onCreatePortfolio = async () => this.createPortfolio(this.getCreateParams())
     createPortfolio = async (newName: NewPortfolioParams): Promise<PortfolioInfoJson> => {
         const api: Polymesh = await this.props.apiGetter()
@@ -116,5 +116,42 @@ export class NewPortfolioView extends Component<NewPortfolioViewProps, NewPortfo
                 </button>
             </div>
         </CollapsibleFieldsetView>
+    }
+}
+
+export interface PortfolioBalanceViewProps {
+    balance: PortfolioBalance
+}
+
+export class PortfolioBalanceView extends Component<PortfolioBalanceViewProps> {
+    render() {
+        const {
+            balance: {
+                token: {
+                    ticker,
+                },
+                free,
+                locked,
+                total,
+            },
+        } = this.props
+        return <ul>
+            <li key="ticker">
+                Ticker:&nbsp;
+                {ticker}
+            </li>
+            <li key="free">
+                Free:&nbsp;
+                {free.toString(10)}
+            </li>
+            <li key="locked">
+                Locked:&nbsp;
+                {locked.toString(10)}
+            </li>
+            <li key="total">
+                Total:&nbsp;
+                {total.toString(10)}
+            </li>
+        </ul>
     }
 }
