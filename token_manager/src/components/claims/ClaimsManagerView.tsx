@@ -7,7 +7,7 @@ import {
     IdentityWithClaims,
     ResultSet,
 } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component, KeyboardEvent } from "react";
 import { getDummyClaimTarget } from "../../handlers/claims/ClaimDataHandlers";
 import {
     getDummyAddInvestorUniquenessClaimParams,
@@ -48,8 +48,9 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
         }
     }
 
-    onTargetToLoadChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ targetToLoad: e.target.value })
+    onTargetToLoadChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ targetToLoad: e.target.value })
     onPickMyDid = async () => this.setState({ targetToLoad: this.props.myDid })
+    onTargetKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" ? this.onLoadAttestationsReceived() : ""
     onLoadAttestationsReceived = async () => {
         const api: Polymesh = await this.props.apiGetter()
         const cycler: ShowFetchCycler = showFetchCycle("Attestations")
@@ -128,6 +129,7 @@ export class ClaimsManagerView extends Component<ClaimsManagerViewProps, ClaimsM
                     value={targetToLoad}
                     placeholder="0x123"
                     onChange={this.onTargetToLoadChanged}
+                    onKeyDown={this.onTargetKeyDown}
                 />
                 &nbsp;
                 <button

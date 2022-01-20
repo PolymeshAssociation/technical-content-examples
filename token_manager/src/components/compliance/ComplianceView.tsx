@@ -2,7 +2,7 @@ import { isEqual } from "lodash"
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { SetAssetRequirementsParams } from "@polymathnetwork/polymesh-sdk/api/procedures/setAssetRequirements";
 import { Compliance, Identity, Requirement, SecurityToken } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component, KeyboardEvent } from "react";
 import { IdentityGetter } from "../../handlers/compliance/ComplianceHandlers";
 import {
     convertRequirementFlatToRequirement,
@@ -65,10 +65,6 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         requirements: requirements,
         modified: true,
     })
-    onFromChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ simulationFrom: e.target.value })
-    onFromPickedMe = async () => this.setState({ simulationFrom: this.props.myDid })
-    onToChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ simulationTo: e.target.value })
-    onToPickedMe = async () => this.setState({ simulationTo: this.props.myDid })
 
     onSaveRequirements = async (): Promise<void> => {
         const cyclerParams: ShowFetchCycler = showFetchCycle("Requirements params")
@@ -95,6 +91,11 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
         }
     }
 
+    onFromChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ simulationFrom: e.target.value })
+    onFromPickedMe = async () => this.setState({ simulationFrom: this.props.myDid })
+    onToChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ simulationTo: e.target.value })
+    onToPickedMe = async () => this.setState({ simulationTo: this.props.myDid })
+    onFromOrToKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" ? this.onSimulateCompliance() : ""
     onSimulateCompliance = async () => {
         const cycler: ShowFetchCycler = showFetchCycle("Checking settle")
         const result = await this.props.requirements.original.checkSettle(this.getSimulateParams())
@@ -190,7 +191,8 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                     <input
                         defaultValue={simulationFrom}
                         placeholder="0x123"
-                        onChange={this.onFromChanged} />
+                        onChange={this.onFromChanged}
+                        onKeyDown={this.onFromOrToKeyDown} />
                     &nbsp;
                     <button
                         className="submit pick-me-for-sender"
@@ -202,7 +204,8 @@ export class ComplianceManagerView extends Component<ComplianceManagerViewProps,
                     <input
                         defaultValue={simulationTo}
                         placeholder="0x123"
-                        onChange={this.onToChanged} />
+                        onChange={this.onToChanged}
+                        onKeyDown={this.onFromOrToKeyDown} />
                     &nbsp;
                     <button
                         className="submit pick-me-for-recipient"

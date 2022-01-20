@@ -1,6 +1,6 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { DefaultPortfolio, Identity, NumberedPortfolio } from "@polymathnetwork/polymesh-sdk/types"
-import { Component } from "react"
+import { ChangeEvent, Component, KeyboardEvent } from "react"
 import { fetchPortfolioInfoJsons, OnPortfolioPicked } from "../../handlers/portfolios/PortfolioHandlers"
 import { ApiGetter, assertUnreachable, PortfolioInfoJson } from "../../types"
 import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers"
@@ -56,7 +56,8 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
             default: assertUnreachable(this.state.listType)
         }
     }
-    updateOtherOwner = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ otherOwner: e.target.value })
+    onOtherOwnerChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ otherOwner: e.target.value })
+    onOtherOwnerKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" ? this.onLoadOtherPortfolios() : ""
 
     onLoadMyPortfolios = async () => {
         this.setState({ listType: PortfolioListType.Mine })
@@ -172,7 +173,8 @@ export class PortfolioManagerView extends Component<PortfolioManagerViewProps, P
                 <input
                     defaultValue={otherOwner}
                     placeholder="0x123"
-                    onChange={this.updateOtherOwner}
+                    onChange={this.onOtherOwnerChanged}
+                    onKeyDown={this.onOtherOwnerKeyDown}
                 />
             </div>
 

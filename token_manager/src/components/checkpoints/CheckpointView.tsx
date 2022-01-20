@@ -1,5 +1,5 @@
 import { BigNumber } from "@polymathnetwork/polymesh-sdk";
-import { Component } from "react";
+import { ChangeEvent, Component, KeyboardEvent } from "react";
 import { CheckpointLoadBalanceParams, OnCheckpointPicked } from "../../handlers/checkpoints/CheckpointHandlers";
 import { CheckpointInfoJson } from "../../types";
 import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
@@ -23,7 +23,8 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
         }
     }
 
-    updateNewWhoseBalance = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({ whoseBalance: e.target.value })
+    onWhoseBalanceChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({ whoseBalance: e.target.value })
+    onWhoseBalanceKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" ? this.onGetBalanceOf() : ""
     onGetBalanceOf = async () => this.setState({ balance: await this.loadBalance() })
     loadBalance = async (): Promise<BigNumber> => {
         const cycler: ShowFetchCycler = showFetchCycle("Balance of holder")
@@ -53,7 +54,8 @@ export class CheckpointView extends Component<CheckpointViewProps, CheckpointVie
                     defaultValue={this.state.whoseBalance}
                     type="text"
                     placeholder="0x123"
-                    onChange={this.updateNewWhoseBalance}
+                    onChange={this.onWhoseBalanceChanged}
+                    onKeyDown={this.onWhoseBalanceKeyDown}
                 />
                 &nbsp;
                 <button

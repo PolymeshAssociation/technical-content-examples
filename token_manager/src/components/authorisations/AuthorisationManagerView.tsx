@@ -1,6 +1,6 @@
 import { Polymesh } from "@polymathnetwork/polymesh-sdk";
 import { AuthorizationRequest, Identity } from "@polymathnetwork/polymesh-sdk/types";
-import { Component } from "react";
+import { ChangeEvent, Component, KeyboardEvent } from "react";
 import { ApiGetter } from "../../types";
 import { showFetchCycle, ShowFetchCycler } from "../../ui-helpers";
 import { CollapsibleFieldsetView } from "../presentation/CollapsibleFieldsetView";
@@ -32,12 +32,13 @@ export class AuthorisationManagerView extends Component<AuthorisationManagerView
         }
     }
 
-    onWhoseChanged = (e: React.ChangeEvent<HTMLInputElement>) => this.setState({
+    onWhoseChanged = (e: ChangeEvent<HTMLInputElement>) => this.setState({
         whose: e.target.value,
     })
     onPickMyDid = () => this.setState({
         whose: this.props.myDid,
     })
+    onWhoseKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" ? this.onLoadAuthorisationRequests() : ""
     onLoadAuthorisationRequests = async () => {
         const api: Polymesh = await this.props.apiGetter()
         const cyclerId: ShowFetchCycler = showFetchCycle("Identity")
