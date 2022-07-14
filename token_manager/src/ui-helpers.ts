@@ -43,7 +43,6 @@ export async function getBasicPolyWalletApi(
 
   const network = await polyWallet.network.get();
 
-  console.log(network);
   polyWallet.network.subscribe(() => window.location.reload());
 
   web3AccountsSubscribe(() => window.location.reload());

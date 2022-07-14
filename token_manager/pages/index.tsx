@@ -827,8 +827,6 @@ export default function Home() {
           />
         </li>
       );
-    } else {
-      throw new Error(`Unknown condition type: ${condition}`);
     }
     return <ul>{elements}</ul>;
   }
@@ -838,8 +836,9 @@ export default function Home() {
     location: (string | number)[],
     canManipulate: boolean
   ): JSX.Element {
-    if (conditions === null || conditions.length === 0)
+    if (conditions === null || conditions.length === 0) {
       return <div>No conditions</div>;
+    }
     return (
       <ul>
         {conditions
@@ -883,7 +882,7 @@ export default function Home() {
     };
     return (
       <ul>
-        <li key="id">Id: {requirement.id}</li>
+        <li key="id">{"Id: " + requirement.id.toString(10)}</li>
         <li key="conditions">
           Conditions:&nbsp;
           <button
@@ -1114,7 +1113,7 @@ export default function Home() {
     );
   }
 
-  function presentAuthorisation(
+  function presentAuthorization(
     authorization: Authorization,
     location: (string | number)[]
   ): JSX.Element {
@@ -1193,7 +1192,7 @@ export default function Home() {
         </li>
         <li key="data">
           Data:&nbsp;
-          {presentAuthorisation(authorizationRequest.data, [
+          {presentAuthorization(authorizationRequest.data, [
             ...location,
             "data",
           ])}
@@ -1202,7 +1201,7 @@ export default function Home() {
     );
   }
 
-  function presentAuthorisationRequests(
+  function presentAuthorizationRequests(
     authorizationRequests: AuthorizationRequest[],
     location: (string | number)[]
   ): JSX.Element {
@@ -1220,7 +1219,7 @@ export default function Home() {
           )
           .map((presented, requestIndex: number) => (
             <li key={requestIndex}>
-              Authorisation {requestIndex}:&nbsp;{presented}
+              Authorization {requestIndex}:&nbsp;{presented}
             </li>
           ))}
       </ul>
@@ -2552,7 +2551,7 @@ export default function Home() {
           <div>
             {(() => {
               const owner: string = myInfo.asset.details?.owner?.did;
-              const pia: string = myInfo.asset.details?.fullAgents[0]?.did;
+              const pia: string = myInfo.asset.details?.fullAgents?.[0]?.did;
               if (myInfo.asset.current === null) return "There is no asset";
               else
                 return (
@@ -2575,7 +2574,7 @@ export default function Home() {
                       Created at:
                       {myInfo.asset.createdAt?.blockNumber?.toString(10)}/
                       {myInfo.asset.createdAt?.eventIndex?.toString(10)}, on{" "}
-                      {myInfo.asset.createdAt?.blockDate}
+                      {myInfo.asset.createdAt?.blockDate.toISOString()}
                     </li>
                     <li key="pia">
                       With PIA:{" "}
@@ -2695,7 +2694,7 @@ export default function Home() {
             </div>
             {(() => {
               const isPia: boolean =
-                myInfo.asset?.details?.fullAgents[0]?.did === myInfo.myDid;
+                myInfo.asset?.details?.fullAgents?.[0]?.did === myInfo.myDid;
               const isOwner: boolean =
                 myInfo.asset?.details?.owner?.did === myInfo.myDid;
               const canManipulate: boolean = isPia || isOwner;
@@ -2776,9 +2775,9 @@ export default function Home() {
 
           <div>
             {presentRequirements(
-              myInfo.requirements.current,
+              myInfo.requirements?.current,
               ["requirements", "current"],
-              myInfo.requirements.canManipulate
+              myInfo.requirements?.canManipulate
             )}
           </div>
 
@@ -2911,7 +2910,7 @@ export default function Home() {
           </div>
 
           <div>
-            {presentAuthorisationRequests(myInfo.authorizations.current, [
+            {presentAuthorizationRequests(myInfo.authorizations.current, [
               "authorizations",
               "current",
             ])}
@@ -3369,7 +3368,6 @@ export default function Home() {
                           ],
                           false,
                           (e) => {
-                            console.log(e);
                             return Promise.resolve(
                               myInfo.checkpoints.current[
                                 parseInt(e.target.value)
