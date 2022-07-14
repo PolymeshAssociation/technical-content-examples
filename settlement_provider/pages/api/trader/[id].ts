@@ -5,6 +5,9 @@ import {
     IncompleteOrderInfoError,
     WrongTypeOrderError,
     WrongZeroOrderError,
+    InvalidPolymeshDidError,
+    NonExistentCustomerPolymeshIdError,
+    InvalidPortfolioError,
     OrderJson,
 } from "../../../src/orderInfo"
 import { IExchangeDb, UnknownTraderError } from "../../../src/exchangeDb"
@@ -62,6 +65,12 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({ status: `wrong type ${e.receivedType} on field ${e.field}` })
         } else if (e instanceof WrongZeroOrderError) {
             res.status(400).json({ status: `cannot have 0 ${e.field}` })
+        } else if (e instanceof InvalidPolymeshDidError) {
+            res.status(400).json({ status: `wrong polymeshId ${e.polymeshDid}` })
+        } else if (e instanceof NonExistentCustomerPolymeshIdError) {
+            res.status(400).json({ status: `non-existent polymeshId ${e.polymeshDid}` })
+        } else if (e instanceof InvalidPortfolioError) {
+            res.status(400).json({ status: `non-existent portfolio ${e.polymeshDid}-${e.portfolioId}` })
         } else {
             console.log(e)
             res.status(500).json({ status: "internal error" })

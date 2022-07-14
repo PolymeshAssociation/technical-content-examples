@@ -1,51 +1,44 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Basic example of a KYC provider system
 
-It provides a basic example of a KYC provider system.
+The KYC provider is known as ExKyc.
 
-## Getting Started
+There are 2 pages:
 
-First, install:
+* `/` for the KYC customer to enter their parameters.
+* `/manager` for the KYC internal system to handle requests.
 
-```bash
-npm install
-```
-Second, run the development server:
+For the avoidance of doubt, this is meant as an example of KYC, and not CDD for Polymesh.
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+You need some setup before using it.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Enter your `keys.json` following the model found in `keys.json.sample`.
 
-## Modify it
+## `/`
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+In this simplified version, a customer is known by its id. You can use any id, even one from someone else. This security loophole is left open to simplify the system.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+The customer information is split into 2 parts:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+* The basic self-explanatory information: name, jurisdiction...
+* The Polymesh identification, only in `post-polymesh`
 
-## Learn More
+These 2 parts can be updated separately.
 
-To learn more about Next.js, take a look at the following resources:
+On this page, the customer can only see, not update, "EzKyc's decision" with regards to being "verified".
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The server will automatically publish a claim if:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. the customer is already verified by EzKyc.
+2. the customer submits a new or updated Polymesh did.
 
-## Deploy on Vercel
+## `/manager`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+On this page, an EzKyc employee can:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+* See, not modify, a customer's information
+* Accept or reject the information provided.
 
-## Further creation steps
+The server will automatically publish a claim if:
 
-```bash
-npm install --save-dev typescript @types/react @types/node
-touch tsconfig.json
-npm run dev
-```
+1. the customer has provided a Polymesh did.
+1. the EzKyc employee accepts the documents.

@@ -1,16 +1,25 @@
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+
 export interface OrderJson {
     isBuy: boolean
     quantity: string
     token: string
     price: string
+    polymeshDid: string
+    portfolioId: string | null
 }
+
 export interface IOrderInfo {
     isBuy: boolean
-    quantity: number
+    quantity: BigNumber
     token: string
-    price: number
+    price: BigNumber
+    polymeshDid: string
+    portfolioId: BigNumber | null
     toJSON: () => OrderJson
 }
+
+const polymeshDidRegex = /^0x[0-9a-fA-F]{64}$/u
 
 export interface AssignedOrderJson extends OrderJson {
     id: string
@@ -32,28 +41,44 @@ function requireDesiredType(info: any, field: string, receivedType: string) {
 
 export class OrderInfo implements IOrderInfo {
     isBuy: boolean
-    quantity: number
+    quantity: BigNumber
     token: string
-    price: number
+    price: BigNumber
+    polymeshDid: string
+    portfolioId: BigNumber | null
 
     constructor(info: OrderJson) {
         requireDesiredType(info.isBuy, "isBuy", "boolean")
         this.isBuy = info.isBuy
         requireDesiredType(info.quantity, "quantity", "string")
-        this.quantity = parseInt(info.quantity)
+        this.quantity = new BigNumber(info.quantity)
         if (this.quantity.toString(10) === "0") {
             throw new WrongZeroOrderError("quantity")
-        } else if (isNaN(this.quantity)) {
+        } else if (this.quantity.toString(10) === "NaN") {
             throw new WrongNumericValueError("quantity", info.quantity)
         }
         requireDesiredType(info.token, "token", "string")
         this.token = info.token
         requireDesiredType(info.price, "price", "string")
-        this.price = parseInt(info.price)
+        this.price = new BigNumber(info.price)
         if (this.price.toString(10) === "0") {
             throw new WrongZeroOrderError("price")
-        } else if (isNaN(this.price)) {
+        } else if (this.price.toString(10) === "NaN") {
             throw new WrongNumericValueError("price", info.price)
+        }
+        requireDesiredType(info.polymeshDid, "polymeshDid", "string")
+        if (!info.polymeshDid.match(polymeshDidRegex)) {
+            throw new InvalidPolymeshDidError(info.polymeshDid)
+        }
+        this.polymeshDid = info.polymeshDid
+        if (typeof info.portfolioId === "undefined" || info.portfolioId === null || info.portfolioId === "") {
+            this.portfolioId = null
+        } else {
+            requireDesiredType(info.portfolioId, "portfolioId", "string")
+            this.portfolioId = new BigNumber(info.portfolioId)
+            if (this.portfolioId.toString(10) === "NaN") {
+                throw new WrongNumericValueError("portfolioId", info.portfolioId)
+            }
         }
     }
 
@@ -63,6 +88,8 @@ export class OrderInfo implements IOrderInfo {
             quantity: this.quantity.toString(10),
             token: this.token,
             price: this.price.toString(10),
+            polymeshDid: this.polymeshDid,
+            portfolioId: this.portfolioId === null ? null : this.portfolioId.toString(10),
         }
     }
 
@@ -113,6 +140,24 @@ export class WrongNumericValueError extends OrderInfoError {
 
 export class WrongZeroOrderError extends OrderInfoError {
     constructor(public field: string, message?: string) {
+        super(message)
+    }
+}
+
+export class InvalidPolymeshDidError extends OrderInfoError {
+    constructor(public polymeshDid: string, message?: string) {
+        super(message)
+    }
+}
+
+export class NonExistentCustomerPolymeshIdError extends OrderInfoError {
+    constructor(public polymeshDid: string) {
+        super()
+    }
+}
+
+export class InvalidPortfolioError extends OrderInfoError {
+    constructor(public polymeshDid: string, public portfolioId: BigNumber, message?: string) {
         super(message)
     }
 }

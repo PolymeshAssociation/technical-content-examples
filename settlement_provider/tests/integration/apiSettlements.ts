@@ -3,8 +3,10 @@ import { promisify } from "util"
 import mockedEnv, { RestoreFn } from "mocked-env"
 import { expect, use } from "chai"
 import { createMocks } from "node-mocks-http"
+import * as nextConfig from "../../next.config.js"
+import { Polymesh } from "@polymathnetwork/polymesh-sdk"
 import { IAssignedOrderInfo, IOrderInfo, OrderInfo, OrderJson } from "../../src/orderInfo"
-import { IFullSettlementInfo, SettlementInfo, SettlementJson } from "../../src/settlementInfo"
+import { IFullSettlementInfo, PublishedSettlementInfo, PublishedSettlementJson, } from "../../src/settlementInfo"
 import { IExchangeDb, UnknownTraderError } from "../../src/exchangeDb"
 import { ISettlementDb } from "../../src/settlementDb"
 import exchangeDbFactory from "../../src/exchangeDbFactory"
@@ -15,19 +17,41 @@ use(require("chai-as-promised"))
 const exists = promisify(existsAsync)
 
 describe("/api/settlements Integration Tests", () => {
+    const onTrustDid = "0x4b0be33fbd1d4ee719bd902e1ee5de6ad6faa1a2558f141488df53482b5c974e"
+    const safeHandsDid = "0x83b568242707705274952d4ccaf30b1e3f066bd9ad2b93cb9c82e9da5245fb78"
+    const {
+        serverRuntimeConfig: { polymesh: {
+            accountMnemonic,
+        }, },
+        publicRuntimeConfig: { polymesh: {
+            nodeUrl, venueId, usdToken,
+        }, },
+    } = nextConfig
+
     let exchangeDbPath: string, settlementDbPath: string
     let exchangeDb: IExchangeDb, settlementDb: ISettlementDb
     let toRestore: RestoreFn
+    let venueOwner: string
 
-    beforeEach("mock env", async () => {
+    beforeEach("mock env", async function () {
+        this.timeout(20000)
         exchangeDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         settlementDbPath = `${__dirname}/dbStore_${Math.random() * 1000000}`
         toRestore = mockedEnv({
             EXCHANGE_DB_PATH: exchangeDbPath,
             SETTLEMENT_DB_PATH: settlementDbPath,
+            POLY_ACCOUNT_MNEMONIC: accountMnemonic,
+            POLY_NODE_URL: nodeUrl,
+            POLY_VENUE_ID: venueId,
+            POLY_USD_TOKEN: usdToken,
         })
         exchangeDb = await exchangeDbFactory()
         settlementDb = await settlementDbFactory()
+        const api = await Polymesh.connect({
+            nodeUrl,
+            accountMnemonic,
+        })
+        venueOwner = (await api.getCurrentIdentity()).did
     })
 
     afterEach("restore env", async () => {
@@ -52,24 +76,33 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 settlements: [],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "GET",
             })
@@ -82,38 +115,52 @@ describe("/api/settlements Integration Tests", () => {
                     ...bareInfo,
                     id: "3",
                 }],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
-            const bareInfo1: SettlementJson = {
+            const bareInfo1: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            const bareInfo2: SettlementJson = {
+            const bareInfo2: PublishedSettlementJson = {
                 buyer: {
                     id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "543",
                 token: "ACME",
                 price: "30",
+                instructionId: "446",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 method: "GET",
             })
@@ -126,38 +173,52 @@ describe("/api/settlements Integration Tests", () => {
                     { ...bareInfo2, id: "2" },
                     { ...bareInfo1, id: "3" },
                 ],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
         it("returns the filtered info on previously set double info", async () => {
-            const bareInfo1: SettlementJson = {
+            const bareInfo1: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            const bareInfo2: SettlementJson = {
+            const bareInfo2: PublishedSettlementJson = {
                 buyer: {
                     id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "543",
                 token: "ACME",
                 price: "30",
+                instructionId: "446",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 method: "GET",
                 query: {
@@ -172,8 +233,12 @@ describe("/api/settlements Integration Tests", () => {
                 settlements: [
                     { ...bareInfo1, id: "3" },
                 ],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
     })
 
@@ -189,24 +254,33 @@ describe("/api/settlements Integration Tests", () => {
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({
                 settlements: [],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
         it("returns the info on previously set info", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "GET",
             })
@@ -219,38 +293,52 @@ describe("/api/settlements Integration Tests", () => {
                     ...bareInfo,
                     id: "3",
                 }],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
         it("returns the info on previously set double info", async () => {
-            const bareInfo1: SettlementJson = {
+            const bareInfo1: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            const bareInfo2: SettlementJson = {
+            const bareInfo2: PublishedSettlementJson = {
                 buyer: {
                     id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcf",
+                    portfolioId: "2",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abce",
+                    portfolioId: null,
                 },
                 quantity: "543",
                 token: "ACME",
                 price: "30",
+                instructionId: "446",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo1))
-            await settlementDb.setSettlementInfo("2", new SettlementInfo(bareInfo2))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo1))
+            await settlementDb.setSettlementInfo("2", new PublishedSettlementInfo(bareInfo2))
             const { req, res } = createMocks({
                 method: "GET",
             })
@@ -263,8 +351,12 @@ describe("/api/settlements Integration Tests", () => {
                     { ...bareInfo2, id: "2" },
                     { ...bareInfo1, id: "3" },
                 ],
+                venue: {
+                    ownerDid: venueOwner,
+                    venueId: venueId,
+                },
             })
-        })
+        }).timeout(20000)
 
     })
 
@@ -276,6 +368,8 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
             const { req, res } = createMocks({
                 method: "POST",
@@ -289,7 +383,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order not found 1" })
-        })
+        }).timeout(30000)
 
         it("returns 404 on missing sell order", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -297,6 +391,8 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
             const { req, res } = createMocks({
                 method: "POST",
@@ -310,7 +406,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(404)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order not found 2" })
-        })
+        }).timeout(30000)
 
         it("returns 400 if isBuy are not correct", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -318,12 +414,16 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
                 isBuy: true,
                 quantity: "15",
                 token: "ACME",
                 price: "40",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }))
             const { req, res } = createMocks({
                 method: "POST",
@@ -337,7 +437,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "Order is of wrong type, expectedIsBuy: false" })
-        })
+        }).timeout(30000)
 
         it("returns 400 when tokens not matching", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -345,12 +445,16 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
                 isBuy: false,
                 quantity: "15",
                 token: "ECMN",
                 price: "40",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }))
             const { req, res } = createMocks({
                 method: "POST",
@@ -364,7 +468,7 @@ describe("/api/settlements Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(400)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "Orders are not for same token, ACME / ECMN" })
-        })
+        }).timeout(30000)
 
         it("returns 200 when got a match, and got correct data, seller has more", async () => {
             await exchangeDb.setOrderInfo("1", new OrderInfo({
@@ -372,12 +476,16 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }))
             const bareSellOrder: OrderJson = {
                 isBuy: false,
                 quantity: "15",
                 token: "ACME",
                 price: "35",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }
             await exchangeDb.setOrderInfo("2", new OrderInfo(bareSellOrder))
             const { req, res } = createMocks({
@@ -397,13 +505,18 @@ describe("/api/settlements Integration Tests", () => {
                 id: settlements[0].id,
                 buyer: {
                     id: "1",
+                    polymeshDid: safeHandsDid,
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: onTrustDid,
+                    portfolioId: null,
                 },
                 quantity: "10",
                 token: "ACME",
                 price: "34",
+                instructionId: settlements[0].instructionId.toString(10),
                 isPaid: false,
                 isTransferred: false,
             })
@@ -421,7 +534,7 @@ describe("/api/settlements Integration Tests", () => {
                 id: "2",
                 quantity: "5",
             })
-        })
+        }).timeout(120000)
 
         it("returns 200 when got a match, and got correct data, buyer has more", async () => {
             const bareBuyOrder: OrderJson = {
@@ -429,6 +542,8 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "15",
                 token: "ACME",
                 price: "33",
+                polymeshDid: safeHandsDid,
+                portfolioId: "1",
             }
             await exchangeDb.setOrderInfo("1", new OrderInfo(bareBuyOrder))
             await exchangeDb.setOrderInfo("2", new OrderInfo({
@@ -436,6 +551,8 @@ describe("/api/settlements Integration Tests", () => {
                 quantity: "10",
                 token: "ACME",
                 price: "35",
+                polymeshDid: onTrustDid,
+                portfolioId: null,
             }))
             const { req, res } = createMocks({
                 method: "POST",
@@ -454,13 +571,18 @@ describe("/api/settlements Integration Tests", () => {
                 id: settlements[0].id,
                 buyer: {
                     id: "1",
+                    polymeshDid: safeHandsDid,
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: onTrustDid,
+                    portfolioId: null,
                 },
                 quantity: "10",
                 token: "ACME",
                 price: "34",
+                instructionId: settlements[0].instructionId.toString(10),
                 isPaid: false,
                 isTransferred: false,
             })
@@ -478,7 +600,7 @@ describe("/api/settlements Integration Tests", () => {
                 id: "1",
                 quantity: "5",
             })
-        })
+        }).timeout(120000)
 
     })
 

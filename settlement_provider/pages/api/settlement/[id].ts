@@ -5,12 +5,14 @@ import {
     WrongTypeSettlementError,
     DuplicatePartiesSettlementError,
     NoActionToDoSettlementError,
-    SettlementJson,
+    DuplicatePolymeshDidSettlementError,
+    IPublishedSettlementInfo,
+    PublishedSettlementJson,
 } from "../../../src/settlementInfo"
 import { ISettlementDb, UnknownSettlementError } from "../../../src/settlementDb"
 import settlementDbFactory from "../../../src/settlementDbFactory"
 
-async function getSettlementInfoById(req: NextApiRequest): Promise<SettlementJson> {
+async function getSettlementInfoById(req: NextApiRequest): Promise<PublishedSettlementJson> {
     return (await (await settlementDbFactory()).getSettlementInfoById(<string>req.query.id)).toJSON()
 }
 
@@ -23,7 +25,7 @@ async function deleteSettlementInfo(req: NextApiRequest): Promise<void> {
 async function updateSettlementInfo(req: NextApiRequest): Promise<void> {
     const id: string = <string>req.query.id
     const settlementDb: ISettlementDb = await settlementDbFactory()
-    const settlement: ISettlementInfo = await settlementDb.getSettlementInfoById(id)
+    const settlement: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById(id)
     const isPaid: boolean = typeof req.query.isPaid !== "undefined"
     const isTransferred: boolean = typeof req.query.isTransferred !== "undefined"
     if (!isPaid && !isTransferred) {
@@ -64,6 +66,8 @@ export default async function (req: NextApiRequest, res: NextApiResponse<object 
             res.status(400).json({ status: `wrong type ${e.receivedType} on field ${e.field}` })
         } else if (e instanceof DuplicatePartiesSettlementError) {
             res.status(400).json({ status: `same buyer and seller: ${e.partyId}` })
+        } else if (e instanceof DuplicatePolymeshDidSettlementError) {
+            res.status(400).json({ status: `same buyer and seller: ${e.polymeshDid}` })
         } else if (e instanceof NoActionToDoSettlementError) {
             res.status(400).json({ status: `no action found for ${e.id}` })
         } else {

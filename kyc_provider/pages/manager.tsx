@@ -13,6 +13,7 @@ export default function Home() {
       passport: "",
       valid: false,
       jurisdiction: "",
+      polymeshDid: "",
     },
   })
   const countryList: CountryInfo[] = getCountryList()
@@ -130,6 +131,11 @@ export default function Home() {
             <div>
               <label htmlFor="customer-jurisdiction">Their jurisdiction of residence</label>
               <Select name="jurisdiction" id="customer-jurisdiction" instanceId="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find((el: CountryInfo) => el.value === myInfo.info.jurisdiction)} isDisabled={true} />
+            </div>
+
+            <div>
+              <label htmlFor="customer-polymeshId">Their Polymesh did</label>
+              <input name="polymeshDid" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo.info.polymeshDid} readOnly={true}></input>
             </div>
 
           </fieldset>

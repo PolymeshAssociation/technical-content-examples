@@ -1,7 +1,20 @@
 import Head from "next/head"
 import { ChangeEvent, MouseEvent, useState } from "react"
 import styles from "../styles/Home.module.css"
+import { Polymesh } from '@polymathnetwork/polymesh-sdk'
+import {
+  Authorization,
+  AuthorizationRequest,
+  AuthorizationType,
+  DefaultPortfolio,
+  Identity,
+  NumberedPortfolio,
+  ResultSet,
+} from '@polymathnetwork/polymesh-sdk/types'
+import { TransactionQueue } from "@polymathnetwork/polymesh-sdk/internal"
+import { getPolyWalletApi } from "../src/ui-helpers"
 import { AssignedOrderJson, OrderJson } from "../src/orderInfo"
+import { isIdentityNotAccount, isNumberedPortfolio } from "../src/types"
 
 export default function Home() {
   const emptyOrder: OrderJson = {
@@ -9,16 +22,105 @@ export default function Home() {
     quantity: "",
     token: "",
     price: "",
+    polymeshDid: "",
+    portfolioId: null,
   }
   const [myInfo, setMyInfo] = useState({
     id: "",
     order: Object.assign({}, emptyOrder),
     modified: false,
+    portfolios: [],
+    custodianDid: "",
+    custodianValid: false,
+    custodiedPortfolios: [],
+    custodyRequestsIn: [],
+    custodyRequestsOut: [],
   })
+
+  interface ShortPortfolioPresentation {
+    id: string | null
+    name: string
+  }
+
+  type PortfolioPresentation = string | (ShortPortfolioPresentation & {
+    owner: string
+  })
+
+  interface AuthorizationRequestPresentation {
+    target: string
+    owner: string
+    portfolioId: string | null
+    name: string
+    request: AuthorizationRequest
+  }
+
+  type AuthorizationRequestInPresentation = string | Omit<AuthorizationRequestPresentation, "target">
+
+  type AuthorizationRequestOutPresentation = string | Omit<AuthorizationRequestPresentation, "owner">
 
   function setStatus(content: string) {
     const element: HTMLElement = document.getElementById("status")
     element.innerHTML = content
+  }
+
+  async function setDidFromPolyWallet(): Promise<string> {
+    setStatus("Getting your PolyWallet")
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Fetching your account")
+    const did: string = (await api.getCurrentIdentity()).did
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      order: {
+        ...prevInfo.order,
+        polymeshDid: did,
+      },
+      modified: true,
+      portfolios: [{ id: "", name: "Loading" }],
+    }))
+    setStatus("Account fetched")
+    await setPortfolioChoices(did)
+    await setCustodianFor(did, myInfo.order.portfolioId)
+    return did
+  }
+
+  async function setPortfolioChoices(did: string): Promise<string[]> {
+    if (did === "") return []
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Getting the account")
+    const account: Identity = await api.getIdentity({ did: did })
+    setStatus("Getting the portfolios")
+    const portfolios: NumberedPortfolio[] = (await account.portfolios.getPortfolios())
+      .filter(isNumberedPortfolio)
+    setStatus("Getting portfolio names")
+    const folioNames: ShortPortfolioPresentation[] = await Promise.all(portfolios.map((portfolio: NumberedPortfolio) => {
+      return portfolio.getName()
+        .then((name: string) => ({
+          id: portfolio.id.toString(10),
+          name: name,
+        }))
+    }))
+    folioNames.unshift({ id: null, name: "default" })
+    setStatus("Populating portfolios")
+    setMyInfo((prevInfo) => {
+      const found: ShortPortfolioPresentation = folioNames
+        .find((folio: ShortPortfolioPresentation) => folio.id === myInfo.order.portfolioId)
+      const newPortfolioId: string | null = typeof found === "undefined" ? null : found.id
+      setCustodianFor(did, newPortfolioId)
+      return {
+        ...prevInfo,
+        order: {
+          ...prevInfo.order,
+          portfolioId: newPortfolioId,
+        },
+        portfolios: folioNames,
+      }
+    })
+    setStatus("Portfolios populated")
+  }
+
+  async function submitDidFromPolyWallet(e): Promise<string> {
+    e.preventDefault()
+    return setDidFromPolyWallet()
   }
 
   async function getMyOrder(): Promise<Response> {
@@ -29,14 +131,23 @@ export default function Home() {
         ...prevInfo,
         order: Object.assign({}, emptyOrder),
         modified: false,
+        portfolios: [],
       }))
     } else if (response.status == 200) {
       setStatus("Order fetched")
       const body: AssignedOrderJson = await response.json()
+      const portfolios: ShortPortfolioPresentation[] = [{ id: null, name: "default" }]
+      if (typeof body.portfolioId === "string") portfolios.push({
+        id: body.portfolioId,
+        name: "Loading",
+      })
       setMyInfo((prevInfo) => ({
         ...prevInfo,
         order: body,
+        portfolios: portfolios,
       }))
+      await setPortfolioChoices(body.polymeshDid)
+      await setCustodianFor(body.polymeshDid, body.portfolioId)
     } else {
       setStatus("Something went wrong")
     }
@@ -101,6 +212,7 @@ export default function Home() {
   }
 
   async function changeMyOrder(field: string, value: any): Promise<void> {
+    if (field === "portfolioId" && value === "") value = null
     setMyInfo((prevInfo) => ({
       ...prevInfo,
       order: {
@@ -108,10 +220,13 @@ export default function Home() {
         [field]: value,
       },
       modified: true,
+      portfolios: field === "polymeshDid" ? [{ id: "", name: "Loading" }] : prevInfo.portfolios,
     }))
+    if (field === "polymeshDid") await setPortfolioChoices(value)
+    else if (field === "portfolioId") await setCustodianFor(myInfo.order.polymeshDid, value)
   }
 
-  async function onMyOrderChanged(e: ChangeEvent<HTMLInputElement>): Promise<void> {
+  async function onMyOrderChanged(e: ChangeEvent<HTMLInputElement | HTMLSelectElement>): Promise<void> {
     await changeMyOrder(e.target.name, e.target.value)
   }
 
@@ -124,6 +239,260 @@ export default function Home() {
       },
       modified: true,
     }))
+  }
+
+  async function findPortfolio(who: Identity, portfolioId: string | null): Promise<DefaultPortfolio | NumberedPortfolio> {
+    const theirPortfolios: [DefaultPortfolio, ...NumberedPortfolio[]] = await who.portfolios.getPortfolios()
+    return theirPortfolios.find((portfolio: DefaultPortfolio | NumberedPortfolio) => {
+      if (!isNumberedPortfolio(portfolio) && portfolioId === null) return true
+      if (isNumberedPortfolio(portfolio) && portfolio.id.toString(10) === portfolioId) return true
+      return false
+    })
+  }
+
+  async function setCustodianFor(polymeshDid: string, portfolioId: string | null) {
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    const who: Identity = await api.getIdentity({ did: polymeshDid })
+    setStatus(`Finding selected portfolio ${portfolioId}`)
+    const found: DefaultPortfolio | NumberedPortfolio = await findPortfolio(who, portfolioId)
+    if (typeof found === "undefined") {
+      setStatus(`Could not find portfolio ${polymeshDid} - ${portfolioId}`)
+      return
+    }
+    setStatus("Fetching custodian")
+    const custodian: Identity = await found.getCustodian()
+    const toUse: string = custodian.did === polymeshDid ? "" : custodian.did
+    if (toUse === "") setStatus("No custodian found")
+    else setStatus("Custodian found")
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodianDid: toUse,
+      custodianValid: false,
+    }))
+  }
+
+  async function onCustodianChanged(e: ChangeEvent<HTMLInputElement>): Promise<void> {
+    const newCustodian: string = e.target.value
+    const myDid: string = (await (await getPolyWalletApi(setStatus)).getCurrentIdentity()).did
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodianDid: newCustodian,
+      custodianValid: prevInfo.order.polymeshDid === myDid && newCustodian !== myDid,
+    }))
+  }
+
+  async function inviteCustodian(): Promise<void> {
+    setStatus(`Inviting custodian ${myInfo.custodianDid}...`)
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Getting your identity")
+    const me: Identity = await api.getCurrentIdentity()
+    setStatus("Fetching your portfolios")
+    const found: DefaultPortfolio | NumberedPortfolio = await findPortfolio(me, myInfo.order.portfolioId)
+    if (typeof found === "undefined") {
+      setStatus(`Could not find your portfolio ${myInfo.order.portfolioId}`)
+    }
+    const custodianQueue: TransactionQueue<void> = await found.setCustodian({ targetIdentity: myInfo.custodianDid })
+    await custodianQueue.run()
+  }
+
+  async function submitInviteCustodian(e: MouseEvent<HTMLElement>): Promise<void> {
+    e.preventDefault()
+    await inviteCustodian()
+  }
+
+  async function loadCustodiedPortfolios(): Promise<void> {
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodiedPortfolios: ["Loading custodied portfolios..."],
+    }))
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Fetching your identity")
+    const me: Identity = await api.getCurrentIdentity()
+    setStatus("Fetching your custodied portfolios")
+    const custodied: ResultSet<DefaultPortfolio | NumberedPortfolio> = await me.portfolios.getCustodiedPortfolios()
+    setStatus(`Fetching ${custodied.data.length} names of custodied portfolios`)
+    const withNames: PortfolioPresentation[] = custodied.data.length === 0
+      ? ["No custodied portfolios"]
+      : await Promise.all(
+        custodied.data.map((portfolio: DefaultPortfolio | NumberedPortfolio) => {
+          if (isNumberedPortfolio(portfolio)) return portfolio.getName().then((name: string) => ({
+            owner: portfolio.owner.did,
+            id: portfolio.id.toString(10),
+            name: name,
+          }))
+          else return Promise.resolve({
+            owner: portfolio.owner.did,
+            id: null,
+            name: "default",
+          })
+        })
+      )
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodiedPortfolios: withNames,
+    }))
+  }
+
+  function getPortfolioPresentation(portfolio: PortfolioPresentation): string {
+    if (typeof portfolio === "string") return portfolio
+    return `${portfolio.owner} - ${portfolio.id} - ${portfolio.name}`
+  }
+
+  async function submitLoadCustodiedPortfolios(e: MouseEvent<HTMLElement>): Promise<void> {
+    e.preventDefault()
+    await loadCustodiedPortfolios()
+  }
+
+  function getCustodiedPortfolioButton(portfolio: PortfolioPresentation): JSX.Element {
+    if (typeof portfolio === "string") return <div></div>
+    else return <div>
+      <button className="submit custodiedportfolio pick" disabled={myInfo.id === ""} onClick={submitPickCustodiedPortfolioBuilder(portfolio)}>Pick it</button>
+    </div>
+  }
+
+  async function setPortfolio(portfolio: PortfolioPresentation): Promise<void> {
+    if (typeof portfolio === "string") return
+    await changeMyOrder("polymeshDid", portfolio.owner)
+    await changeMyOrder("portfolioId", portfolio.id)
+  }
+
+  function submitPickCustodiedPortfolioBuilder(portfolio: PortfolioPresentation): (e: MouseEvent<HTMLElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLElement>): Promise<void> {
+      e.preventDefault()
+      await setPortfolio(portfolio)
+    }
+  }
+
+  async function loadCustodyRequests(): Promise<void> {
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodyRequestsIn: ["Loading custody requests..."],
+    }))
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Fetching your identity")
+    const me: Identity = await api.getCurrentIdentity()
+    setStatus("Fetching your custody requests")
+    const requests: AuthorizationRequest[] = await me.authorizations.getReceived({
+      type: AuthorizationType.PortfolioCustody,
+      includeExpired: false,
+    })
+    const presentations: AuthorizationRequestInPresentation[] = requests.length === 0
+      ? ["No custody requests"]
+      : await Promise.all(
+        requests.map((request: AuthorizationRequest) => {
+          const data: Authorization = request.data
+          if (data.type !== AuthorizationType.PortfolioCustody) throw new Error(`Expected "PortfolioCustody", not ${data.type}`)
+          const portfolio: DefaultPortfolio | NumberedPortfolio = data.value
+          if (isNumberedPortfolio(portfolio)) return portfolio.getName().then((name: string) => ({
+            owner: portfolio.owner.did,
+            portfolioId: portfolio.id.toString(10),
+            name: name,
+            request: request,
+          }))
+          else return Promise.resolve({
+            owner: portfolio.owner.did,
+            portfolioId: null,
+            name: "default",
+            request: request,
+          })
+        })
+      )
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodyRequestsIn: presentations,
+    }))
+  }
+
+  function getAuthorisationPresentation(request: AuthorizationRequestInPresentation): string {
+    if (typeof request === "string") return request
+    return `${request.owner} - ${request.portfolioId} - ${request.name}`
+  }
+
+  async function submitLoadCustodyRequestsIn(e: MouseEvent<HTMLElement>): Promise<void> {
+    e.preventDefault()
+    await loadCustodyRequests()
+  }
+
+  function getCustodyRequestInButtons(request: AuthorizationRequestInPresentation): JSX.Element {
+    if (typeof request === "string") return <div></div>
+    else return <div>
+      <button className="submit custodyRequest accept" onClick={submitCustodyRequestBuilder(request.request, true)}>Accept</button>
+      &nbsp;&nbsp;
+      <button className="submit custodyRequest reject" onClick={submitCustodyRequestBuilder(request.request, false)}>Reject</button>
+    </div>
+  }
+
+  async function handleCustodyRequestIn(request: AuthorizationRequest, acceptIt: boolean): Promise<void> {
+    let handleQueue: TransactionQueue<void> = await (acceptIt ? request.accept() : request.remove())
+    await handleQueue.run()
+    await Promise.all([
+      loadCustodiedPortfolios(),
+      loadCustodyRequests(),
+      loadCustodyRequestsOut(),
+    ])
+  }
+
+  function submitCustodyRequestBuilder(request: AuthorizationRequest, acceptIt: boolean): (e: MouseEvent<HTMLElement>) => Promise<void> {
+    return async function (e: MouseEvent<HTMLElement>): Promise<void> {
+      e.preventDefault()
+      await handleCustodyRequestIn(request, acceptIt)
+    }
+  }
+
+  async function loadCustodyRequestsOut(): Promise<void> {
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodyRequestsOut: ["Loading custody requests..."],
+    }))
+    const api: Polymesh = await getPolyWalletApi(setStatus)
+    setStatus("Fetching your identity")
+    const me: Identity = await api.getCurrentIdentity()
+    setStatus("Fetching your outgoing custody requests")
+    const requests: ResultSet<AuthorizationRequest> = await me.authorizations.getSent({
+      size: 10,
+    })
+    const presentations: AuthorizationRequestOutPresentation[] = requests.data.length === 0
+      ? ["No custody requests"]
+      : await Promise.all(
+        requests.data.map((request: AuthorizationRequest) => {
+          const data: Authorization = request.data
+          if (data.type !== AuthorizationType.PortfolioCustody) throw new Error(`Expected "PortfolioCustody", not ${data.type}`)
+          const target: string = isIdentityNotAccount(request.target) ? request.target.did : request.target.address
+          if (isNumberedPortfolio(data.value)) return data.value.getName().then((name: string) => ({
+            target: target,
+            portfolioId: (data.value as NumberedPortfolio).id.toString(10),
+            name: name,
+            request: request,
+          }))
+          else return Promise.resolve({
+            target: target,
+            portfolioId: null,
+            name: "default",
+            request: request,
+          })
+        })
+      )
+    setMyInfo((prevInfo) => ({
+      ...prevInfo,
+      custodyRequestsOut: presentations,
+    }))
+  }
+
+  function getAuthorisationOutPresentation(request: AuthorizationRequestOutPresentation): string {
+    if (typeof request === "string") return request
+    return `${request.target} - ${request.portfolioId} - ${request.name}`
+  }
+
+  async function submitLoadCustodyRequestsOut(e: MouseEvent<HTMLElement>): Promise<void> {
+    e.preventDefault()
+    await loadCustodyRequestsOut()
+  }
+
+  function getCustodyRequestOutButtons(request: AuthorizationRequestOutPresentation): JSX.Element {
+    if (typeof request === "string") return <div></div>
+    else return <div>
+      <button className="submit custodyRequestOut reject" onClick={submitCustodyRequestBuilder(request.request, false)}>Revoke</button>
+    </div>
   }
 
   return (
@@ -184,8 +553,36 @@ export default function Home() {
               <input name="price" id="order-price" type="number" placeholder="12345" value={myInfo.order.price} onChange={onMyOrderChanged}></input>
             </div>
 
+            <div>
+              <label htmlFor="order-polymeshDid">Trader's Polymesh did</label>
+              <input name="polymeshDid" id="order-polymeshDid" type="text" placeholder="0x12345" value={myInfo["order"]["polymeshDid"]} onChange={onMyOrderChanged}></input>
+              &nbsp;
+              <button className="submit polymeshDid" onClick={submitDidFromPolyWallet} disabled={myInfo["id"] === ""} title="No copy and paste, just click">Pick it from PolyWallet</button>
+            </div>
+
+            <div>
+              <label htmlFor="order-portfolioId">Trading portfolio</label>
+              <select name="portfolioId" id="order-portfolioId" onChange={onMyOrderChanged} defaultValue={myInfo["order"]["portfolioId"]}>
+                {
+                  myInfo["portfolios"].map((portfolio: ShortPortfolioPresentation, index: number) => <option value={portfolio.id || ""} key={index}>
+                    {portfolio.id} - {portfolio.name}
+                  </option>)
+                }
+              </select>
+            </div>
+
             <div className="submit">
               <button className="submit myInfo" disabled={!(myInfo.modified)} onClick={submitMyOrder}>Submit your order</button>
+            </div>
+
+            <div>
+              <label htmlFor="order-custodianDid">Custodian's Polymesh did</label>
+              <input name="custodianDid" id="order-custodianDid" type="text" placeholder="0x12345" value={myInfo["custodianDid"]} onChange={onCustodianChanged}></input>
+              &nbsp;
+              <button className="submit custodianDid" disabled={!(myInfo["custodianValid"])} onClick={submitInviteCustodian}>Invite custodian</button>
+            </div>
+
+            <div className="submit">
             </div>
 
           </fieldset>
@@ -193,6 +590,60 @@ export default function Home() {
           <div id="status" className={styles.status}>
             Latest status will show here
           </div>
+
+          <fieldset className={styles.card}>
+            <legend>Your custodied portfolios</legend>
+
+            <div className="submit">
+              <button className="submit custodied" onClick={submitLoadCustodiedPortfolios}>Load them</button>
+            </div>
+
+            <ul>
+              {
+                myInfo["custodiedPortfolios"].map((portfolio: PortfolioPresentation) => <li>
+                  <span>{getPortfolioPresentation(portfolio)}</span>
+                  {getCustodiedPortfolioButton(portfolio)}
+                </li>)
+              }
+            </ul>
+
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Your incoming custody authorisation requests</legend>
+
+            <div className="submit">
+              <button className="submit custodyRequests" onClick={submitLoadCustodyRequestsIn}>Load them</button>
+            </div>
+
+            <ul>
+              {
+                myInfo["custodyRequestsIn"].map((request: AuthorizationRequestInPresentation) => <li>
+                  <span>{getAuthorisationPresentation(request)}</span>
+                  {getCustodyRequestInButtons(request)}
+                </li>)
+              }
+            </ul>
+
+          </fieldset>
+
+          <fieldset className={styles.card}>
+            <legend>Your outgoing custody authorisation requests</legend>
+
+            <div className="submit">
+              <button className="submit custodyRequestsOut" onClick={submitLoadCustodyRequestsOut}>Load them</button>
+            </div>
+
+            <ul>
+              {
+                myInfo["custodyRequestsOut"].map((request: AuthorizationRequestOutPresentation) => <li>
+                  <span>{getAuthorisationOutPresentation(request)}</span>
+                  {getCustodyRequestOutButtons(request)}
+                </li>)
+              }
+            </ul>
+
+          </fieldset>
 
         </form>
 

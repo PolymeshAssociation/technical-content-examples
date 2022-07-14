@@ -1,3 +1,4 @@
+import { BigNumber } from "@polymathnetwork/polymesh-sdk"
 import Head from "next/head"
 import { MouseEvent, useState } from "react"
 import { AssignedOrderJson } from "../src/orderInfo"
@@ -62,8 +63,8 @@ export default function Home() {
     })
     if (settlementResponse.status == 200) {
       const settlement: FullSettlementJson = await settlementResponse.json()
-      console.log(`Settlement posted at instruction ${settlement.id}`)
-      setStatus(`Settlement posted at instruction ${settlement.id}`)
+      console.log(`Settlement posted at instruction ${settlement.instructionId}`)
+      setStatus(`Settlement posted at instruction ${settlement.instructionId}`)
     } else {
       console.log(settlementResponse.json())
       setStatus("Something went wrong")
@@ -111,7 +112,7 @@ export default function Home() {
                 {
                   myInfo.info.orders
                     .filter((order: AssignedOrderJson) => !order.isBuy)
-                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => parseInt(left.price) - parseInt(right.price))
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => new BigNumber(left.price).minus(new BigNumber(right.price)).toNumber())
                     .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.sell === order.id ? styles.selected : ""}`} key={`order-sell-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(false)}>
                       <span title="Trader id">{order.id} - </span>
                       <span title="Quantity">{order.quantity} </span>
@@ -131,7 +132,7 @@ export default function Home() {
                 {
                   myInfo.info.orders
                     .filter((order: AssignedOrderJson) => order.isBuy)
-                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => parseInt(right.price) - parseInt(left.price))
+                    .sort((left: AssignedOrderJson, right: AssignedOrderJson) => new BigNumber(right.price).minus(new BigNumber(left.price)).toNumber())
                     .map((order: AssignedOrderJson) => <div className={`${styles.card} ${styles.unbreakable} ${myInfo.picked.buy === order.id ? styles.selected : ""}`} key={`order-buy-${order.id}`} data-order-id={order.id} onClick={onTradeSelected(true)}>
                       <b title="Price in USD / token"> @ {order.price}</b>,
                       <span title="Quantity"> {order.quantity}</span> of

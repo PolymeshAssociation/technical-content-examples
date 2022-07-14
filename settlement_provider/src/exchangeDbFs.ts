@@ -1,9 +1,17 @@
 import { exists as existsAsync, promises as fsPromises } from "fs"
 import { promisify } from "util"
+import { Polymesh } from "@polymathnetwork/polymesh-sdk"
+import {
+    Identity,
+    NumberedPortfolio,
+} from "@polymathnetwork/polymesh-sdk/types"
+import { isNumberedPortfolio, PolymeshCreator } from "./types"
 import {
     AssignedOrderInfo,
     IAssignedOrderInfo,
+    InvalidPortfolioError,
     IOrderInfo,
+    NonExistentCustomerPolymeshIdError,
     OrderInfo,
     OrderJson,
 } from "./orderInfo"
@@ -27,7 +35,9 @@ const saveDb = async function (dbPath: string, db: ExchangeDbJson): Promise<void
 
 export class ExchangeDbFs implements IExchangeDb {
 
-    constructor(public dbPath: string) {
+    private api?: Polymesh | null = null
+
+    constructor(public dbPath: string, public apiCreator: PolymeshCreator) {
     }
 
     async getOrders(): Promise<IAssignedOrderInfo[]> {
@@ -46,6 +56,19 @@ export class ExchangeDbFs implements IExchangeDb {
     }
 
     async setOrderInfo(id: string, info: IOrderInfo): Promise<void> {
+        this.api = this.api || await this.apiCreator()
+        if (!(await this.api.isIdentityValid({ identity: info.polymeshDid }))) {
+            throw new NonExistentCustomerPolymeshIdError(info.polymeshDid)
+        }
+        if (info.portfolioId !== null) {
+            const trader: Identity = await this.api.getIdentity({ did: info.polymeshDid })
+            const found: NumberedPortfolio = (await trader.portfolios.getPortfolios())
+                .filter(isNumberedPortfolio)
+                .find((portfolio: NumberedPortfolio) => portfolio.id.isEqualTo(info.portfolioId))
+            if (typeof found === "undefined" || found === null) {
+                throw new InvalidPortfolioError(info.polymeshDid, info.portfolioId)
+            }
+        }
         const db: ExchangeDbJson = await getDb(this.dbPath)
         db[id] = info.toJSON()
         return saveDb(this.dbPath, db)

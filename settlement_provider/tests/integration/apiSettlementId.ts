@@ -5,9 +5,9 @@ import { expect } from "chai"
 import { createMocks } from "node-mocks-http"
 import {
     IFullSettlementInfo,
-    ISettlementInfo,
-    SettlementInfo,
-    SettlementJson,
+    IPublishedSettlementInfo,
+    PublishedSettlementInfo,
+    PublishedSettlementJson,
 } from "../../src/settlementInfo"
 import { ISettlementDb } from "../../src/settlementDb"
 import settlementDbFactory from "../../src/settlementDbFactory"
@@ -52,20 +52,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns the info on previously set info", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "GET",
                 query: {
@@ -84,20 +89,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
     describe("DELETE", () => {
 
         it("returns 200 on delete the only info and has saved", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("4", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "DELETE",
                 query: {
@@ -114,20 +124,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 200 on delete non-existent info and has unchanged", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("4", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "DELETE",
                 query: {
@@ -148,34 +163,44 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 200 on delete one info out of two", async () => {
-            const bareInfo4: SettlementJson = {
+            const bareInfo4: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            const bareInfo3: SettlementJson = {
+            const bareInfo3: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "3",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc3",
+                    portfolioId: null,
                 },
                 quantity: "12346",
                 token: "ACME",
                 price: "34",
+                instructionId: "446",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("4", new SettlementInfo(bareInfo4))
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo3))
+            await settlementDb.setSettlementInfo("4", new PublishedSettlementInfo(bareInfo4))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo3))
             const { req, res } = createMocks({
                 method: "DELETE",
                 query: {
@@ -200,20 +225,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
     describe("PATCH", () => {
 
         it("returns 200 on update isPaid and has saved", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "PATCH",
                 query: {
@@ -226,7 +256,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
                 isPaid: true,
@@ -234,20 +264,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 200 on update isTransferred and has saved", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "PATCH",
                 query: {
@@ -260,7 +295,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
                 isTransferred: true,
@@ -268,20 +303,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 200 on update isPaid and isTransferred and has saved", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: false,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "PATCH",
                 query: {
@@ -295,7 +335,7 @@ describe("/api/settlement/[id] Integration Tests", () => {
 
             expect(res._getStatusCode()).to.equal(200)
             expect(JSON.parse(res._getData())).to.deep.equal({ status: "ok" })
-            const retrieved: ISettlementInfo = await settlementDb.getSettlementInfoById("3")
+            const retrieved: IPublishedSettlementInfo = await settlementDb.getSettlementInfoById("3")
             expect(retrieved.toJSON()).to.deep.equal({
                 ...bareInfo,
                 isPaid: true,
@@ -304,20 +344,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 400 on update nothing to do", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "PATCH",
                 query: {
@@ -331,20 +376,25 @@ describe("/api/settlement/[id] Integration Tests", () => {
         })
 
         it("returns 404 on unknown settlement", async () => {
-            const bareInfo: SettlementJson = {
+            const bareInfo: PublishedSettlementJson = {
                 buyer: {
                     id: "1",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abcd",
+                    portfolioId: "1",
                 },
                 seller: {
                     id: "2",
+                    polymeshDid: "0x01234567890abcdef0123456789abcdef01234567890abcdef0123456789abc2",
+                    portfolioId: null,
                 },
                 quantity: "12345",
                 token: "ACME",
                 price: "33",
+                instructionId: "445",
                 isPaid: true,
                 isTransferred: false,
             }
-            await settlementDb.setSettlementInfo("3", new SettlementInfo(bareInfo))
+            await settlementDb.setSettlementInfo("3", new PublishedSettlementInfo(bareInfo))
             const { req, res } = createMocks({
                 method: "PATCH",
                 query: {

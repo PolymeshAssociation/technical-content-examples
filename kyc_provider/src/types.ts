@@ -1,4 +1,5 @@
 import countries from "i18n-iso-countries"
+import { CountryCode } from "@polymathnetwork/polymesh-sdk/types"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -7,10 +8,10 @@ export declare type CountryInfo = {
 }
 
 export function getCountryList(): CountryInfo[] {
-    return Object.entries(countries.getNames("en", { select: "official" })).map(([code, countryName]) => {
+    return Object.values(CountryCode).sort().map((code: string) => {
         return {
-            "value": code.charAt(0) + code.charAt(1).toLocaleLowerCase(),
-            "label": countryName
+            "value": code,
+            "label": countries.getName(code.toUpperCase(), "en") || code,
         }
     })
 }
