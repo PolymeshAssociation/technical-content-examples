@@ -1,11 +1,11 @@
 import countries from "i18n-iso-countries"
+import type { InjectedExtension } from '@polkadot/extension-inject/types';
 import {
-    CalendarUnit,
+    Account,
+    AgentWithGroup,
     CddClaim,
-    CheckpointWithCreationDate,
+    CheckpointWithData,
     Claim,
-    ClaimData,
-    ClaimTarget,
     ClaimType,
     Condition,
     ConditionType,
@@ -14,34 +14,35 @@ import {
     DistributionParticipant,
     DividendDistributionDetails,
     EventIdentifier,
+    GroupPermissions,
+    Identity,
     IdentityCondition,
-    InvestorUniquenessClaim,
-    KnownTokenType,
+    InvestorUniquenessV2Claim,
+    ModuleName,
     NumberedPortfolio,
-    PrimaryIssuanceAgentCondition,
     Requirement,
+    ScheduleWithDetails,
     Scope,
-    ScopeType,
     SecurityToken,
     SecurityTokenDetails,
     TickerReservation,
     TickerReservationDetails,
-    UnscopedClaim,
+    TokenIdentifier,
+    TxTag,
 } from "@polymathnetwork/polymesh-sdk/types"
 import {
-    AddInvestorUniquenessClaimParams,
     AuthorizationRequest,
     Checkpoint,
     CheckpointSchedule,
-    ConfigureDividendDistributionParams,
     CorporateAction,
-    CreateCheckpointScheduleParams,
+    CustomPermissionGroup,
     DividendDistribution,
-    Identity,
-    ModifyCorporateActionsAgentParams,
-    ModifyPrimaryIssuanceAgentParams,
+    KnownPermissionGroup,
 } from "@polymathnetwork/polymesh-sdk/internal"
-import { BigNumber } from "@polymathnetwork/polymesh-sdk"
+import { BigNumber, Polymesh } from "@polymathnetwork/polymesh-sdk"
+import { ScopeClaimProof } from "@polymathnetwork/polymesh-sdk/types/internal"
+import { Requirements } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Compliance/Requirements"
+import { Permissions } from "@polymathnetwork/polymesh-sdk/api/entities/SecurityToken/Permissions"
 countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
 
 export declare type CountryInfo = {
@@ -58,272 +59,255 @@ export function getCountryList(): CountryInfo[] {
     })
 }
 
+export type MyInfoPath = (string | number)[]
+
 export type MyInfoJson = {
-    ticker: string,
-    myDid: string,
-    myAddress: string,
-    myTickers: string[],
-    reservation: ReservationInfoJson,
-    token: TokenInfoJson,
-    requirements: RequirementsInfoJson,
-    authorisations: AuthorisationInfoJson,
-    portfolios: PortfoliosInfoJson,
-    attestations: AttestationsInfoJson,
-    checkpoints: CheckpointsInfoJson,
-    corporateActions: CorporateActionsInfoJson,
+    api: Polymesh | null,
+    polyWallet: PolyWallet | null
+    ticker: string
+    myDid: string
+    myAddress: string
+    myTickers: string[]
+    reservation: ReservationInfoJson
+    token: TokenInfoJson
+    permissions: PermissionsInfoJson
+    requirements: RequirementsInfoJson
+    authorisations: AuthorisationInfoJson
+    portfolios: PortfoliosInfoJson
+    checkpoints: CheckpointsInfoJson
+    corporateActions: CorporateActionsInfoJson
 }
 
 export type ReservationInfoJson = {
-    fetchTimer: NodeJS.Timeout,
-    current: TickerReservation,
-    details: TickerReservationDetails,
+    current: TickerReservation | null,
+    details: TickerReservationDetails | null,
+}
+
+export function getEmptyReservation(): ReservationInfoJson {
+    return {
+        current: null,
+        details: null,
+    }
 }
 
 export type TokenInfoJson = {
-    current: SecurityToken,
-    createdAt: EventIdentifier,
-    details: SecurityTokenDetails,
-    piaBalance: {
-        locked: string,
-        total: string,
-        toIssue: number,
-        toRedeem: number,
-    },
-    ownershipTarget: string,
-    piaChangeInfo: ModifyPrimaryIssuanceAgentParams,
+    current: SecurityToken | null
+    createdAt: EventIdentifier | null
+    details: SecurityTokenDetails | null
+    currentFundingRound: string
+    tokenIdentifiers: TokenIdentifier[]
+}
+
+export function getEmptyTokenInfoJson(): TokenInfoJson {
+    return {
+        current: null,
+        details: null,
+        createdAt: null,
+        currentFundingRound: "",
+        tokenIdentifiers: [],
+    }
+}
+
+export type PermissionGroupInfoJson<GroupType extends KnownPermissionGroup | CustomPermissionGroup> = {
+    current: GroupType
+    permissions: GroupPermissions
+    exists: boolean
+}
+
+// Should be part of the SDK. Remove when it is part of the SDK.
+export type PermissionGroupsInfo = {
+    known: KnownPermissionGroup[]
+    custom: CustomPermissionGroup[]
+}
+
+export type PermissionGroupsInfoJson = {
+    known: PermissionGroupInfoJson<KnownPermissionGroup>[]
+    custom: PermissionGroupInfoJson<CustomPermissionGroup>[]
+}
+
+export function getEmptyPermissionGroupsInfoJson(): PermissionGroupsInfoJson {
+    return {
+        known: [],
+        custom: [],
+    }
+}
+
+export type PermissionsInfoJson = {
+    original: Permissions | null
+    groups: PermissionGroupsInfoJson
+    agents: AgentWithGroup[]
+}
+
+export function getEmptyPermissionsInfoJson(): PermissionsInfoJson {
+    return {
+        original: null,
+        groups: getEmptyPermissionGroupsInfoJson(),
+        agents: [],
+    }
 }
 
 export type RequirementsInfoJson = {
-    current: Requirement[],
-    arePaused: boolean,
-    canManipulate: boolean,
-    modified: boolean,
-    settleSimulation: {
-        sender: string,
-        recipient: string,
-        works: boolean | null,
-    },
-}
-
-export type AuthorisationInfoJson = {
-    current: AuthorizationRequest[],
-}
-
-export type PortfoliosInfoJson = {
-    current: [DefaultPortfolio, ...NumberedPortfolio[]] | null,
-    mine: [DefaultPortfolio, ...NumberedPortfolio[]],
-    otherOwner: string,
-    details: PortfolioInfoJson[],
-    myDetails: PortfolioInfoJson[],
-    newPortfolioName: string,
-}
-
-export type PortfolioInfoJson = {
-    original: DefaultPortfolio | NumberedPortfolio,
-    owner: string,
-    id: string | null,
-    name: string,
-    custodian: string,
-    newCustodian: string,
-}
-
-export type AttestationsInfoJson = {
-    current: ClaimData<Claim>[],
-    otherTarget: string,
-    toAdd: {
-        target: string,
-        expiry: Date | null,
-        claim: Claim,
-    },
-    uniquenessToAdd: AddInvestorUniquenessClaimParams,
-}
-
-export type CheckpointsInfoJson = {
-    current: CheckpointWithCreationDate[],
-    details: CheckpointInfoJson[],
-    scheduledToAdd: CreateCheckpointScheduleParams,
-    currentSchedules: CheckpointSchedule[],
-    scheduleDetails: CheckpointScheduleDetailsInfoJson[],
-}
-
-export type CheckpointInfoJson = {
-    checkpoint: Checkpoint,
-    totalSupply: BigNumber,
-    createdAt: Date,
-    whoseBalance: string,
-    balance: BigNumber,
-}
-
-export type CheckpointScheduleInfoJson = {
-    schedule: CheckpointSchedule,
-    createdCheckpoints: CheckpointInfoJson[],
-    exists: boolean,
-}
-
-export type CheckpointScheduleDetailsInfoJson = CheckpointScheduleInfoJson & {
-    remainingCheckpoints: number,
-    nextCheckpointDate: Date,
-}
-
-export type CorporateActionsInfoJson = {
-    distributions: DistributionsInfoJson,
-    agent: Identity,
-    newAgent: ModifyCorporateActionsAgentParams,
-}
-
-export type DistributionsInfoJson = {
-    dividends: DividendDistributionInfoJson[],
-    newDividend: ConfigureDividendDistributionParams,
-}
-
-export type CorporateActionInfoJson = {
-    current: CorporateAction,
-    exists: boolean,
-    checkpoint: CheckpointInfoJson | null,
-    checkpointSchedule: CheckpointScheduleInfoJson | null,
-}
-
-export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "current"> & {
-    current: DividendDistribution,
-    origin: PortfolioInfoJson,
-    details: DividendDistributionDetails,
-    participants: DistributionParticipant[],
-}
-
-export function getEmptyTokenDetails(): SecurityTokenDetails {
-    return {
-        assetType: KnownTokenType.EquityCommon,
-        isDivisible: false,
-        name: "",
-        owner: null,
-        totalSupply: new BigNumber("0"),
-        primaryIssuanceAgent: null,
-    }
+    original: Requirements | null
+    current: Requirement[]
+    arePaused: boolean
+    canManipulate: boolean
 }
 
 export function getEmptyRequirements(): RequirementsInfoJson {
     return {
-        current: [] as Requirement[],
-        arePaused: true as boolean,
-        canManipulate: false as boolean,
-        modified: false as boolean,
-        settleSimulation: {
-            sender: "" as string,
-            recipient: "" as string,
-            works: null as boolean | null,
-        },
+        original: null,
+        current: [],
+        arePaused: true,
+        canManipulate: false,
     }
+}
+
+export type AuthorisationInfoJson = {
+    current: AuthorizationRequest[]
+}
+
+export type PortfoliosInfoJson = {
+    picked: PortfolioInfoJson | null
+}
+
+export type PortfolioInfoJson = {
+    original: DefaultPortfolio | NumberedPortfolio
+    name: string | null
+    exists: boolean
+    custodian: string
+    createdAt: EventIdentifier | null
+}
+
+export type CheckpointsInfoJson = {
+    current: Checkpoint[]
+    details: CheckpointInfoJson[]
+    picked: CheckpointInfoJson | null
+    currentSchedules: CheckpointSchedule[]
+    scheduleDetails: CheckpointScheduleDetailsInfoJson[]
+}
+
+export function getEmptyCheckpointsInfoJson(): CheckpointsInfoJson {
+    return {
+        current: [],
+        details: [],
+        picked: null,
+        currentSchedules: [],
+        scheduleDetails: [],
+    }
+}
+
+export type CheckpointInfoJson = {
+    checkpoint: Checkpoint
+    exists: boolean
+    totalSupply: BigNumber
+    createdAt: Date
+}
+
+export type CheckpointScheduleInfoJson = {
+    schedule: CheckpointSchedule
+    createdCheckpoints: CheckpointInfoJson[]
+    exists: boolean
+}
+
+export type CheckpointScheduleDetailsInfoJson = CheckpointScheduleInfoJson & {
+    remainingCheckpoints: number
+    nextCheckpointDate: Date
+}
+
+export type CorporateActionsInfoJson = {
+    distributions: DistributionsInfoJson
+}
+
+export type DistributionsInfoJson = {
+    dividends: DividendDistributionInfoJson[]
+}
+
+export type CorporateActionInfoJson = {
+    current: CorporateAction
+    exists: boolean
+    checkpoint: CheckpointInfoJson | null
+    checkpointSchedule: CheckpointScheduleInfoJson | null
+}
+
+export type DividendDistributionInfoJson = Omit<CorporateActionInfoJson, "current"> & {
+    current: DividendDistribution
+    origin: PortfolioInfoJson
+    exists: boolean
+    details: DividendDistributionDetails
+    participants: DistributionParticipant[]
 }
 
 export function getEmptyMyInfo(): MyInfoJson {
     return {
-        ticker: "" as string,
-        myDid: "" as string,
-        myAddress: "" as string,
-        myTickers: [] as string[],
-        reservation: {
-            fetchTimer: null as NodeJS.Timeout,
-            current: null as TickerReservation,
-            details: null as TickerReservationDetails,
-        } as ReservationInfoJson,
-        token: {
-            current: null as SecurityToken,
-            details: getEmptyTokenDetails() as SecurityTokenDetails,
-            piaBalance: {
-                locked: "" as string,
-                total: "" as string,
-                toIssue: 0 as number,
-                toRedeem: 0 as number,
-            },
-            ownershipTarget: "" as string,
-            piaChangeInfo: {
-                target: "" as string | Identity,
-                requestExpiry: null as Date | null,
-            } as ModifyPrimaryIssuanceAgentParams,
-        } as TokenInfoJson,
-        requirements: getEmptyRequirements() as RequirementsInfoJson,
+        api: null,
+        polyWallet: null,
+        ticker: "",
+        myDid: "",
+        myAddress: "",
+        myTickers: [],
+        reservation: getEmptyReservation(),
+        token: getEmptyTokenInfoJson(),
+        permissions: getEmptyPermissionsInfoJson(),
+        requirements: getEmptyRequirements(),
         authorisations: {
-            current: [] as AuthorizationRequest[],
-        } as AuthorisationInfoJson,
-        attestations: {
-            current: [] as ClaimData<Claim>[],
-            otherTarget: "" as string,
-            toAdd: {
-                target: "" as string,
-                expiry: null as Date | null,
-                claim: {
-                    type: ClaimType.NoData,
-                } as Claim,
-            } as ClaimTarget,
-            uniquenessToAdd: {
-                scope: {
-                    type: ScopeType.Ticker,
-                    value: "" as string,
-                } as Scope,
-                cddId: "" as string,
-                proof: "" as string,
-                scopeId: "" as string,
-                expiry: null as Date | null,
-            } as AddInvestorUniquenessClaimParams,
-        } as AttestationsInfoJson,
+            current: [],
+        },
         portfolios: {
-            current: null as [DefaultPortfolio, ...NumberedPortfolio[]] | null,
-            mine: [] as [DefaultPortfolio, ...NumberedPortfolio[]],
-            otherOwner: "" as string,
-            details: [] as PortfolioInfoJson[],
-            myDetails: [] as PortfolioInfoJson[],
-            newPortfolioName: "",
+            picked: null,
         },
-        checkpoints: {
-            current: [] as CheckpointWithCreationDate[],
-            details: [] as CheckpointInfoJson[],
-            scheduledToAdd: {
-                start: new Date(),
-                period: {
-                    amount: 3,
-                    unit: CalendarUnit.Month,
-                },
-                repetitions: 0,
-            },
-            currentSchedules: [] as CheckpointSchedule[],
-            scheduleDetails: [] as CheckpointScheduleDetailsInfoJson[],
-        },
+        checkpoints: getEmptyCheckpointsInfoJson(),
         corporateActions: {
             distributions: {
-                dividends: [] as DividendDistributionInfoJson[],
-                newDividend: {
-                    declarationDate: new Date(),
-                    checkpoint: null as Checkpoint,
-                    description: "" as string,
-                    taxWithholdings: [],
-                    originPortfolio: null,
-                    currency: "",
-                    perShare: new BigNumber(0),
-                    maxAmount: new BigNumber(0),
-                    paymentDate: new Date,
-                    expiryDate: null,
-                },
+                dividends: [],
             },
-            agent: null as Identity,
-            newAgent: {
-                target: "" as string | Identity,
-                requestExpiry: null as Date | null,
-            } as ModifyCorporateActionsAgentParams
         },
     }
 }
 
-export interface HasFetchTimer {
-    fetchTimer: NodeJS.Timeout | null
-}
-
+export const isIdentity = (identity: string | Identity): identity is Identity => typeof (identity as Identity).did !== "undefined"
+export const isIdentityNotAccount = (identity: Identity | Account): identity is Identity => typeof (identity as Identity).did !== "undefined"
+export const isAccount = (account: string | Account): account is Account => typeof (account as Account).address !== "undefined"
+export const isKnownPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is KnownPermissionGroup => typeof (group as KnownPermissionGroup).type !== "undefined"
+export const isCustomPermissionGroup = (group: KnownPermissionGroup | CustomPermissionGroup): group is CustomPermissionGroup => typeof (group as CustomPermissionGroup).id !== "undefined"
 export const isNumberedPortfolio = (portfolio: DefaultPortfolio | NumberedPortfolio): portfolio is NumberedPortfolio => typeof (portfolio as NumberedPortfolio).id !== "undefined"
 export const isIdentityCondition = (condition: Condition): condition is IdentityCondition => (condition as IdentityCondition).type === ConditionType.IsIdentity
-export const isPrimaryIssuanceAgentCondition = (condition: Condition): condition is PrimaryIssuanceAgentCondition => (condition as PrimaryIssuanceAgentCondition).type === ConditionType.IsPrimaryIssuanceAgent
-export const isUnScopedClaim = (claim: Claim): claim is UnscopedClaim => isCddClaim(claim) || (claim as UnscopedClaim).type === ClaimType.NoData
-export const isInvestorUniquenessClaim = (claim: Claim): claim is InvestorUniquenessClaim => (claim as InvestorUniquenessClaim).type === ClaimType.InvestorUniqueness
+export const isScopeClaimProof = (claim: string | ScopeClaimProof): claim is ScopeClaimProof => typeof (claim as ScopeClaimProof).proofScopeIdCddIdMatch !== "undefined"
+export const isInvestorUniquenessV2Claim = (claim: Claim): claim is InvestorUniquenessV2Claim => (claim as InvestorUniquenessV2Claim).type === ClaimType.InvestorUniquenessV2
+export const isJurisdictionClaim = (claim: Claim): claim is JurisdictionClaim => (claim as JurisdictionClaim).type === ClaimType.Jurisdiction
 export const isCddClaim = (claim: Claim): claim is CddClaim => (claim as CddClaim).type === ClaimType.CustomerDueDiligence
-export const isClaimData = (claimData: ClaimData | ClaimTarget): claimData is ClaimData => typeof (claimData as ClaimData).issuedAt !== "undefined"
-export const isCheckpointWithCreationDate = (checkpointInfo: CheckpointWithCreationDate | Checkpoint): checkpointInfo is CheckpointWithCreationDate => typeof (checkpointInfo as CheckpointWithCreationDate).createdAt !== "undefined"
+export const isCheckpointWithData = (checkpointWith: CheckpointWithData | Checkpoint): checkpointWith is CheckpointWithData => typeof (checkpointWith as CheckpointWithData).checkpoint !== "undefined"
 export const isCheckpointSchedule = (checkpoint: Checkpoint | CheckpointSchedule): checkpoint is CheckpointSchedule => typeof (checkpoint as CheckpointSchedule).period !== "undefined"
+export const isScheduleWithDetails = (schedule: CheckpointSchedule | ScheduleWithDetails): schedule is ScheduleWithDetails => typeof (schedule as ScheduleWithDetails).schedule !== "undefined"
+export const isTxTagNotModuleName = (tag: TxTag | ModuleName): tag is TxTag => (tag.indexOf(".") > -1)
+export const isModuleNameNotTxTag = (tag: TxTag | ModuleName): tag is ModuleName => (tag.indexOf(".") <= -1)
 
+// This declaration should be part of the SDK. Remove when it is part of it.
+export declare type JurisdictionClaim = {
+    type: ClaimType.Jurisdiction
+    code: CountryCode
+    scope: Scope
+}
+
+export type PolyWallet = InjectedExtension & {
+    network: {
+        get: () => Promise<any>
+        subscribe: (any) => void
+    }
+    uid: {
+        requestProof: (any) => any
+        provide: (any) => any
+    }
+}
+
+export type ApiGetter = () => Promise<Polymesh>
+
+/**
+ * For type safety. See https://schneidenbach.gitbooks.io/typescript-cookbook/content/nameof-operator.html
+ */
+export const nameofFactory = <T>() => (name: keyof T) => name;
+
+/**
+ * For exhaustiveness via compiler:
+ * https://stackoverflow.com/questions/39419170/how-do-i-check-that-a-switch-block-is-exhaustive-in-typescript
+ */
+export const assertUnreachable = (x: never): never => { throw new Error("Didn't expect to get here") }

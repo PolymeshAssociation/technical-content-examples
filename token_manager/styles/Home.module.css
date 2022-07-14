@@ -131,6 +131,10 @@
   cursor: help;
 }
 
+.isWrong {
+  color: red;
+}
+
 .logo {
   height: 2em;
 }
