@@ -303,8 +303,7 @@ export default function Home() {
       })
     ).run();
     setStatus("Token ownership transfer queued in authorizations");
-    // await setAsset(asset);
-    await loadYourTickers();
+    await loadAuthorizations();
   }
 
   async function changeTokenPia(): Promise<void> {
@@ -1476,34 +1475,34 @@ export default function Home() {
   async function addUniquenessAttestation(
     location: (string | number)[]
   ): Promise<void> {
-    // const toAdd: AddInvestorUniquenessClaimParams = Object.assign(
-    //   {},
-    //   findValue(myInfo, location)
-    // );
-    // const api: Polymesh = await getPolyWalletApi();
-    // const currentIdentity: Identity = await api.getSigningIdentity();
-    // const polyWallet = (window || {})["polyWallet"];
-    // const network = await polyWallet.network.get();
-    // const crypto = await import("@polymathnetwork/confidential-identity");
-    // const data = await polyWallet.uid
-    //   .requestProof({ ticker: toAdd.scope.value })
-    //   .catch((e) => {
-    //     if (e.message !== "Uid not found") throw e;
-    //     const mockedUid: string = crypto.create_mocked_investor_uid(
-    //       currentIdentity.did
-    //     );
-    //     return polyWallet.uid.provide({
-    //       uid: mockedUid,
-    //       did: currentIdentity.did,
-    //       network: network.name,
-    //     });
-    //   })
-    //   .then(() => polyWallet.uid.requestProof({ ticker: toAdd.scope.value }));
-    // toAdd.proof = data.proof;
-    // toAdd.scopeId = data.scope_id;
-    // setMyInfo(returnUpdatedCreator([...location, "proof"], data.proof));
-    // setMyInfo(returnUpdatedCreator([...location, "scopeId"], data.scope_id));
-    // await (await api.claims.addInvestorUniquenessClaim(toAdd)).run();
+    const toAdd: AddInvestorUniquenessClaimParams = Object.assign(
+      {},
+      findValue(myInfo, location)
+    );
+    const api: Polymesh = await getPolyWalletApi();
+    const currentIdentity: Identity = await api.getSigningIdentity();
+    const polyWallet = (window || {})["polyWallet"];
+    const network = await polyWallet.network.get();
+    const crypto = await import("@polymathnetwork/confidential-identity");
+    const data = await polyWallet.uid
+      .requestProof({ ticker: toAdd.scope.value })
+      .catch((e) => {
+        if (e.message !== "Uid not found") throw e;
+        const mockedUid: string = crypto.create_mocked_investor_uid(
+          currentIdentity.did
+        );
+        return polyWallet.uid.provide({
+          uid: mockedUid,
+          did: currentIdentity.did,
+          network: network.name,
+        });
+      })
+      .then(() => polyWallet.uid.requestProof({ ticker: toAdd.scope.value }));
+    toAdd.proof = data.proof;
+    toAdd.scopeId = data.scope_id;
+    setMyInfo(returnUpdatedCreator([...location, "proof"], data.proof));
+    setMyInfo(returnUpdatedCreator([...location, "scopeId"], data.scope_id));
+    await (await api.claims.addInvestorUniquenessClaim(toAdd)).run();
   }
 
   async function createPortfolio(): Promise<NumberedPortfolio> {
