@@ -65,8 +65,6 @@ export async function getBasicPolyWalletApi(
   const api: Polymesh = await Polymesh.connect({
     nodeUrl: network.wssUrl,
     signingManager: browserExtensionSigningManager,
-    // keyring: myKeyring,
-    // signer: polyWallet.signer,
     middleware: {
       link: middlewareLink,
       key: middlewareKey,
