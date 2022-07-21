@@ -1,206 +1,227 @@
-import Head from "next/head"
-import getConfig from "next/config"
-import React, { useState } from "react"
-import Select from "react-select"
-import styles from "../styles/Home.module.css"
-import { ClaimType, ClaimData, CountryCode, CurrentIdentity } from "@polymathnetwork/polymesh-sdk/types"
-import { Polymesh, Keyring } from '@polymathnetwork/polymesh-sdk'
-import countries from "i18n-iso-countries"
-countries.registerLocale(require("i18n-iso-countries/langs/en.json"))
+import Head from "next/head";
+import getConfig from "next/config";
+import React, { useState } from "react";
+import Select from "react-select";
+import styles from "../styles/Home.module.css";
+import {
+  ClaimType,
+  ClaimData,
+  CountryCode,
+  Identity,
+} from "@polymeshassociation/polymesh-sdk/types";
+import { BigNumber, Polymesh } from "@polymeshassociation/polymesh-sdk";
+import countries from "i18n-iso-countries";
+countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
 
 export default function Home() {
   const [myInfo, setMyInfo] = useState({
-    "id": "",
-    "info": {
-      "name": "",
-      "country": "",
-      "passport": "",
-      "valid": false,
-      "jurisdiction": "",
-      "polymeshDid": ""
+    id: "",
+    info: {
+      name: "",
+      country: "",
+      passport: "",
+      valid: false,
+      jurisdiction: "",
+      polymeshDid: "",
     },
-    "modified": false
-  } as object)
-  const countryList = Object.values(CountryCode).sort().map(code => {
-    return {
-      "value": code,
-      "label": countries.getName(code.toUpperCase(), "en") || code
-    }
-  })
+    modified: false,
+  } as object);
+  const countryList = Object.values(CountryCode)
+    .sort()
+    .map((code) => {
+      return {
+        value: code,
+        label: countries.getName(code.toUpperCase(), "en") || code,
+      };
+    });
 
   function setStatus(content: string) {
-    const element = document.getElementById("status") as HTMLElement
-    element.innerHTML = content
+    const element = document.getElementById("status") as HTMLElement;
+    element.innerHTML = content;
   }
 
   async function getEzKycDid(): Promise<string> {
-    setStatus("Fetching EzKyc did")
-    const response = await fetch("/api/kycProvider", { "method": "GET" })
+    setStatus("Fetching EzKyc did");
+    const response = await fetch("/api/kycProvider", { method: "GET" });
     if (response.status != 200) {
-      setStatus("Something went wrong when getting the EzKyc information")
-      console.log(response)
+      setStatus("Something went wrong when getting the EzKyc information");
+      console.log(response);
       throw new Error("Failed to get EzKyc did");
     }
-    setStatus("Received EzKyc did")
-    return (await response.json())["did"]
+    setStatus("Received EzKyc did");
+    return (await response.json())["did"];
   }
 
-  async function getPolyWalletApi(): Promise<any> {
-    setStatus("Getting your Polymesh Wallet")
+  async function getPolyWalletApi(): Promise<Polymesh> {
+    setStatus("Getting your Polymesh Wallet");
     // Move to top of the file when compilation error no longer present.
     const {
-      web3Accounts,
+      web3AccountsSubscribe,
       web3Enable,
-      web3FromAddress,
-      web3ListRpcProviders,
-      web3UseRpcProvider
-    } = require('@polkadot/extension-dapp')
-    
-    const { 
-      publicRuntimeConfig: { 
+    } = require("@polkadot/extension-dapp");
+
+    const {
+      BrowserExtensionSigningManager,
+    } = require("@polymathnetwork/browser-extension-signing-manager");
+
+    const {
+      publicRuntimeConfig: {
         appName,
         // TODO remove middlewareLink and middlewareKey if still undesirable
-        polymesh: { nodeUrl, middlewareLink, middlewareKey }
-      }
-    } = getConfig()
-    const polkaDotExtensions = await web3Enable(appName)
-    const polyWallets = polkaDotExtensions.filter(injected => injected["name"] === "polywallet")
+        polymesh: { middlewareLink, middlewareKey },
+      },
+    } = getConfig();
+
+    const polkaDotExtensions = await web3Enable(appName);
+
+    const polyWallets = polkaDotExtensions.filter(
+      (injected) => injected.name === "polywallet"
+    );
     if (polyWallets.length == 0) {
-      setStatus("You need to install the Polymesh Wallet extension")
-      throw new Error("No Polymesh Wallet")
+      setStatus("You need to install the Polymesh Wallet extension");
+      throw new Error("No Polymesh Wallet");
     }
-    const polyWallet = polyWallets[0]
-    setStatus("Verifying network")
-    const network = await polyWallet.network.get()
-    if (network["wssUrl"] !== nodeUrl) {
-      setStatus(`Your network needs to match ${nodeUrl}`)
-      throw new Error(`Incompatible nodeUrl ${network["wssUrl"]} / ${nodeUrl}`)
-    }
-    setStatus("Fetching your account")
-    const myAccounts = await polyWallet.accounts.get()
+
+    const polyWallet = polyWallets[0];
+
+    setStatus("Verifying network");
+
+    const network = await polyWallet.network.get();
+
+    polyWallet.network.subscribe(() => window.location.reload());
+
+    web3AccountsSubscribe(() => window.location.reload());
+
+    setStatus("Fetching your account");
+
+    const myAccounts = await polyWallet.accounts.get();
     if (myAccounts.length == 0) {
-      setStatus("You need to create an account in the Polymesh Wallet extension")
-      return
+      setStatus(
+        "You need to create an account in the Polymesh Wallet extension"
+      );
+      return;
     }
-    const myAccount = myAccounts[0]
-    const myKeyring = new Keyring()
-    myKeyring.addFromAddress(myAccount.address)
-    const mySigner = polyWallet.signer
-    setStatus("Building your API")
+
+    const browserExtensionSigningManager =
+      await BrowserExtensionSigningManager.create({
+        appName,
+        extensionName: "polywallet",
+      });
+
+    setStatus("Building your API");
     return await Polymesh.connect({
-      nodeUrl,
-      keyring: myKeyring,
-      signer: polyWallet.signer,
+      nodeUrl: network.wssUrl,
+      signingManager: browserExtensionSigningManager,
       middleware: {
         link: middlewareLink,
-        key: middlewareKey
-      }
-    })
+        key: middlewareKey,
+      },
+    });
   }
 
   async function getMyInfo(): Promise<Response> {
-    const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, { "method": "GET" })
+    const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
+      method: "GET",
+    });
     if (response.status == 404) {
-      setStatus("Customer not found, enter your information")
+      setStatus("Customer not found, enter your information");
     } else if (response.status == 200) {
-      setStatus("Info fetched")
-      const body = await response.json()
+      setStatus("Info fetched");
+      const body = await response.json();
       setMyInfo({
         ...myInfo,
-        "info": body
-      })
-      
+        info: body,
+      });
     } else {
-      setStatus("Something went wrong")
+      setStatus("Something went wrong");
     }
-    return response
+    return response;
   }
 
   async function submitGetMyInfo(e): Promise<void> {
-    e.preventDefault() // prevent page from submitting form
-    await getMyInfo()
+    e.preventDefault(); // prevent page from submitting form
+    await getMyInfo();
   }
 
   async function sendMyInfo(): Promise<void> {
     setMyInfo({
       ...myInfo,
-      "modified": false
-    })
-    setStatus("Submitting info...")
+      modified: false,
+    });
+    setStatus("Submitting info...");
     const response = await fetch(`/api/kycCustomer/${myInfo["id"]}`, {
-      "method": "PUT",
-      "body": JSON.stringify(myInfo["info"])
-    })
+      method: "PUT",
+      body: JSON.stringify(myInfo["info"]),
+    });
     if (response.status == 200) {
-      const body = await response.json()
-      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`)
+      const body = await response.json();
+      setStatus(`Info submitted and saved. ${JSON.stringify(body.result)}`);
     } else {
-      setStatus("Something went wrong")
+      setStatus("Something went wrong");
       setMyInfo({
         ...myInfo,
-        "modified": true
-      })
+        modified: true,
+      });
     }
   }
 
   async function submitMyInfo(e): Promise<void> {
-    e.preventDefault()
-    sendMyInfo()
+    e.preventDefault();
+    sendMyInfo();
   }
 
   function onMyIdChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo({
       ...myInfo,
-      "id": e.target.value
-    })
+      id: e.target.value,
+    });
   }
 
   function onMyInfoChanged(e: React.ChangeEvent<HTMLInputElement>): void {
     setMyInfo({
       ...myInfo,
-      "info": {
+      info: {
         ...myInfo["info"],
-        [e.target.name]: e.target.value
+        [e.target.name]: e.target.value,
       },
-      "modified": true
-    })
+      modified: true,
+    });
   }
 
   function onCountryChanged(countryCode: string, target: object): void {
     setMyInfo({
       ...myInfo,
-      "info": {
+      info: {
         ...myInfo["info"],
-        [target["name"]]: countryCode
+        [target["name"]]: countryCode,
       },
-      "modified": true
-    })
+      modified: true,
+    });
   }
 
   async function fetchMyClaim(e): Promise<ClaimData | null> {
-    e.preventDefault() // prevent page from submitting form
-    const [ ezKycDid, api ] = await Promise.all([
+    e.preventDefault(); // prevent page from submitting form
+    const [ezKycDid, api] = await Promise.all([
       getEzKycDid(),
-      getPolyWalletApi()
-    ])
-    setStatus("Fetching your identity")
-    const me: CurrentIdentity = await api.getCurrentIdentity()
-    const ezKycIdentity = await api.getIdentity({ did: ezKycDid })
+      getPolyWalletApi(),
+    ]);
+    setStatus("Fetching your identity");
+    const me: Identity = await api.getSigningIdentity();
+    const ezKycIdentity = await api.identities.getIdentity({ did: ezKycDid });
     const issuedClaims = await api.claims.getIdentitiesWithClaims({
       targets: [me],
       trustedClaimIssuers: [ezKycIdentity],
-      claimTypes: [ ClaimType.Jurisdiction ],
+      claimTypes: [ClaimType.Jurisdiction],
       includeExpired: false,
-      start: 0,
-      size: 20
-    })
-    console.log(issuedClaims);
+      start: new BigNumber(0),
+      size: new BigNumber(20),
+    });
     if (issuedClaims.data.length == 0) {
-      setStatus("There are no claims for you")
-      return null
+      setStatus("There are no claims for you");
+      return null;
     } else {
-      const issuedClaim = issuedClaims.data[0]
-      return issuedClaim
+      const issuedClaim = issuedClaims.data[0].claims[0];
+      return issuedClaim;
     }
   }
 
@@ -212,26 +233,37 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to EzKyc
-        </h1>
+        <h1 className={styles.title}>Welcome to EzKyc</h1>
 
         <h2>Let's get you set up</h2>
 
         <form lang="en">
-
           <fieldset className={styles.card}>
             <legend>Your customer id</legend>
 
             <div>
-              <label htmlFor="customer-id" className={styles.hasTitle} title="Given to you when you registered. As of now, just pick one.">Your id</label>
-              <input name="id" id="customer-id" type="number" placeholder="1" value={myInfo["id"]} onChange={onMyIdChanged}></input>
+              <label
+                htmlFor="customer-id"
+                className={styles.hasTitle}
+                title="Given to you when you registered. As of now, just pick one."
+              >
+                Your id
+              </label>
+              <input
+                name="id"
+                id="customer-id"
+                type="number"
+                placeholder="1"
+                value={myInfo["id"]}
+                onChange={onMyIdChanged}
+              ></input>
             </div>
 
             <div className="submit">
-              <button className="submit customerId" onClick={submitGetMyInfo}>Fetch your info</button>
+              <button className="submit customerId" onClick={submitGetMyInfo}>
+                Fetch your info
+              </button>
             </div>
-
           </fieldset>
 
           <fieldset className={styles.card}>
@@ -239,28 +271,75 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-name">Your name</label>
-              <input name="name" id="customer-name" type="text" placeholder="John Doe" value={myInfo["info"]["name"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
+              <input
+                name="name"
+                id="customer-name"
+                type="text"
+                placeholder="John Doe"
+                value={myInfo["info"]["name"]}
+                onChange={onMyInfoChanged}
+                disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}
+              ></input>
             </div>
 
             <div>
               <label htmlFor="customer-country">Your country</label>
-              <Select name="country" id="customer-country" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["country"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
+              <Select
+                name="country"
+                id="customer-country"
+                options={countryList}
+                isClearable={true}
+                isSearchable={true}
+                hasValue={true}
+                value={countryList.find(
+                  (el) => el.value === myInfo["info"]["country"]
+                )}
+                onChange={onCountryChanged}
+                isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}
+              />
             </div>
 
             <div>
               <label htmlFor="customer-passport">Your passport number</label>
-              <input name="passport" id="customer-passport" type="text" placeholder="12345" value={myInfo["info"]["passport"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}></input>
+              <input
+                name="passport"
+                id="customer-passport"
+                type="text"
+                placeholder="12345"
+                value={myInfo["info"]["passport"]}
+                onChange={onMyInfoChanged}
+                disabled={myInfo["id"] === "" || myInfo["info"]["valid"]}
+              ></input>
             </div>
 
             <div>
-              <label htmlFor="customer-jurisdiction">Your jurisdiction of residence</label>
-              <Select name="jurisdiction" id="customer-jurisdiction" options={countryList} isClearable={true} isSearchable={true} hasValue={true} value={countryList.find(el => el.value === myInfo["info"]["jurisdiction"])} onChange={onCountryChanged} isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}/>
+              <label htmlFor="customer-jurisdiction">
+                Your jurisdiction of residence
+              </label>
+              <Select
+                name="jurisdiction"
+                id="customer-jurisdiction"
+                options={countryList}
+                isClearable={true}
+                isSearchable={true}
+                hasValue={true}
+                value={countryList.find(
+                  (el) => el.value === myInfo["info"]["jurisdiction"]
+                )}
+                onChange={onCountryChanged}
+                isDisabled={myInfo["id"] === "" || myInfo["info"]["valid"]}
+              />
             </div>
 
             <div className="submit">
-              <button className="submit myInfo" disabled={!(myInfo["modified"])} onClick={submitMyInfo}>Submit your info</button>
+              <button
+                className="submit myInfo"
+                disabled={!myInfo["modified"]}
+                onClick={submitMyInfo}
+              >
+                Submit your info
+              </button>
             </div>
-
           </fieldset>
 
           <fieldset className={styles.card}>
@@ -268,11 +347,21 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-valid">
-                <span className={styles.hasTitle} title="Fetch your info again to see EzKyc decision">Verified</span>?
+                <span
+                  className={styles.hasTitle}
+                  title="Fetch your info again to see EzKyc decision"
+                >
+                  Verified
+                </span>
+                ?
               </label>
-              <input name="valid" type="checkbox" checked={myInfo["info"]["valid"]} disabled={true} ></input>
+              <input
+                name="valid"
+                type="checkbox"
+                checked={myInfo["info"]["valid"]}
+                disabled={true}
+              ></input>
             </div>
-
           </fieldset>
 
           <fieldset className={styles.card}>
@@ -280,19 +369,37 @@ export default function Home() {
 
             <div>
               <label htmlFor="customer-polymeshId">Your Polymesh did</label>
-              <input name="polymeshDid" id="customer-polymeshId" type="text" placeholder="0x12345" value={myInfo["info"]["polymeshDid"]} onChange={onMyInfoChanged} disabled={myInfo["id"] === ""}></input>
+              <input
+                name="polymeshDid"
+                id="customer-polymeshId"
+                type="text"
+                placeholder="0x12345"
+                value={myInfo["info"]["polymeshDid"]}
+                onChange={onMyInfoChanged}
+                disabled={myInfo["id"] === ""}
+              ></input>
             </div>
 
             <div className="submit">
-              <button className="submit myUpdates" disabled={!myInfo["modified"]} onClick={submitMyInfo}>Submit your updated situation</button>
+              <button
+                className="submit myUpdates"
+                disabled={!myInfo["modified"]}
+                onClick={submitMyInfo}
+              >
+                Submit your updated situation
+              </button>
             </div>
 
             <div className="submit">
-              <button className="submit myClaim" disabled={!myInfo["info"]["valid"]} onClick={fetchMyClaim}>Fetch My Claim</button>
+              <button
+                className="submit myClaim"
+                disabled={!myInfo["info"]["valid"]}
+                onClick={fetchMyClaim}
+              >
+                Fetch My Claim
+              </button>
             </div>
-
           </fieldset>
-
         </form>
 
         <div id="status" className={styles.status}>
@@ -306,11 +413,14 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
-          <img src="/polymath.svg" alt="Polymath Logo" className={styles.logo} />
+          Powered by{" "}
+          <img
+            src="/polymath.svg"
+            alt="Polymath Logo"
+            className={styles.logo}
+          />
         </a>
       </footer>
-
     </div>
-  )
+  );
 }
